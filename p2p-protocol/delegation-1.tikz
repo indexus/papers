@@ -1,0 +1,65 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tiny] (230) at (-12.5, -6.5) {AB};
+		\node [style=none] (231) at (-13, -4) {};
+		\node [style=tiny] (232) at (-11.5, -5.5) {AC};
+		\node [style=tiny] (233) at (-10.5, -6.5) {AD};
+		\node [style=none] (234) at (-11, -4) {};
+		\node [style=none] (235) at (-12, -2) {};
+		\node [style=tiny] (236) at (-7.5, -5.5) {BC};
+		\node [style=none] (237) at (-7, -4) {};
+		\node [style=none] (238) at (-8, -2) {};
+		\node [style=none] (239) at (-10, -1) {};
+		\node [style=tiny] (240) at (-5.5, -5.5) {CA};
+		\node [style=none] (241) at (-5, -4) {};
+		\node [style=tiny] (242) at (-3.5, -5.5) {CC};
+		\node [style=none] (243) at (-3, -4) {};
+		\node [style=none] (244) at (-4, -2) {};
+		\node [style=tiny] (245) at (-1.5, -5.5) {DA};
+		\node [style=tiny] (246) at (-0.5, -6.5) {DB};
+		\node [style=tiny] (247) at (1.5, -6.5) {DD};
+		\node [style=none] (248) at (-1, -4) {};
+		\node [style=none] (249) at (1, -4) {};
+		\node [style=none] (250) at (0, -2) {};
+		\node [style=none] (251) at (-2, -1) {};
+		\node [style=none] (252) at (-6, 0) {};
+		\node [style=tiny] (253) at (-8.5, -6.5) {BB};
+		\node [style=none] (254) at (-9, -4) {};
+		\node [style=none] (773) at (7.75, -1.75) {};
+		\node [style=none] (774) at (13.75, -1.75) {};
+		\node [style=none] (775) at (3.75, -4.75) {};
+		\node [style=none] (776) at (9.75, -4.75) {};
+		\node [style=none] (777) at (8.75, -3.25) {@};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (230) to (231.center);
+		\draw [style=thin] (231.center) to (235.center);
+		\draw [style=thin] (232) to (234.center);
+		\draw [style=thin] (233) to (234.center);
+		\draw [style=thin] (234.center) to (235.center);
+		\draw [style=thick] (236) to (237.center);
+		\draw [style=thick] (237.center) to (238.center);
+		\draw [style=thin] (235.center) to (239.center);
+		\draw [style=thick] (238.center) to (239.center);
+		\draw [style=thin] (240) to (241.center);
+		\draw [style=thin] (241.center) to (244.center);
+		\draw [style=thin] (242) to (243.center);
+		\draw [style=thin] (243.center) to (244.center);
+		\draw [style=thin] (245) to (248.center);
+		\draw [style=thin] (246) to (248.center);
+		\draw [style=thin] (247) to (249.center);
+		\draw [style=thin, in=240, out=60] (248.center) to (250.center);
+		\draw [style=thin] (249.center) to (250.center);
+		\draw [style=thin] (244.center) to (251.center);
+		\draw [style=thin] (250.center) to (251.center);
+		\draw [style=thick] (239.center) to (252.center);
+		\draw [style=thin] (251.center) to (252.center);
+		\draw [style=dashed edge] (253) to (254.center);
+		\draw [style=dashed edge] (254.center) to (238.center);
+		\draw [style=surface] (773.center)
+			 to (775.center)
+			 to (776.center)
+			 to (774.center)
+			 to cycle;
+	\end{pgfonlayer}
+\end{tikzpicture}
