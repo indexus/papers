@@ -1,0 +1,67 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tiny] (31) at (-27.5, -5.5) {AA};
+		\node [style=tiny] (32) at (-26.5, -6.5) {AB};
+		\node [style=none] (33) at (-27, -4) {};
+		\node [style=tiny] (34) at (-25.5, -5.5) {AC};
+		\node [style=tiny] (35) at (-24.5, -6.5) {AD};
+		\node [style=none] (36) at (-25, -4) {};
+		\node [style=none] (37) at (-26, -2) {};
+		\node [style=tiny] (38) at (-23.5, -5.5) {BA};
+		\node [style=tiny] (39) at (-22.5, -6.5) {BB};
+		\node [style=tiny] (40) at (-21.5, -5.5) {BC};
+		\node [style=tiny] (41) at (-20.5, -6.5) {BD};
+		\node [style=none] (42) at (-23, -4) {};
+		\node [style=none] (43) at (-21, -4) {};
+		\node [style=none] (44) at (-22, -2) {};
+		\node [style=none] (45) at (-24, -1) {};
+		\node [style=tiny] (46) at (-19.5, -5.5) {CA};
+		\node [style=tiny] (47) at (-18.5, -6.5) {CB};
+		\node [style=none] (48) at (-19, -4) {};
+		\node [style=tiny] (49) at (-17.5, -5.5) {CC};
+		\node [style=tiny] (50) at (-16.5, -6.5) {CD};
+		\node [style=none] (51) at (-17, -4) {};
+		\node [style=none] (52) at (-18, -2) {};
+		\node [style=tiny] (53) at (-15.5, -5.5) {DA};
+		\node [style=tiny] (54) at (-14.5, -6.5) {DB};
+		\node [style=tiny] (55) at (-13.5, -5.5) {DC};
+		\node [style=tiny] (56) at (-12.5, -6.5) {DD};
+		\node [style=none] (57) at (-15, -4) {};
+		\node [style=none] (58) at (-13, -4) {};
+		\node [style=none] (59) at (-14, -2) {};
+		\node [style=none] (60) at (-16, -1) {};
+		\node [style=none] (61) at (-20, 0) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (31) to (33.center);
+		\draw [style=thin] (32) to (33.center);
+		\draw [style=thin] (33.center) to (37.center);
+		\draw [style=thin] (34) to (36.center);
+		\draw [style=thin] (35) to (36.center);
+		\draw [style=thin] (36.center) to (37.center);
+		\draw [style=thin] (38) to (42.center);
+		\draw [style=thin] (39) to (42.center);
+		\draw [style=thin] (40) to (43.center);
+		\draw [style=thin] (41) to (43.center);
+		\draw [style=thin] (42.center) to (44.center);
+		\draw [style=thin] (43.center) to (44.center);
+		\draw [style=thin] (37.center) to (45.center);
+		\draw [style=thin] (44.center) to (45.center);
+		\draw [style=thin] (46) to (48.center);
+		\draw [style=thin] (47) to (48.center);
+		\draw [style=thin] (48.center) to (52.center);
+		\draw [style=thin] (49) to (51.center);
+		\draw [style=thin] (50) to (51.center);
+		\draw [style=thin] (51.center) to (52.center);
+		\draw [style=thin] (53) to (57.center);
+		\draw [style=thin] (54) to (57.center);
+		\draw [style=thin] (55) to (58.center);
+		\draw [style=thin] (56) to (58.center);
+		\draw [style=thin] (57.center) to (59.center);
+		\draw [style=thin] (58.center) to (59.center);
+		\draw [style=thin] (52.center) to (60.center);
+		\draw [style=thin] (59.center) to (60.center);
+		\draw [style=thin] (45.center) to (61.center);
+		\draw [style=thin] (60.center) to (61.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
