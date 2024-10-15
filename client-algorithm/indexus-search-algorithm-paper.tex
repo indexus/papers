@@ -43,13 +43,13 @@
 
 \title{Indexus: A Peer-to-Peer Search Algorithm}
 \author{Remi Henriot  \\
-        indexus.io }
+        research@indexus.io }
 \date{}
 
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }A peer-to-peer protocol engineered to facilitate nearest neighbor and range queries across multi-dimensional datasets. Both node addresses and datasets are mapped onto a unified binary space partitioning (BSP) tree, creating a streamlined and convergent system. The choice of a BSP tree over an R-tree for the data splitting strategy simplifies the protocol by reducing complex node interactions during insertion and deletion operations. The system achieves eventual consistency, high I/O throughput, and robust resilience through the integration of CRDT mechanisms, complemented by strategic caching and replication.
+\noindent \textbf{Abstract. }The search algorithm proposed addresses efficient item retrieval in a decentralized, peer-to-peer network by employing incremental batch queries to optimize scalability and performance. It ensures consistency in result ordering through distance-based sorting in a defined metric space. By leveraging eventual consistency, the algorithm balances network performance with accuracy, allowing data to converge to a stable state over time. This design supports decentralized data distribution, promoting fairness and resilience while avoiding centralization risks.
 \vspace{1em}\end{abstract}
 
 \section*{Introduction}
@@ -73,7 +73,7 @@ If we consider a news feed scroll, it begins at the present moment—the spatial
 
 \vspace{1em}
 
-Any feed, whether it tracks events or operates as part of an online marketplace, can be conceptualized as a single or multi-dimensional incremental search. The underlying data reservoir for these feeds can be vast, necessitating a system that can handle intensive read and write operations robustly. To ensure equitable data access and prevent centralized control, the data should not be localized on a single machine. Instead, it must be distributed across a network of nodes, supporting a decentralized architecture that avoids unfair ownership and enhances system resilience.
+Any feed, whether it tracks events or operates as part of an online marketplace, can be conceptualized as a single or N-dimensional incremental search. The underlying data reservoir for these feeds can be vast, necessitating a system that can handle intensive read and write operations robustly. To ensure equitable data access and prevent centralized control, the data should not be localized on a single machine. Instead, it must be distributed across a network of nodes, supporting a decentralized architecture that avoids unfair ownership and enhances system resilience.
 
 \vspace{1em}
 
@@ -112,7 +112,7 @@ Let’s consider a BASE4 system (using symbols A, B, C, and D) for our examples.
 A dimension is defined by a distance function between coordinates. Common examples include time, geographic coordinates, or any other measurable attribute that can be used to organize the data. It usually also embeds filtering and directional functions for range queries.
 
 \subsection*{Space}
-A space is a defined multi-dimensional area that encompasses specific ranges for each dimension. It uses a \textbf{mask} and an \textbf{offset} to encode locations within that space.
+A space is a defined N-dimensional area that encompasses specific ranges for each dimension. It uses a \textbf{mask} and an \textbf{offset} to encode locations within that space.
 
 \vspace{1em}
 
@@ -244,9 +244,9 @@ We initialize our algorithm by adding the root set of the collection into the se
 
 \subsection*{Recursion}
 
-We sort all indexed sets based on their distances to the origin and select sets incrementally until we reach a sum of their counters higher than \texttt{BatchSize} \(\times\) \texttt{Cap}. This threshold mechanism guarantees efficiency by minimizing the rounds of requests—a tradeoff between the number of rounds and the number of requests per round.
+We sort all indexed sets and items based on their distances to the origin and select them incrementally until we reach a sum of their counters higher than \texttt{BatchSize} \(\times\) \texttt{Cap}. This threshold mechanism guarantees efficiency by minimizing the rounds of requests—a tradeoff between the number of rounds and the number of requests per round.
 
-If we don't have enough sets (and therefore subsequent items) to reach the threshold, we decrease our layer index to progress and extend our radius on the parent layers. We can recursively apply those steps until the last layer processed generates only items. 
+If we don't have enough elements to reach the threshold, we decrease our layer index to progress and extend our radius on the parent layers. We can recursively apply those steps until the last layer processed generates only items. 
 
 \subsection*{Visualization}
 
@@ -341,19 +341,19 @@ When selecting the sets, we verify the threshold but also ensure that we don't s
 
 \section*{Advanced Topics}
 
-\subsection*{Filtering}
+\subsection*{Dimensions}
+The concept of dimensions in data representation is a vast and complex research area, particularly when it comes to translating theoretical constructs into client libraries. Typically, algorithms are more intuitively applied to quantitative data; however, semantic data can also be projected into an N-dimensional space, where each word corresponds to a position within that space, as demonstrated by techniques like Word2Vec. As long as the chosen distance metric adheres to standard mathematical rules, such as the triangle inequality, the distance between points (or items) can be meaningfully calculated. By default, this distance is computed using the Euclidean formula—the square root of the sum of the squared differences across dimensions. However, by introducing weights to specific dimensions, it is possible to influence sorting and search results. This distortion of the metric space can optimize user experiences, especially when certain factors, such as price, are more important than others, such as proximity to the product. Adjusting the distance formula to account for such tradeoffs can therefore enhance relevance in search results.
 
-\subsection*{Cross Collections}
+\subsection*{Filtering}
+When querying datasets, filters can be applied to various dimensions to exclude elements that do not meet specified criteria. These filters can range from simple constraints, such as minimum and maximum distances, to more complex directional filters based on the origin of the data. For example, in a temporal dimension, a directional filter could exclude future items to display only those from the present and past, whereas a geolocation filter might focus on items within a certain angular range (e.g., between +90 and +120 degrees). Filters not only refine the result set but also impact the efficiency of the search. As more elements are excluded, thresholds—such as those defined by Cap x Batch parameters—may need to be adjusted to ensure the search process remains efficient.
+
+\subsection*{Cross-Collection Search}
+The search algorithm, initially designed for single collections, has been generalized to accommodate searches across multiple collections, marking a significant improvement over traditional Web 2.0 solutions. This capability allows users to perform a unified search across collections of varying types, eliminating the need to navigate separate interfaces. Such cross-collection searches also enable new user experiences by combining data from diverse sources, provided that they share common attributes (although this is not a strict requirement). However, the number of collections involved directly impacts the number of requests required to load data. While we encourage entities to maintain their own collections, the use of public collections, which aggregate items of similar nature, is recommended to enhance search efficiency and provide a seamless user experience.
 
 \subsection*{Aggregation}
-We propose to associate properties with each item; they should be part of an Abelian group so we can compute values for their parent sets. 
+To facilitate efficient computation, we associate properties with each item that belong to an Abelian group. This structure allows for the aggregation of values across parent sets. The search algorithm benefits greatly from this layered data structure and the use of counters that provide density information. Without these counters, the search would suffer from inefficiencies, resulting in a greater number of interactions between child and parent layers. Solving the challenges associated with implementing these counters was crucial to the algorithm’s success, as it not only improved performance but also enabled additional aggregation operations. For instance, if the items in a collection represent products with prices, we can calculate the total sum of prices across a set (SUM(price)) and, by dividing this sum by the number of items in the set (COUNT(items)), compute the average price (AVG(price)).
 
-\subsection*{Loading}
-Based on set properties, faster retrieval and a progressive resolution of the data are possible - blurred to the most detailed one.
-
-\subsection*{Dimensions}
-
-\subsection*{Ratios}
-When multi-dimensional sub-distances can be weighted based on user preferences.
+\subsection*{Progressive Loading}
+Progressive loading refers to the gradual refinement of data resolution as deeper layers of information are processed. This technique is particularly useful for generating visualizations, such as heatmaps, which can be progressively enhanced in real time as more data is loaded. In large-scale systems, such as big data visualizations, this approach enables real-time feedback and graphical representations. The concept mirrors techniques used in video game engines, where distant background elements are rendered with lower resolution, and resolution increases as objects come closer. By leveraging this principle, progressive loading allows for efficient use of computational resources while providing increasingly detailed data as needed.
 
 \end{document}
