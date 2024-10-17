@@ -5,12 +5,12 @@
 
 % Node styles
 \tikzstyle{tiny}=[font={\tiny}]
-\tikzstyle{normal}=[font={\Huge}]
+\tikzstyle{normal}=[font={\tiny}]
 \tikzstyle{large}=[font={\Huge}]
 \tikzstyle{item}=[fill={rgb,255: red,85; green,85; blue,85}, draw=none, shape=circle, minimum size=0.2cm]
 
 % Edge styles
 \tikzstyle{thin}=[-, ultra thin]
 \tikzstyle{thick}=[-, very thick]
-\tikzstyle{dashed edge}=[-, dashed, very thick]
+\tikzstyle{dashed edge}=[-, dashed]
 \tikzstyle{surface}=[-, fill={rgb,255: red,230; green,230; blue,230}]
