@@ -659,11 +659,6 @@
 		\node [style=none] (1793) at (-42, -42) {};
 		\node [style=none] (1794) at (-38, -46) {};
 		\node [style=none] (1795) at (-34, -42) {};
-		\node [style=none] (1806) at (-38, -70) {};
-		\node [style=none] (1807) at (-38, -66) {};
-		\node [style=none] (1808) at (-42, -70) {};
-		\node [style=none] (1809) at (-38, -74) {};
-		\node [style=none] (1810) at (-34, -70) {};
 		\node [style=none] (1811) at (-12, -42) {};
 		\node [style=none] (1812) at (-12, -38) {};
 		\node [style=none] (1813) at (-16, -42) {};
@@ -863,6 +858,12 @@
 		\node [style=none] (2015) at (18.5, -70) {};
 		\node [style=large] (2016) at (-8, -110) {Loading CC};
 		\node [style=large] (2017) at (18, -110) {41 Items};
+		\node [style=none] (2018) at (-38, -70) {};
+		\node [style=none] (2019) at (-38, -62) {};
+		\node [style=none] (2020) at (-46, -70) {};
+		\node [style=none] (2021) at (-38, -78) {};
+		\node [style=none] (2022) at (-30, -70) {};
+		\node [style=large] (2023) at (-34, -82) {Loading D};
 	\end{pgfonlayer}
 	\begin{pgfonlayer}{edgelayer}
 		\draw [style=surface] (858.center)
@@ -1278,10 +1279,6 @@
 		\draw [bend right=45] (1792.center) to (1793.center);
 		\draw [bend right=45] (1793.center) to (1794.center);
 		\draw [bend right=45] (1794.center) to (1795.center);
-		\draw [bend right=45] (1810.center) to (1807.center);
-		\draw [bend right=45] (1807.center) to (1808.center);
-		\draw [bend right=45] (1808.center) to (1809.center);
-		\draw [bend right=45] (1809.center) to (1810.center);
 		\draw [bend right=45] (1815.center) to (1812.center);
 		\draw [bend right=45] (1812.center) to (1813.center);
 		\draw [bend right=45] (1813.center) to (1814.center);
@@ -1389,5 +1386,9 @@
 		\draw [bend right=45] (2012.center) to (2013.center);
 		\draw [bend right=45] (2013.center) to (2014.center);
 		\draw [bend right=45] (2014.center) to (2015.center);
+		\draw [bend right=45] (2022.center) to (2019.center);
+		\draw [bend right=45] (2019.center) to (2020.center);
+		\draw [bend right=45] (2020.center) to (2021.center);
+		\draw [bend right=45] (2021.center) to (2022.center);
 	\end{pgfonlayer}
 \end{tikzpicture}
