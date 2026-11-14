@@ -1,0 +1,284 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tiny] (559) at (-12.25, 0.75) {AB};
+		\node [style=none] (560) at (-12.75, 3.25) {};
+		\node [style=tiny] (561) at (-11.25, 1.75) {AC};
+		\node [style=tiny] (562) at (-10.25, 0.75) {AD};
+		\node [style=none] (563) at (-10.75, 3.25) {};
+		\node [style=none] (564) at (-11.75, 5.25) {};
+		\node [style=tiny] (565) at (-7.25, 1.75) {BC};
+		\node [style=none] (566) at (-6.75, 3.25) {};
+		\node [style=none] (567) at (-7.75, 5.25) {};
+		\node [style=none] (568) at (-9.75, 6.25) {};
+		\node [style=tiny] (569) at (-5.25, 1.75) {CA};
+		\node [style=none] (570) at (-4.75, 3.25) {};
+		\node [style=tiny] (571) at (-3.25, 1.75) {CC};
+		\node [style=none] (572) at (-2.75, 3.25) {};
+		\node [style=none] (573) at (-3.75, 5.25) {};
+		\node [style=tiny] (574) at (-1.25, 1.75) {DA};
+		\node [style=tiny] (575) at (-0.25, 0.75) {DB};
+		\node [style=tiny] (576) at (1.75, 0.75) {DD};
+		\node [style=none] (577) at (-0.75, 3.25) {};
+		\node [style=none] (578) at (1.25, 3.25) {};
+		\node [style=none] (579) at (0.25, 5.25) {};
+		\node [style=none] (580) at (-1.75, 6.25) {};
+		\node [style=none] (581) at (-5.75, 7.25) {};
+		\node [style=tiny] (582) at (-8.25, 0.75) {BB};
+		\node [style=none] (583) at (-8.75, 3.25) {};
+		\node [style=tiny] (584) at (-4.25, 0.75) {CB};
+		\node [style=none] (778) at (11, 5.5) {};
+		\node [style=none] (779) at (8, 5.5) {};
+		\node [style=none] (783) at (6, 4) {};
+		\node [style=none] (784) at (9, 4) {};
+		\node [style=none] (785) at (14, 5.5) {};
+		\node [style=none] (786) at (11, 5.5) {};
+		\node [style=none] (787) at (9, 4) {};
+		\node [style=none] (788) at (12, 4) {};
+		\node [style=none] (789) at (9, 4) {};
+		\node [style=none] (790) at (6, 4) {};
+		\node [style=none] (791) at (4, 2.5) {};
+		\node [style=none] (792) at (7, 2.5) {};
+		\node [style=none] (793) at (12, 4) {};
+		\node [style=none] (794) at (9, 4) {};
+		\node [style=none] (795) at (7, 2.5) {};
+		\node [style=none] (796) at (10, 2.5) {};
+		\node [style=none] (858) at (8, 9.5) {};
+		\node [style=none] (859) at (14, 9.5) {};
+		\node [style=none] (860) at (4, 6.5) {};
+		\node [style=none] (861) at (10, 6.5) {};
+		\node [style=none] (862) at (9, 8) {@};
+		\node [style=none] (863) at (8.5, 4.75) {A};
+		\node [style=none] (864) at (11.25, 4.75) {B};
+		\node [style=none] (865) at (6.5, 3.25) {C};
+		\node [style=none] (866) at (9.25, 3.25) {D};
+		\node [style=tiny] (987) at (12.5, 1) {BB};
+		\node [style=tiny] (992) at (11, 1) {BA};
+		\node [style=none] (993) at (8.5, 0.75) {};
+		\node [style=tiny] (997) at (9.5, 1) {AB};
+		\node [style=none] (998) at (7, 0.75) {};
+		\node [style=none] (999) at (8.5, 0.75) {};
+		\node [style=tiny] (1002) at (8, 1) {AA};
+		\node [style=none] (1003) at (6, 0) {};
+		\node [style=none] (1004) at (7.5, 0) {};
+		\node [style=none] (1005) at (7, 0.75) {};
+		\node [style=none] (1006) at (8.5, 0.75) {};
+		\node [style=tiny] (1007) at (7, 0.25) {AC};
+		\node [style=none] (1008) at (7.5, 0) {};
+		\node [style=none] (1009) at (9, 0) {};
+		\node [style=none] (1010) at (8.5, 0.75) {};
+		\node [style=tiny] (1012) at (8.5, 0.25) {AD};
+		\node [style=none] (1013) at (9, 0) {};
+		\node [style=tiny] (1017) at (10, 0.25) {BC};
+		\node [style=tiny] (1022) at (11.5, 0.25) {BD};
+		\node [style=none] (1023) at (5, -0.75) {};
+		\node [style=none] (1024) at (6.5, -0.75) {};
+		\node [style=none] (1025) at (6, 0) {};
+		\node [style=none] (1026) at (7.5, 0) {};
+		\node [style=tiny] (1027) at (6, -0.5) {CA};
+		\node [style=tiny] (1032) at (7.5, -0.5) {CB};
+		\node [style=none] (1033) at (8, -0.75) {};
+		\node [style=none] (1035) at (9, 0) {};
+		\node [style=tiny] (1037) at (9, -0.5) {DA};
+		\node [style=tiny] (1042) at (10.5, -0.5) {DB};
+		\node [style=none] (1043) at (4, -1.5) {};
+		\node [style=none] (1044) at (5.5, -1.5) {};
+		\node [style=none] (1045) at (5, -0.75) {};
+		\node [style=none] (1046) at (6.5, -0.75) {};
+		\node [style=tiny] (1047) at (5, -1.25) {CC};
+		\node [style=none] (1048) at (5.5, -1.5) {};
+		\node [style=none] (1049) at (7, -1.5) {};
+		\node [style=none] (1050) at (6.5, -0.75) {};
+		\node [style=none] (1051) at (8, -0.75) {};
+		\node [style=tiny] (1052) at (6.5, -1.25) {CD};
+		\node [style=none] (1053) at (7, -1.5) {};
+		\node [style=none] (1055) at (8, -0.75) {};
+		\node [style=tiny] (1057) at (8, -1.25) {DC};
+		\node [style=none] (1058) at (7, -1.5) {};
+		\node [style=none] (1059) at (8.5, -1.5) {};
+		\node [style=none] (1060) at (8, -0.75) {};
+		\node [style=none] (1061) at (9.5, -0.75) {};
+		\node [style=tiny] (1062) at (9.5, -1.25) {DD};
+		\node [style=none] (1063) at (6.5, -0.75) {};
+		\node [style=none] (1064) at (8, -0.75) {};
+		\node [style=none] (1065) at (7.5, 0) {};
+		\node [style=none] (1066) at (9, 0) {};
+		\node [style=none] (1067) at (8.5, -1.5) {};
+		\node [style=none] (1068) at (10, -1.5) {};
+		\node [style=none] (1069) at (9.5, -0.75) {};
+		\node [style=none] (1070) at (11, -0.75) {};
+		\node [style=none] (1071) at (9.5, -0.75) {};
+		\node [style=none] (1072) at (11, -0.75) {};
+		\node [style=none] (1073) at (10.5, 0) {};
+		\node [style=none] (1074) at (12, 0) {};
+		\node [style=none] (1075) at (8, -0.75) {};
+		\node [style=none] (1076) at (9.5, -0.75) {};
+		\node [style=none] (1077) at (9, 0) {};
+		\node [style=none] (1078) at (10.5, 0) {};
+		\node [style=none] (1079) at (7.5, 0) {};
+		\node [style=none] (1080) at (9, 0) {};
+		\node [style=none] (1081) at (8.5, 0.75) {};
+		\node [style=none] (1082) at (10, 0.75) {};
+		\node [style=none] (1083) at (9, 0) {};
+		\node [style=none] (1084) at (10.5, 0) {};
+		\node [style=none] (1085) at (10, 0.75) {};
+		\node [style=none] (1086) at (11.5, 0.75) {};
+		\node [style=none] (1087) at (10.5, 0) {};
+		\node [style=none] (1088) at (12, 0) {};
+		\node [style=none] (1089) at (11.5, 0.75) {};
+		\node [style=none] (1090) at (13, 0.75) {};
+		\node [style=none] (1091) at (11.5, 0.75) {};
+		\node [style=none] (1092) at (13, 0.75) {};
+		\node [style=none] (1093) at (12.5, 1.5) {};
+		\node [style=none] (1094) at (14, 1.5) {};
+		\node [style=none] (1095) at (10, 0.75) {};
+		\node [style=none] (1096) at (11.5, 0.75) {};
+		\node [style=none] (1097) at (11, 1.5) {};
+		\node [style=none] (1098) at (12.5, 1.5) {};
+		\node [style=none] (1099) at (8.5, 0.75) {};
+		\node [style=none] (1100) at (10, 0.75) {};
+		\node [style=none] (1101) at (9.5, 1.5) {};
+		\node [style=none] (1102) at (11, 1.5) {};
+		\node [style=none] (1103) at (7, 0.75) {};
+		\node [style=none] (1104) at (8.5, 0.75) {};
+		\node [style=none] (1105) at (8, 1.5) {};
+		\node [style=none] (1106) at (9.5, 1.5) {};
+		\node [style=tiny] (1107) at (-2.25, 0.75) {CD};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thick] (559) to (560.center);
+		\draw [style=thick] (560.center) to (564.center);
+		\draw [style=thick] (561) to (563.center);
+		\draw [style=thin] (562) to (563.center);
+		\draw [style=thick] (563.center) to (564.center);
+		\draw [style=thick] (565) to (566.center);
+		\draw [style=thick] (566.center) to (567.center);
+		\draw [style=thick] (564.center) to (568.center);
+		\draw [style=thick] (567.center) to (568.center);
+		\draw [style=thick] (569) to (570.center);
+		\draw [style=thick] (570.center) to (573.center);
+		\draw [style=thick] (571) to (572.center);
+		\draw [style=thick] (572.center) to (573.center);
+		\draw [style=thin] (574) to (577.center);
+		\draw [style=thick] (575) to (577.center);
+		\draw [style=thin] (576) to (578.center);
+		\draw [style=thin] (578.center) to (579.center);
+		\draw [style=thick] (573.center) to (580.center);
+		\draw [style=thick] (579.center) to (580.center);
+		\draw [style=thick] (568.center) to (581.center);
+		\draw [style=thick] (580.center) to (581.center);
+		\draw [style=dashed edge] (582) to (583.center);
+		\draw [style=dashed edge] (583.center) to (567.center);
+		\draw [style=dashed edge] (570.center) to (584);
+		\draw [style=surface] (779.center)
+			 to (778.center)
+			 to (784.center)
+			 to (783.center)
+			 to cycle;
+		\draw (786.center)
+			 to (785.center)
+			 to (788.center)
+			 to (787.center)
+			 to cycle;
+		\draw [style=surface] (790.center)
+			 to (789.center)
+			 to (792.center)
+			 to (791.center)
+			 to cycle;
+		\draw [style=surface] (794.center)
+			 to (793.center)
+			 to (796.center)
+			 to (795.center)
+			 to cycle;
+		\draw [style=surface] (858.center)
+			 to (860.center)
+			 to (861.center)
+			 to (859.center)
+			 to cycle;
+		\draw [style=thin] (999.center) to (998.center);
+		\draw [style=surface] (1004.center)
+			 to (1003.center)
+			 to (1005.center)
+			 to (1006.center)
+			 to cycle;
+		\draw (1008.center) to (1010.center);
+		\draw (1009.center) to (1008.center);
+		\draw [style=thin] (1023.center) to (1025.center);
+		\draw (1025.center) to (1026.center);
+		\draw (1026.center) to (1024.center);
+		\draw (1024.center) to (1023.center);
+		\draw [style=surface] (1033.center) to (1035.center);
+		\draw [style=surface] (1046.center)
+			 to (1044.center)
+			 to (1043.center)
+			 to (1045.center)
+			 to cycle;
+		\draw [style=surface] (1050.center)
+			 to (1051.center)
+			 to (1049.center)
+			 to (1048.center)
+			 to cycle;
+		\draw [style=thin] (1053.center) to (1055.center);
+		\draw [style=thin] (1058.center)
+			 to (1060.center)
+			 to (1061.center)
+			 to (1059.center)
+			 to cycle;
+		\draw [style=surface] (1065.center)
+			 to (1066.center)
+			 to (1064.center)
+			 to (1063.center)
+			 to cycle;
+		\draw [style=thin] (1067.center)
+			 to (1069.center)
+			 to (1070.center)
+			 to (1068.center)
+			 to cycle;
+		\draw [style=thin] (1071.center)
+			 to (1073.center)
+			 to (1074.center)
+			 to (1072.center)
+			 to cycle;
+		\draw [style=thin] (1075.center)
+			 to (1077.center)
+			 to (1078.center)
+			 to (1076.center)
+			 to cycle;
+		\draw [style=thin] (1079.center)
+			 to (1081.center)
+			 to (1082.center)
+			 to (1080.center)
+			 to cycle;
+		\draw [style=thin] (1083.center)
+			 to (1085.center)
+			 to (1086.center)
+			 to (1084.center)
+			 to cycle;
+		\draw [style=thin] (1087.center)
+			 to (1089.center)
+			 to (1090.center)
+			 to (1088.center)
+			 to cycle;
+		\draw [style=thin] (1091.center)
+			 to (1093.center)
+			 to (1094.center)
+			 to (1092.center)
+			 to cycle;
+		\draw [style=thin] (1095.center)
+			 to (1097.center)
+			 to (1098.center)
+			 to (1096.center)
+			 to cycle;
+		\draw [style=thin] (1099.center)
+			 to (1101.center)
+			 to (1102.center)
+			 to (1100.center)
+			 to cycle;
+		\draw [style=thin] (1103.center)
+			 to (1105.center)
+			 to (1106.center)
+			 to (1104.center)
+			 to cycle;
+		\draw [style=thick] (577.center) to (579.center);
+		\draw [style=dashed edge] (572.center) to (1107);
+	\end{pgfonlayer}
+\end{tikzpicture}

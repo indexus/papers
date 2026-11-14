@@ -1,0 +1,51 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tiny] (177) at (-6.5, -6.5) {AB};
+		\node [style=none] (178) at (-7, -4) {};
+		\node [style=tiny] (179) at (-5.5, -5.5) {AC};
+		\node [style=tiny] (180) at (-4.5, -6.5) {AD};
+		\node [style=none] (181) at (-5, -4) {};
+		\node [style=none] (182) at (-6, -2) {};
+		\node [style=tiny] (185) at (-1.5, -5.5) {BC};
+		\node [style=none] (188) at (-1, -4) {};
+		\node [style=none] (189) at (-2, -2) {};
+		\node [style=none] (190) at (-4, -1) {};
+		\node [style=tiny] (191) at (0.5, -5.5) {CA};
+		\node [style=none] (193) at (1, -4) {};
+		\node [style=tiny] (194) at (2.5, -5.5) {CC};
+		\node [style=none] (196) at (3, -4) {};
+		\node [style=none] (197) at (2, -2) {};
+		\node [style=tiny] (198) at (4.5, -5.5) {DA};
+		\node [style=tiny] (199) at (5.5, -6.5) {DB};
+		\node [style=tiny] (201) at (7.5, -6.5) {DD};
+		\node [style=none] (202) at (5, -4) {};
+		\node [style=none] (203) at (7, -4) {};
+		\node [style=none] (204) at (6, -2) {};
+		\node [style=none] (205) at (4, -1) {};
+		\node [style=none] (206) at (0, 0) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (177) to (178.center);
+		\draw [style=thin] (178.center) to (182.center);
+		\draw [style=thin] (179) to (181.center);
+		\draw [style=thin] (180) to (181.center);
+		\draw [style=thin] (181.center) to (182.center);
+		\draw [style=thin] (185) to (188.center);
+		\draw [style=thin] (188.center) to (189.center);
+		\draw [style=thin] (182.center) to (190.center);
+		\draw [style=thin] (189.center) to (190.center);
+		\draw [style=thin] (191) to (193.center);
+		\draw [style=thin] (193.center) to (197.center);
+		\draw [style=thin] (194) to (196.center);
+		\draw [style=thin] (196.center) to (197.center);
+		\draw [style=thin] (198) to (202.center);
+		\draw [style=thin] (199) to (202.center);
+		\draw [style=thin] (201) to (203.center);
+		\draw [style=thin, in=240, out=60] (202.center) to (204.center);
+		\draw [style=thin] (203.center) to (204.center);
+		\draw [style=thin] (197.center) to (205.center);
+		\draw [style=thin] (204.center) to (205.center);
+		\draw [style=thin] (190.center) to (206.center);
+		\draw [style=thin] (205.center) to (206.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
