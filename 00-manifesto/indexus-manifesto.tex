@@ -1,0 +1,84 @@
+\documentclass[11pt]{article}
+\usepackage{../common/indexus}
+
+\begin{document}
+
+\title{The Indexus Manifesto: Data as a Commons}
+\author{Remi Henriot \\
+        research@indexus.io}
+\date{}
+
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Abstract. }Data is found through indexes, and indexing tends to concentrate: the more offers and readers an index gathers, the more useful it becomes relative to any other, and the party that operates it decides what is found, in which order and on which terms. We describe a different arrangement: producers publish signed records once into an open, peer-to-peer index that no single party operates; independent hosts store and serve it; applications compose what they need without holding the data; and the people who host and produce are paid for what is read. This manifesto states the principles behind the Indexus protocol and the four papers that specify it.
+\vspace{1em}\end{abstract}
+
+\section*{The problem}
+The issue is not that data exists in many places. It is that the indexing of data concentrates.
+
+Data is useful once it can be found: a property sale near an address, the weather at a given hour, an offer within a given distance, the events of a given day. Finding requires an index, a structure that answers ``what is here, and how much of it''. Building and maintaining an index of a whole domain is costly, so in practice one or a few parties do it, and everyone else queries theirs.
+
+An index has increasing returns. Each producer that lists in it makes it more complete for readers, and each reader that queries it makes it more valuable for producers. Beyond a certain size it is more useful than any alternative, and both producers and readers converge on it. This is a network effect, and it applies to the index rather than to the data: the same records could be held by many parties, but they are found through one.
+
+The party that operates the dominant index then sets, by construction, what is found, in which order, under which terms of access and at which price for being listed. It also observes every query. Traffic follows the index, not the producers. Competitors who would not share a database with each other each list with the same operator, because that is where the readers are. Applications that want the data must either rebuild an index of their own, at full cost, or depend on the operator's.
+
+Indexus addresses this point: it makes the index itself shared. The index is a protocol that anyone can host and anyone can query, with rules fixed by a public specification, so that the network effect accrues to the shared index rather than to one operator.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{\input{figures/silos.tikz}}
+    \caption{Left, each application indexes the same sources on its own, or depends on one operator's index. Right, the sources are indexed once in a shared index that no single party operates, and every application is a view on it.}
+    \label{fig:silos}
+\end{figure}
+
+\section*{Principles}
+
+\subsection*{1. Data is produced once and read everywhere}
+A record should be published once, by the party who produced it, into an index that anyone can read and anyone can host. Reading it should not require copying it. A new application should start from the data that already exists, not from an empty database and a scraping job.
+
+\subsection*{2. Applications are views, not owners}
+An application decides what to show, how and to whom. It should not need to own the data to do so. In Indexus an application composes collections from different producers that share a Space: a land register, a weather model and a person's own trips meet in the same geographic cells, and the application reads their sums side by side. The application is decoupled from the production of the data, and can be replaced without losing it.
+
+\subsection*{3. The index is shared, not operated by one party}
+Decentralisation addresses that mechanism directly: the index is not held by any single operator. Businesses in competition can publish their offers into the same collections and host part of the same index. They obtain the same network effect as a third-party index, one place where every offer can be found, compared and summed, while the order of results and the meaning of a total are fixed by a public specification, the same for every participant. Ranking, presentation and the customer relationship remain with the applications and businesses that choose them.
+
+\subsection*{4. A protocol, not a platform}
+The network is defined by a written specification, not by one program. Several independent implementations must be able to join the same network and pass the same conformance tests, as the implementations of an Internet standard do. No implementation, including the one we write, owns the network. Changes go through public proposals.
+
+\subsection*{5. Exact at every scale}
+A map shows a city and a street with the same tool, so the totals behind it must be true at every zoom, not sampled or estimated. Every zone of the index carries the exact sum of what lies below it, a deleted record is subtracted, and a parent total converges to its children within a bounded, measured delay. Numbers are a public good only if they are right.
+
+\subsection*{6. Trust is verified, not granted}
+In an open network the node that answers is not necessarily one you trust. Records are signed by their producers, and the sums a node returns must be checkable against those signatures. A reader should be able to verify a total without asking anyone to vouch for it.
+
+\subsection*{7. Private stays private}
+Opening data does not mean publishing everything. A person's history can live on that person's own node and be composed with public collections on that person's device, without leaving it. Access is decided by whoever produced the data, in the protocol, not by an application's terms of service.
+
+\subsection*{8. Hosting and producing are paid}
+Infrastructure that nobody is paid to run disappears, and data that nobody is paid to produce goes stale. Base public data should stay free to read. Beyond it, freshness, volume and premium collections can be paid per request, in small amounts, and the payment split between the host that served the request and the producer of the data. We use Bitcoin's Lightning network for this and issue no token of our own: the network should not need a currency to exist.
+
+\subsection*{9. Open and not appropriable}
+The reference implementation is free software under a copyleft licence, so that no one, including a future owner of any company we build, can close it. The specification and the name belong to a neutral foundation. Client libraries stay permissive so that applications built on the index can be anything their authors want.
+
+\subsection*{10. Sovereign and resilient}
+There is no central server to switch off. Nodes run on ordinary machines, on any provider or at home, and the index survives the loss of any of them. This makes Indexus useful to public services and to organisations that need their data to stay under their control. We will say in advance what uses we support and what uses we do not, in a public charter, because a licence cannot do that for us.
+
+\subsection*{11. Measured, not promised}
+Every claim about scale, latency or exactness is published with the scripts that reproduce it. What is implemented, what is measured and what is only proposed are labelled as such in every paper.
+
+\section*{Where we are}
+The index exists and runs. Writes are acknowledged only once durable, totals are exact at every zone, and on sixteen machines the network has sustained more than fifty thousand acknowledged writes per second with exact totals and no loss, scaling linearly with the number of machines in the range we have measured. Replication across three copies is being built and modelled before it is trusted. Verifiable sums, payments and the formal specification are proposals.
+
+The four papers that accompany this manifesto describe the system from the bottom up:
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textit{Encoding, Spaces and Incremental Search}: one tree for addresses, collections and records, and how a feed or a map reads it.
+  \item \textit{A Peer-to-Peer Protocol for Zones}: who holds which zone, how zones move between nodes, and what an acknowledgement guarantees.
+  \item \textit{Exact and Verifiable Aggregates}: how every zone keeps an exact sum, how fast parents follow, and how a reader checks a total.
+  \item \textit{Paying for Open Data}: how hosts and producers are paid, and how the protocol becomes a standard with many implementations.
+\end{enumerate}
+
+\section*{An invitation}
+We are looking for producers who want their data read without giving it away, for hosts who want to run part of a common infrastructure, for developers who want to build applications on data they do not have to collect, and for people who want to write a second implementation and prove that the specification stands on its own. The goal is not one more database. It is to make the next application cheaper to build than the last one, because the data it needs is already there, shared, exact and paid for fairly.
+
+\end{document}

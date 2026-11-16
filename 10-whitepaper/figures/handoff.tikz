@@ -1,0 +1,45 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tiny] (1) at (-1.2, 1) {donor};
+		\node [style=tiny] (2) at (-1.2, 0) {receiver};
+		\node [style=none] (3) at (0, 0.8) {};
+		\node [style=none] (4) at (7, 0.8) {};
+		\node [style=none] (5) at (7, 1.2) {};
+		\node [style=none] (6) at (0, 1.2) {};
+		\node [style=none] (7) at (13, -0.2) {};
+		\node [style=none] (8) at (17, -0.2) {};
+		\node [style=none] (9) at (17, 0.2) {};
+		\node [style=none] (10) at (13, 0.2) {};
+		\node [style=none] (11) at (0, -0.7) {};
+		\node [style=none] (12) at (17.5, -0.7) {};
+		\node [style=none] (13) at (0.2, -0.8) {};
+		\node [style=none] (14) at (0.2, 1.5) {};
+		\node [style=tiny] (15) at (0.2, 1.8) {copy};
+		\node [style=none] (16) at (7, -0.8) {};
+		\node [style=none] (17) at (7, 1.5) {};
+		\node [style=tiny] (18) at (7, 1.8) {freeze};
+		\node [style=none] (19) at (9, -0.8) {};
+		\node [style=none] (20) at (9, 1.5) {};
+		\node [style=tiny] (21) at (9, 1.8) {stage};
+		\node [style=none] (22) at (11, -0.8) {};
+		\node [style=none] (23) at (11, 1.5) {};
+		\node [style=tiny] (24) at (11, 1.8) {emit};
+		\node [style=none] (25) at (13, -0.8) {};
+		\node [style=none] (26) at (13, 1.5) {};
+		\node [style=tiny] (27) at (13, 1.8) {install};
+		\node [style=tiny] (28) at (3.5, 1) {accepts writes};
+		\node [style=tiny] (29) at (15, 0) {accepts writes};
+		\node [style=tiny] (30) at (10, 0.5) {no writer};
+		\node [style=tiny] (31) at (17.5, -1) {time};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=surface] (3.center) to (4.center) to (5.center) to (6.center) to cycle;
+		\draw [style=surface] (7.center) to (8.center) to (9.center) to (10.center) to cycle;
+		\draw [style=arrow] (11.center) to (12.center);
+		\draw [style=dashed edge] (13.center) to (14.center);
+		\draw [style=dashed edge] (16.center) to (17.center);
+		\draw [style=dashed edge] (19.center) to (20.center);
+		\draw [style=dashed edge] (22.center) to (23.center);
+		\draw [style=dashed edge] (25.center) to (26.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

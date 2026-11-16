@@ -1,0 +1,68 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-1.7, -0.3) {};
+		\node [style=none] (2) at (1.7, -0.3) {};
+		\node [style=none] (3) at (1.7, 0.3) {};
+		\node [style=none] (4) at (-1.7, 0.3) {};
+		\node [style=tiny] (5) at (0, 0) {genesis: all  \textrightarrow{}  BC};
+		\node [style=none] (6) at (4, -0.3) {};
+		\node [style=none] (7) at (6.4, -0.3) {};
+		\node [style=none] (8) at (6.4, 0.3) {};
+		\node [style=none] (9) at (4, 0.3) {};
+		\node [style=tiny] (10) at (5.2, 0) {certificate 1};
+		\node [style=none] (11) at (8.9, 0.5) {};
+		\node [style=none] (12) at (11.5, 0.5) {};
+		\node [style=none] (13) at (11.5, 1.1) {};
+		\node [style=none] (14) at (8.9, 1.1) {};
+		\node [style=tiny] (15) at (10.2, 0.8) {0\ldots{}  \textrightarrow{}  AB};
+		\node [style=none] (16) at (8.9, -1.1) {};
+		\node [style=none] (17) at (11.5, -1.1) {};
+		\node [style=none] (18) at (11.5, -0.5) {};
+		\node [style=none] (19) at (8.9, -0.5) {};
+		\node [style=tiny] (20) at (10.2, -0.8) {1\ldots{}  \textrightarrow{}  BC};
+		\node [style=none] (21) at (14, -1.1) {};
+		\node [style=none] (22) at (16.4, -1.1) {};
+		\node [style=none] (23) at (16.4, -0.5) {};
+		\node [style=none] (24) at (14, -0.5) {};
+		\node [style=tiny] (25) at (15.2, -0.8) {certificate 2};
+		\node [style=none] (26) at (18.9, -0.3) {};
+		\node [style=none] (27) at (21.5, -0.3) {};
+		\node [style=none] (28) at (21.5, 0.3) {};
+		\node [style=none] (29) at (18.9, 0.3) {};
+		\node [style=tiny] (30) at (20.2, 0) {10\ldots{}  \textrightarrow{}  CA};
+		\node [style=none] (31) at (18.9, -1.9) {};
+		\node [style=none] (32) at (21.5, -1.9) {};
+		\node [style=none] (33) at (21.5, -1.3) {};
+		\node [style=none] (34) at (18.9, -1.3) {};
+		\node [style=tiny] (35) at (20.2, -1.6) {11\ldots{}  \textrightarrow{}  BC};
+		\node [style=none] (36) at (1.7, 0) {};
+		\node [style=none] (37) at (4, 0) {};
+		\node [style=tiny] (38) at (2.85, 0.25) {consumes};
+		\node [style=none] (39) at (6.4, 0.15) {};
+		\node [style=none] (40) at (8.9, 0.8) {};
+		\node [style=none] (41) at (6.4, -0.15) {};
+		\node [style=none] (42) at (8.9, -0.8) {};
+		\node [style=none] (43) at (11.5, -0.8) {};
+		\node [style=none] (44) at (14, -0.8) {};
+		\node [style=tiny] (45) at (12.75, -0.55) {consumes};
+		\node [style=none] (46) at (16.4, -0.65) {};
+		\node [style=none] (47) at (18.9, 0) {};
+		\node [style=none] (48) at (16.4, -0.95) {};
+		\node [style=none] (49) at (18.9, -1.6) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=thin] (16.center) to (17.center) to (18.center) to (19.center) to cycle;
+		\draw [style=thin] (21.center) to (22.center) to (23.center) to (24.center) to cycle;
+		\draw [style=thin] (26.center) to (27.center) to (28.center) to (29.center) to cycle;
+		\draw [style=thin] (31.center) to (32.center) to (33.center) to (34.center) to cycle;
+		\draw [style=arrow] (36.center) to (37.center);
+		\draw [style=arrow] (39.center) to (40.center);
+		\draw [style=arrow] (41.center) to (42.center);
+		\draw [style=arrow] (43.center) to (44.center);
+		\draw [style=arrow] (46.center) to (47.center);
+		\draw [style=arrow] (48.center) to (49.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

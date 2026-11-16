@@ -1,0 +1,26 @@
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % Left: silos
+  \node[lbl] at (2.2,3.6) {\textbf{Today: indexes held by one party each}};
+  \foreach \i/\x in {1/0,2/1.6,3/3.2,4/4.8} {
+    \node[nodebox,minimum width=1.3cm] (a\i) at (\x-0.4,2.6) {App \i};
+    \draw[zonefill] (\x-0.95,0.9) rectangle (\x+0.15,1.9);
+    \node[lbl,align=center] at (\x-0.4,1.4) {its own\\index};
+    \draw[msg] (a\i.south) -- (\x-0.4,1.9);
+  }
+  \foreach \x in {0,1.6,3.2,4.8} { \draw[msg,dashed] (2.0,0.1) -- (\x-0.4,0.9); }
+  \node[lbl] at (2.0,-0.15) {producers, copied again and again};
+  % Right: commons
+  \begin{scope}[xshift=8cm]
+    \node[lbl] at (2.2,3.6) {\textbf{Indexus: one index, many views}};
+    \foreach \i/\x in {1/0,2/1.6,3/3.2,4/4.8} {
+      \node[nodebox,minimum width=1.3cm] (b\i) at (\x-0.4,2.6) {App \i};
+      \draw[msg] (b\i.south) -- (\x-0.4,1.9);
+    }
+    \draw[zonefill] (-0.95,0.9) rectangle (4.95,1.9);
+    \node[lbl,align=center] at (2.0,1.4) {shared zones, exact sums, peer-to-peer hosts};
+    \foreach \x/\n in {0.2/A,2.0/B,3.8/C} {
+      \node[nodebox,minimum width=1.2cm] (p\n) at (\x,0.0) {Producer \n};
+      \draw[msg] (p\n.north) -- (\x,0.9);
+    }
+  \end{scope}
+\end{tikzpicture}

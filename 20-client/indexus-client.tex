@@ -1,0 +1,144 @@
+\documentclass[11pt]{article}
+\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec,titling,abstract}
+\usepackage{amsmath}
+\usepackage{float,graphicx,enumitem}
+\usepackage{algorithm,algpseudocode}
+\usepackage[hidelinks]{hyperref}
+\usepackage{../figkit/ixfig}
+
+\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection.}{0.5em}{}
+\pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
+\posttitle{\par\end{center}\vskip 0.5em}
+\preauthor{\vspace{0em}\begin{center}\small}
+\postauthor{\vspace{-4em}\end{center}}
+\renewcommand{\abstractname}{}
+\renewcommand{\abstracttextfont}{\normalfont\small}
+
+\begin{document}
+
+\title{Indexus: The Client}
+\author{Remi Henriot \\ research@indexus.io}
+\date{}
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Abstract. }Our whitepaper describes an index in which every zone keeps the exact sum of the records below it~[2]. This paper describes how a reader uses it. A client turns coordinates into locations, reads the sums of a zone's children in one request, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of our first paper~[1], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
+\vspace{1em}\end{abstract}
+
+\section{Introduction}
+A reader of the index wants two things. A map wants totals: how many records, and how much, in each part of what it shows, at the size given by its zoom. A feed wants records: the nearest ones first, then the next, as the user scrolls. Both read the same zones and the same sums. The client never counts records itself; every number it shows is a sum read from the index.
+
+We follow the whitepaper's words: a \emph{record} is one entry, a \emph{collection} a named set of records sharing a space, a \emph{zone} the records whose location starts with the same characters, and the \emph{sum} of a zone its count and the totals of its numbers.
+
+\section{Spaces}
+A space is a list of dimensions. A dimension has a range and a distance: a sphere has latitude, longitude and the distance along the surface; a line has a start, an end and the difference of two values. A space of $n$ coordinates cuts each of them $6/n$ times per character: a map of latitude and longitude cuts each three times per character.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{orig/masks.png}
+    \caption{Two subdivisions of the same space}
+\end{figure}
+
+The client computes a location as follows. The mask gives the dimension cut by each bit, and the offset is the collection's name read as numbers.
+
+\begin{algorithm}[H]
+\caption{Location of a point}
+\begin{algorithmic}[1]
+\State $bounds \gets$ the ranges of the space; $location \gets$ ``''
+\For{$l = 0$ \textbf{to} $precision - 1$}
+  \State $bits \gets 0$
+  \For{$n = 0$ \textbf{to} $5$}
+    \State $a \gets mask(l, n)$; $mid \gets$ middle of $bounds[a]$
+    \If{$point[a] > mid$} $bits \gets 2\,bits + 1$; set $bounds[a]$ to $[mid, max]$
+    \Else\ $bits \gets 2\,bits$; set $bounds[a]$ to $[min, mid]$
+    \EndIf
+  \EndFor
+  \State $location \gets location + alphabet[(offset(l) + bits) \bmod 64]$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Decoding replays the same halvings after removing the offset, and gives back the \emph{cell}: the box of coordinates that the location covers. With base 4 the rule is the same with 2 bits per character: the point at latitude $-60$ and longitude $-45$, with an offset BC, has the location BD and the cell latitude $[-90,-45]$ by longitude $[-90,0]$. With the real alphabet, Paris has a four-character location whose cell is about 4.9 by 6.5 kilometres.
+
+\section{Zones}
+A location is a path in the tree, and each of its prefixes is a zone. The parent of a zone is its location without the last character. The client computes the address of a zone with the same rule as the nodes, its location's bits followed by the collection's name, and both are checked against the same examples.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{orig/encoded.png}
+    \caption{Encoded tree (BASE4)}
+\end{figure}
+
+\section{Reading a zone}
+A read of a zone answers the sums of its children: one row for the records placed exactly at the zone, and one row per non-empty child, with its count and the total of each number. It has at most 65 rows. When every record of a child lies in a single place, the row is given under that place, down to four characters below the zone; the client can then refine a map without reading further.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/sums.tikz}
+    \caption{Reading zone @ returns its children A, B, C and D with their counts; reading zone C returns the records placed at C and its children CB, CC and CD.}
+\end{figure}
+
+Rows travel as columns of numbers: the keys, the counts, then each metric. A browser reads them where they arrive and hands them to its graphics processor without building one object per row. A client may ask for some metrics only; the sums are still those of whole records.
+
+\section{Finding nodes}
+A client starts from a few known nodes and has two ways to reach a zone. In the first, it chooses one node for its session, the known node closest to a random key, and lets that node forward each read to the holder of the zone. In the second, it computes the holder itself from the nodes it knows, sends each read there, and follows the answer when a node replies that the zone lives elsewhere. Reads for many zones are grouped, up to 128 per request.
+
+\section{Drawing a map}
+A map shows a region at a zoom. The zoom sets the size of the cells to draw. The client keeps the zones it has already read and descends them: a cell outside the view is skipped, a cell fine enough is drawn, a cell too coarse is replaced by its children if they are known. The children it lacks are exactly the zones it reads next.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/zoom.tikz}
+    \caption{The view, darker, at three zooms. The client reads @, then C, then the four children of C. Zones outside the view are never read.}
+\end{figure}
+
+A parent remains drawn until all the records of its child have arrived, so the map never shows a hole while it refines. The view is read with a margin of a quarter of its size on each side, so that a small move does not trigger a read. Three neighbouring levels are prepared together, which lets the map blend from one zoom to the next.
+
+\section{Searching around a point}
+A feed, or a list of the nearest places, starts at an origin and goes outwards. The client uses the incremental algorithm of our first paper~[1], unchanged in its principle: it reads zones in layers, from coarse to fine, sorts what it holds by distance from the origin, and uses the counts of the zones to predict how many records lie within each distance. It stops reading as soon as enough records are certain to be closer than everything not yet read, and returns them; the next call continues from there.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=14cm]{orig/layers.png}
+    \caption{Layers and concentric circles}
+\end{figure}
+
+Two things changed since 2024. The zones selected in one step are read in a single request. And a zone of a thousand records or fewer is read as records rather than as sums, so that the last layer holds real records, each with its exact distance.
+
+\section{Combining collections}
+Two collections of the same space cut the world into the same cells, but write them with different characters, because their offsets differ. Removing the offset gives back the cell's integer coordinates and its resolution. The client joins two collections on these coordinates.
+
+\begin{figure}[H]
+    \centering
+    \ixnew[0.5]{figures/compose.tikz}
+    \caption{The same cell is D in a collection of houses (offset B) and B in a weather collection (offset D). Without the offset both are the cell (0,0).}
+\end{figure}
+
+For each cell of the first collection, the client finds the same cell, or the nearest enclosing one, in up to three others, and computes a small expression over their sums: an average price is the sum of prices divided by the count; a price per square metre divided by a temperature needs two collections. Data from different producers is thus combined on the reader's device, and none of it is copied into a common database.
+
+\section{Keeping data}
+The client keeps the answers it has read in memory, within a budget of 256~MB by default. When the budget is exceeded, the least recently used answers leave, except those the current view needs. The same answers are copied once to the graphics processor, which adds the rows of each cell to draw and writes one instance per cell. If the graphics device is lost, it is rebuilt from memory without reading the network again.
+
+\section{Freshness}
+A node answers a zone from its summaries, which include its own writes at once and the writes held by other nodes about a second later. A client may ask for an exact recount, which the node computes from the records of every holder of the zone. The map refreshes the zones in view at most every five seconds, and descends only into the zones whose counts changed.
+
+\section{Calculations}
+\textit{Size of an answer.} A row costs 8 bytes plus 4 bytes per metric. A zone whose 64 children all exist, with 4 metrics, is answered in 1\,620 bytes; a request of 128 such zones in about 205 kilobytes.
+
+\textit{Zones read for a view.} With latitude and longitude, each character divides each axis by 8. A view covering a fraction $w$ by $h$ of the world, read at a depth $D$, needs about $\lceil w \cdot 8^{D} \rceil \times \lceil h \cdot 8^{D} \rceil$ zones, fewer where the map is empty.
+
+\textit{Search.} Each step of the search reads one layer, in one request per collection. The number of steps grows with the depth of the tree, not with the number of records.
+
+\section{Conclusion}
+The client reads sums, never counts. With the sums of a zone's children it draws a map at any zoom, searches around a point with a bounded number of requests, and joins collections of different producers cell by cell. The reader owns none of the data it shows; it only computes where to read it.
+
+\section*{References}
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
+  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
+  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2026.
+\end{enumerate}
+
+\end{document}

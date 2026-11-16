@@ -1,0 +1,45 @@
+% Shared style of the Indexus paper series (2026). Same look as the first papers.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{indexus}
+\RequirePackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
+\RequirePackage{mathptmx}
+\renewcommand{\ttdefault}{lmtt}
+\RequirePackage{needspace}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{titlesec,titling,abstract}
+\RequirePackage{algorithm,algpseudocode}
+\RequirePackage{float,anyfontsize,etoolbox,graphicx,enumitem,amsmath,amssymb}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds,shapes.geometric,decorations.pathreplacing,patterns}
+\RequirePackage[hidelinks]{hyperref}
+\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}[block]{\normalfont\fontsize{12pt}{14pt}\bfseries}{\thesubsection}{1em}{}
+\pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
+\posttitle{\par\end{center}\vskip 0.5em}
+\preauthor{\vspace{0em}\begin{center}\small}
+\postauthor{\vspace{-4em}\end{center}}
+\renewcommand{\abstractname}{}
+\renewcommand{\abstractnamefont}{\normalfont\small\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\small}
+\makeatletter
+\patchcmd{\algorithmic}{\itemsep\z@}{\itemsep\z@\lineskip\z@}{}{}
+\makeatother
+% The grey worked-example box of the first papers.
+\newtcolorbox{example}[1][]{colback=black!5,colframe=black!80,boxrule=0.6pt,arc=2mm,left=2mm,right=2mm,top=1mm,bottom=1mm,fontupper=\small,#1}
+% A rule or guarantee the protocol promises (normative).
+\newtcolorbox{guarantee}[1]{colback=white,colframe=black,boxrule=0.8pt,arc=0mm,title={\small\bfseries #1},coltitle=black,colbacktitle=black!12,fontupper=\small}
+% Status of a part: Implemented, Measured, Draft, Proposal.
+\newcommand{\status}[1]{\hfill{\small\itshape [#1]}}
+% Figure styles, black and grey only, as in the first papers.
+\tikzset{
+  tiny/.style={font=\tiny}, lbl/.style={font=\scriptsize},
+  point/.style={fill=black,draw=black,circle,minimum size=5pt,inner sep=0pt},
+  item/.style={fill=black!67,draw=none,circle,minimum size=0.2cm},
+  zone/.style={draw=black,thin}, zonefill/.style={draw=black,thin,fill=black!10},
+  delegated/.style={draw=black,thin,fill=black!30},
+  nodebox/.style={draw=black,rounded corners=1pt,minimum width=1.1cm,minimum height=0.55cm,font=\scriptsize},
+  thin/.style={ultra thin}, thick/.style={very thick}, dashed edge/.style={-,dashed},
+  msg/.style={-{Stealth[length=2mm]},line width=0.4pt}, surface/.style={-,fill=black!10}
+}
+\endinput

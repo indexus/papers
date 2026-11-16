@@ -1,0 +1,198 @@
+\documentclass[11pt]{article}
+\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec,titling,abstract}
+\usepackage{amsmath}
+\usepackage{float,graphicx,enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{../figkit/ixfig}
+
+\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection.}{0.5em}{}
+\pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
+\posttitle{\par\end{center}\vskip 0.5em}
+\preauthor{\vspace{0em}\begin{center}\small}
+\postauthor{\vspace{-4em}\end{center}}
+\renewcommand{\abstractname}{}
+\renewcommand{\abstracttextfont}{\normalfont\small}
+
+\begin{document}
+
+\title{Indexus: A Peer-to-Peer Data Indexing System}
+\author{Remi Henriot \\ research@indexus.io}
+\date{}
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Abstract. }We propose an index of data that no single party has to operate. Nodes and data share one binary tree. Records are placed in zones by their coordinates, each zone keeps the exact sum of what lies below it, and each zone is held by the node closest to it in the tree. Any node or reader can compute where a zone is. A zone has one writer at a time, an acknowledged write is never lost or counted twice, and the totals stay exact when zones move from one node to another.
+\vspace{1em}\end{abstract}
+
+\section{Introduction}
+Data becomes useful when it can be found: the houses for sale near an address, the weather at a given hour, the news of the day scrolled back in time. Finding data requires an index. Building one is costly, so in practice one party builds it and the others query it. That party then decides what is found, in which order and on which terms.
+
+We propose an index that is a protocol rather than a service. Any party can run part of it, any reader can compute where a piece of data lives, and the answer does not depend on which node gives it. For maps, feeds and dashboards, the index also answers totals, how many and how much in a region, and those totals are exact.
+
+Our 2024 papers introduced the tree, the encoding of locations and the incremental search~[1,~2]. This paper describes the protocol as it is built today.
+
+\section{Tree}
+Everything in Indexus is a position in one binary tree: the nodes of the network, the collections, the zones and the records.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{orig/tree.png}
+    \caption{Binary tree}
+\end{figure}
+
+We write positions with characters. In our examples a character is 2 bits, written A, B, C or D. In practice a character is 6 bits, from an alphabet of 64 symbols, and a full address is 96 bits, 16 characters.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{orig/encoded.png}
+    \caption{Encoded tree (BASE4)}
+\end{figure}
+
+\section{Space}
+A record has coordinates: a latitude and a longitude, a time, or any measurable value. A \textbf{space} turns coordinates into a position in the tree by halving its dimensions one after the other. Each halving gives one bit: 1 for the upper half, 0 for the lower one. The \textbf{mask} says which dimension each bit cuts. The \textbf{offset} shifts each character by a value taken from the name of the collection, so that two collections of the same space are spread over different nodes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{orig/masks.png}
+    \caption{Two subdivisions of the same space}
+\end{figure}
+
+With latitude and longitude, a mask (latitude, longitude) and an offset BC, the point at latitude $-60$ and longitude $-45$ gets the location BD. Its first two bits are 00, shifted by B, which gives B; its next two bits are 01, shifted by C, which gives D.
+
+\section{Collection}
+A \textbf{record} is one entry: an identifier, a location and a few numbers, such as a count or a price. A \textbf{collection} is a named set of records that use the same space. A \textbf{zone} is a part of a collection: all the records whose location starts with the same characters. The zone C holds every record whose location starts with C, and the zone CB every record starting with CB. A map zoomed out reads large zones; zoomed in, it reads small ones.
+
+Each zone keeps its \textbf{sum}: how many records lie below it and the sum of each of their numbers. The sum of a zone is the sum of its records plus the sums of its children. A deleted record is subtracted.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{orig/collection.png}
+    \caption{Collection, set and items}
+\end{figure}
+
+Our 2024 papers called zones \emph{sets} and records \emph{items}. In this example the whole collection holds 60 records: 15 in zone A, 33 in zone C, 9 in zone D, and 3 others. A reader that knows these sums can draw the collection at any zoom without reading the records.
+
+\section{Network}
+A \textbf{node} is a machine taking part in the protocol. Its address is also a leaf of the tree.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{orig/network.png}
+    \caption{Network of nodes}
+\end{figure}
+
+A zone also has an address: its location followed by the name of its collection. A zone is held by the node whose address is closest to it. Two addresses are close when their paths in the tree separate late. Any node, and any reader, can therefore find the holder of a zone from the list of nodes, without asking anyone.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/owner.tikz}
+    \caption{Zone C of collection BB has the address CB. Node CA is the closest: it holds the zone.}
+\end{figure}
+
+\section{Routing}
+Nodes share what they know of the network: which nodes are active, and which node holds which part of the tree. This knowledge only grows, and two nodes that have received the same news agree.
+
+At regular intervals each node contacts one node in each group of its routing table: the nodes on the other side of the root, those that separate from it one level lower, and so on. News reaches every node after a few rounds.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{orig/routing.png}
+    \caption{Routing table (N=4, k=1)}
+\end{figure}
+
+\section{Writing}
+The steps to write a record are:
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
+  \item The client sends the record to any node, with an identifier for the request.
+  \item If that node does not hold the zone, it forwards the record to the node that does.
+  \item The holder stores the record on its disk, together with a receipt of the request.
+  \item The holder answers. This answer is the \textbf{acknowledgement}.
+\end{enumerate}
+
+An acknowledged record is on disk. If the client gets no answer, it sends the same request again. The holder recognises the identifier and returns the first answer: the record is never added twice.
+
+\section{Delegation}
+As a collection grows, its zones spread over the network. Each new zone goes to the node closest to it. The thick lines lead to the nodes that hold the collection, the dashed lines to the addresses of its zones, and the darker tiles are the zones in use.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{orig/delegation-1.png}
+    \caption{Delegation - representation at t1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{orig/delegation-2.png}
+    \caption{Delegation - representation at t2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{orig/delegation-3.png}
+    \caption{Delegation - representation at t3}
+\end{figure}
+
+When a node is too busy, a new node joins at an address that differs from it by a single bit. The new node takes half of the busy node's part of the tree, and no other node loses anything. When a node is idle, it hands its part to a neighbour and leaves.
+
+\section{Moving a zone}
+When a zone changes holder, the two nodes may for a short time disagree on who holds it. If both accepted writes, the zone would exist in two versions. So the right to write is handed over explicitly:
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
+  \item The old holder copies the zone to the new one, and still accepts writes.
+  \item It stops accepting writes and sends the last ones.
+  \item It records on its disk that the zone now belongs to the new holder.
+  \item The new holder installs the zone and starts accepting writes.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \ixnew[0.6]{figures/handoff.tikz}
+    \caption{A zone moves. For a short time nobody accepts writes for it; never two nodes.}
+\end{figure}
+
+Receipts move with the zone, so a request sent again after the move is still recognised. Each step is written on disk before the next one starts, and is resumed after a restart.
+
+\section{Sums across nodes}
+A zone and its parent may be held by different nodes. The node that holds the zone sends its sum to the node that holds the parent. It sends the sum itself, not a difference. A message received twice, or late, then changes nothing: the parent keeps the latest sum of each child and adds them up.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/summary.tikz}
+    \caption{Zone C, held by CA, sends its sum to zone @, held by BC.}
+\end{figure}
+
+A node does not send a message for every write. It waits about one second and sends the latest sum. On 32 machines under load, the total of a whole collection included a new record after about one second.
+
+\section{Search}
+A map reads the zones of the area it shows, at the size given by its zoom. A feed, or any search around a point, reads zones in order of distance from its origin, layer by layer. The sums of the zones tell the search how many records lie within each distance, so it stops as soon as it has enough records closer than everything not yet read. This is the algorithm of our first paper, now used by the reference client.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{orig/layers.png}
+    \caption{Layers and concentric circles}
+\end{figure}
+
+Collections that use the same space can be read together: a map can show property sales, the weather and a person's own trips, from different producers, without copying any of them.
+
+\section{Calculations}
+\textit{Finding a holder.} With $N$ nodes, finding the holder of a zone takes about $\log_2 N$ steps: about 10 for 1\,000 nodes.
+
+\textit{Spreading news.} Each node contacts about $\log_2 N + 1$ others per round. In tests with 1\,024 nodes, news reached every node within 4 rounds.
+
+\textit{Writing.} A write reaches its holder directly, or after one forward.
+
+\textit{Measured.} From 4 to 16 machines, each node sustained the same rate of writes whatever the size of the network. On 32 machines the network acknowledged 72\,964 writes per second with no write lost and exact totals, and up to 101\,665 at saturation, nearly twice the maximum on 16 machines.
+
+\section{Conclusion}
+We have described an index that no single party has to run. Nodes and data share one tree, so the place of every zone follows from addresses. Every zone keeps an exact sum, and parents follow their children by absolute values. The right to write is handed over explicitly, so that a zone never has two writers and an acknowledged write is never lost. What remains is to keep each zone on three machines, so that the loss of one disk loses nothing, and to let a reader check a total served by a node it does not know.
+
+\section*{References}
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
+  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
+  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System (first version). 2024.
+  \item P. Maymounkov and D. Mazi\`eres. Kademlia: A Peer-to-peer Information System Based on the XOR Metric. 2002.
+\end{enumerate}
+
+\end{document}

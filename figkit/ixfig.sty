@@ -1,0 +1,32 @@
+% Figure kit of the Indexus papers: the author's TikZiT styles, vector, zoomable.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ixfig}
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,backgrounds,arrows,shapes,shapes.geometric,decorations.markings,calc,positioning}
+\pgfdeclarelayer{edgelayer}
+\pgfdeclarelayer{nodelayer}
+\pgfsetlayers{background,edgelayer,nodelayer,main}
+% The author's styles (sample.tikzstyles, style.tikzstyles), unchanged.
+\tikzstyle{none}=[inner sep=0mm]
+\tikzstyle{tiny}=[font={\tiny}]
+\tikzstyle{normal}=[font={\tiny}]
+\tikzstyle{large}=[font={\Huge}]
+\tikzstyle{item}=[fill={rgb,255: red,85; green,85; blue,85}, draw=none, shape=circle, minimum size=0.2cm]
+\tikzstyle{point}=[fill=black, draw=black, shape=circle, minimum size=5pt, inner sep=0pt]
+\tikzstyle{thin}=[-, ultra thin]
+\tikzstyle{thick}=[-, very thick]
+\tikzstyle{dashed edge}=[-, dashed]
+\tikzstyle{surface}=[-, fill={rgb,255: red,230; green,230; blue,230}]
+% Two additions in the same spirit, for new figures only.
+\tikzstyle{arrow}=[-{Stealth[length=1.6mm,width=1.1mm]}, ultra thin]
+\tikzstyle{dark surface}=[-, fill={rgb,255: red,200; green,200; blue,200}]
+% Figures are typeset in Computer Modern, as the author's TikZiT renders were.
+\RequirePackage{lmodern}
+\newcommand{\ixfigfont}{\fontfamily{lmr}\selectfont}
+% \ixfig[width]{file}: the figure scaled to a width, still vector.
+\newcommand{\ixfig}[2][12cm]{{\ixfigfont\resizebox{#1}{!}{\input{#2}}}}
+% \ixnew[scale]{file}: a new figure at a fixed scale (default 0.62 cm per unit).
+% Fonts and line widths do not scale, so every new figure has the same tiny
+% labels and the same thin lines as every other: consistent when zooming.
+\newcommand{\ixnew}[2][0.62]{{\ixfigfont\tikzset{every picture/.append style={scale=#1}}\input{#2}}}
+\endinput

@@ -1,0 +1,105 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tiny] (255) at (-12.5, -6.5) {AB};
+		\node [style=none] (256) at (-13, -4) {};
+		\node [style=tiny] (257) at (-11.5, -5.5) {AC};
+		\node [style=tiny] (258) at (-10.5, -6.5) {AD};
+		\node [style=none] (259) at (-11, -4) {};
+		\node [style=none] (260) at (-12, -2) {};
+		\node [style=tiny] (261) at (-7.5, -5.5) {BC};
+		\node [style=none] (262) at (-7, -4) {};
+		\node [style=none] (263) at (-8, -2) {};
+		\node [style=none] (264) at (-10, -1) {};
+		\node [style=tiny] (265) at (-5.5, -5.5) {CA};
+		\node [style=none] (266) at (-5, -4) {};
+		\node [style=tiny] (267) at (-3.5, -5.5) {CC};
+		\node [style=none] (268) at (-3, -4) {};
+		\node [style=none] (269) at (-4, -2) {};
+		\node [style=tiny] (270) at (-1.5, -5.5) {DA};
+		\node [style=tiny] (271) at (-0.5, -6.5) {DB};
+		\node [style=tiny] (272) at (1.5, -6.5) {DD};
+		\node [style=none] (273) at (-1, -4) {};
+		\node [style=none] (274) at (1, -4) {};
+		\node [style=none] (275) at (0, -2) {};
+		\node [style=none] (276) at (-2, -1) {};
+		\node [style=none] (277) at (-6, 0) {};
+		\node [style=tiny] (278) at (-8.5, -6.5) {BB};
+		\node [style=none] (279) at (-9, -4) {};
+		\node [style=tiny] (280) at (-4.5, -6.5) {CB};
+		\node [style=none] (748) at (7.75, 0.25) {};
+		\node [style=none] (749) at (13.75, 0.25) {};
+		\node [style=none] (750) at (3.75, -2.75) {};
+		\node [style=none] (751) at (9.75, -2.75) {};
+		\node [style=none] (752) at (10.75, -3.75) {};
+		\node [style=none] (753) at (7.75, -3.75) {};
+		\node [style=none] (754) at (5.75, -5.25) {};
+		\node [style=none] (755) at (8.75, -5.25) {};
+		\node [style=none] (756) at (13.75, -3.75) {};
+		\node [style=none] (757) at (10.75, -3.75) {};
+		\node [style=none] (758) at (8.75, -5.25) {};
+		\node [style=none] (759) at (11.75, -5.25) {};
+		\node [style=none] (760) at (8.75, -5.25) {};
+		\node [style=none] (761) at (5.75, -5.25) {};
+		\node [style=none] (762) at (3.75, -6.75) {};
+		\node [style=none] (763) at (6.75, -6.75) {};
+		\node [style=none] (764) at (11.75, -5.25) {};
+		\node [style=none] (765) at (8.75, -5.25) {};
+		\node [style=none] (766) at (6.75, -6.75) {};
+		\node [style=none] (767) at (9.75, -6.75) {};
+		\node [style=none] (768) at (8.75, -1.25) {@};
+		\node [style=none] (769) at (8.25, -4.5) {A};
+		\node [style=none] (770) at (11, -4.5) {B};
+		\node [style=none] (771) at (6.25, -6) {C};
+		\node [style=none] (772) at (9, -6) {D};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thick] (255) to (256.center);
+		\draw [style=thick] (256.center) to (260.center);
+		\draw [style=thin] (257) to (259.center);
+		\draw [style=thin] (258) to (259.center);
+		\draw [style=thin] (259.center) to (260.center);
+		\draw [style=thick] (261) to (262.center);
+		\draw [style=thick] (262.center) to (263.center);
+		\draw [style=thick] (260.center) to (264.center);
+		\draw [style=thick] (263.center) to (264.center);
+		\draw [style=thick] (265) to (266.center);
+		\draw [style=thick] (266.center) to (269.center);
+		\draw [style=thin] (267) to (268.center);
+		\draw [style=thin] (268.center) to (269.center);
+		\draw [style=thin] (270) to (273.center);
+		\draw [style=thin] (271) to (273.center);
+		\draw [style=thin] (272) to (274.center);
+		\draw [style=thin, in=240, out=60] (273.center) to (275.center);
+		\draw [style=thin] (274.center) to (275.center);
+		\draw [style=thick] (269.center) to (276.center);
+		\draw [style=thin] (275.center) to (276.center);
+		\draw [style=thick] (264.center) to (277.center);
+		\draw [style=thick] (276.center) to (277.center);
+		\draw [style=dashed edge] (278) to (279.center);
+		\draw [style=dashed edge] (279.center) to (263.center);
+		\draw [style=dashed edge] (266.center) to (280);
+		\draw [style=surface] (748.center)
+			 to (750.center)
+			 to (751.center)
+			 to (749.center)
+			 to cycle;
+		\draw [style=surface] (753.center)
+			 to (752.center)
+			 to (755.center)
+			 to (754.center)
+			 to cycle;
+		\draw [style=thin] (757.center)
+			 to (756.center)
+			 to (759.center)
+			 to (758.center)
+			 to cycle;
+		\draw [style=surface] (761.center)
+			 to (760.center)
+			 to (763.center)
+			 to (762.center)
+			 to cycle;
+		\draw [style=thin] (766.center) to (765.center);
+		\draw [style=thin] (764.center) to (767.center);
+		\draw [style=thin] (767.center) to (766.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
