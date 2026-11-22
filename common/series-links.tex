@@ -1,0 +1,34 @@
+% One registry for companion PDF paths and stable destination names.
+\csdef{ixpath@manifesto}{00-manifesto/indexus-manifesto.pdf}
+\csdef{ixtitle@manifesto}{The Manifesto}
+\csdef{ixpath@whitepaper}{10-whitepaper/indexus-whitepaper.pdf}
+\csdef{ixtitle@whitepaper}{The Whitepaper}
+\csdef{ixpath@client}{20-client/indexus-client.pdf}
+\csdef{ixtitle@client}{The Client}
+\csdef{ixpath@network}{30-network/indexus-network.pdf}
+\csdef{ixtitle@network}{The Network}
+\csdef{ixpath@economics}{40-economics/indexus-4-economics.pdf}
+\csdef{ixtitle@economics}{Paying for Open Data}
+\csdef{ixpath@properties}{50-properties-and-applications/indexus-properties-and-applications.pdf}
+\csdef{ixtitle@properties}{Properties, Benchmarks, and Directions}
+\csdef{ixpath@history}{60-history-and-authorship/indexus-history-and-authorship.pdf}
+\csdef{ixtitle@history}{Development History and Authorship}
+\csdef{ixpath@search2024}{client-algorithm/indexus-search-algorithm-paper.pdf}
+\csdef{ixtitle@search2024}{A Peer-to-Peer Search Algorithm}
+\csdef{ixpath@network2024}{p2p-protocol/indexus-p2p-protocol-paper.pdf}
+\csdef{ixtitle@network2024}{A Peer-to-Peer Data Indexing System}
+
+\newcommand{\ixpaper}[1]{\href{../\csuse{ixpath@#1}}{\emph{\csuse{ixtitle@#1}}}}
+\newcommand{\ixsection}[3]{\href{../\csuse{ixpath@#1}\#ix:#2}{#3}}
+\newcommand{\ixref}[1]{\hyperlink{reference:#1}{#1}}
+\csdef{ixfulltitle@manifesto}{The Indexus Manifesto: Data as a Commons}
+\csdef{ixfulltitle@whitepaper}{Indexus: A Peer-to-Peer Data Indexing System}
+\csdef{ixfulltitle@client}{Indexus: The Client}
+\csdef{ixfulltitle@network}{Indexus: The Network}
+\csdef{ixfulltitle@economics}{Indexus: Paying for Open Data}
+\csdef{ixfulltitle@properties}{Indexus: Properties, Benchmarks, and Directions}
+\csdef{ixfulltitle@history}{Indexus: Development History, Authorship, and Human--AI Collaboration}
+\csdef{ixfulltitle@search2024}{Indexus: A Peer-to-Peer Search Algorithm}
+\csdef{ixfulltitle@network2024}{Indexus: A Peer-to-Peer Data Indexing System}
+\newcommand{\ixbib}[1]{\href{../\csuse{ixpath@#1}}{\emph{\csuse{ixfulltitle@#1}}}}
+\newcommand{\ixpapertext}[2]{\href{../\csuse{ixpath@#1}}{#2}}

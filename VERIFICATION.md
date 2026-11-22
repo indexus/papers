@@ -21,7 +21,7 @@ python3 build.py --check --legacy
 | Network | 9 | 0 | 0 |
 | Economics | 9 | 0 | 0 |
 | Properties and applications | 13 | 0 | 0 |
-| History and authorship | 5 | 0 | 0 |
+| History and authorship | 6 | 0 | 0 |
 | Historical search article | 10 | 0 | 0 |
 | Historical protocol article | 6 | 0 | 0 |
 
@@ -31,7 +31,7 @@ these are distinct from overflows or compilation errors.
 
 ## Visual and content review
 
-All 57 pages of the current series were rendered at 150 dpi and reviewed,
+All 58 pages of the current series were rendered at 150 dpi and reviewed,
 including the title blocks, tables, captions, equations and section transitions.
 The 16 historical pages were also rendered and reviewed for comparison. Detailed
 figure crops were checked where labels, routes or box boundaries needed revision.
@@ -72,3 +72,30 @@ pass does not constitute a new distributed benchmark or a new proof.
 
 All papers retain CC BY 4.0, `research@indexus.io`, and the goal of an open
 protocol standard with independent implementations and shared conformance tests.
+
+## Companion links and discussion archive
+
+The added links were checked as compiled PDF actions, including both ordinary
+companion-file links and named section destinations. The check distinguishes
+PDF remote destinations from browser `nameddest=` URL fragments. Local citation
+numbers now link to their bibliography entries, whose companion-paper titles
+link to the corresponding PDFs.
+
+`check_links.py` reports 31 local PDF actions, 59 companion PDF actions and
+172 local Markdown targets resolved for this revision. It requires the optional
+`pypdf` package and does not fetch external websites.
+
+The side archive contains 18 annotated episodes and 35 verbatim excerpts from
+nine ChatGPT, Codex, Claude Code, Antigravity and Cursor conversation records.
+All 35 passages were compared against the retrieved source text, including
+record hashes and character ranges: 35 matches, zero unavailable records and
+zero mismatches in the author's verification run. ChatGPT comparison used a
+private saved history capture; no raw account dump is part of the repository.
+The verifier also rejects an empty evidence collection.
+
+Each episode distinguishes the request, the assistant reply, its relevance and
+its evidential limit. A French reading guide explains the workflow. Coverage,
+forwarded text, intermediate failures, timestamp bases and selection limits are
+recorded explicitly. The hashes protect quotation integrity rather than
+independently attesting authorship or date. No new distributed benchmark is
+claimed by publishing these excerpts.

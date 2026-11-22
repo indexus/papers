@@ -35,6 +35,34 @@ compare that starting point with durable authority, granular hand-over,
 versioned monoid summaries and optional replication. The original sources are
 archives, not current implementation specifications.
 
+## How the papers connect
+
+Companion-paper names and bibliography entries in the PDFs are clickable.
+Selected links go to stable named sections, such as authority, granular hand-over,
+summary freshness and benchmark definitions. For offline reading, keep the
+repository's neighboring PDF folders together.
+
+| Question | Start here | Then read |
+| --- | --- | --- |
+| Why a shared index? | [Manifesto](00-manifesto/indexus-manifesto.pdf) | [Whitepaper](10-whitepaper/indexus-whitepaper.pdf) |
+| How do maps and feeds read it? | [Client](20-client/indexus-client.pdf) | [Network summaries](30-network/indexus-network.pdf#nameddest=ix:summaries) |
+| When may a new vnode accept writes? | [Network hand-over](30-network/indexus-network.pdf#nameddest=ix:handoff) | [Properties and measurements](50-properties-and-applications/indexus-properties-and-applications.pdf#nameddest=ix:benchmarks) |
+| What is implemented versus proposed? | [Properties and limits](50-properties-and-applications/indexus-properties-and-applications.pdf#nameddest=ix:limits) | [Economics](40-economics/indexus-4-economics.pdf) |
+| What did the author and AI tools each do? | [History](60-history-and-authorship/indexus-history-and-authorship.pdf) | [Selected discussion archive](ai-transparency/README.md) |
+
+## AI collaboration and source discussions
+
+The [transparency archive](ai-transparency/README.md) contains **18 annotated
+episodes and 35 exact excerpts**, covering ChatGPT, Codex, Claude Code,
+Antigravity and Cursor. It includes requests, corrections, failed checks and
+cross-tool hand-offs. This is a curated sample, not a complete set of logs or
+an independent certification of authorship.
+
+For a simple account in French of how the author worked, read
+[Parcours de travail avec les IA](ai-transparency/PARCOURS.fr.md).
+[Method and limits](ai-transparency/METHOD.md) distinguish original requests,
+forwarded text, assistant claims and checks against other artifacts.
+
 ## What is established
 
 The cluster results, local fault tests, single-node application experiments and
@@ -71,6 +99,10 @@ papers. `--check` verifies that figure generation does not change checked-in
 TikZiT sources. Both modes reject compilation errors, unresolved references and
 overfull boxes larger than 2 pt. `--legacy` also compiles the two historical
 papers into temporary directories, leaving their archived PDFs unchanged.
+
+For a structural check of compiled PDF destinations and local Markdown links,
+install the optional `pypdf` package and run `python3 check_links.py` after the
+build. The check covers actual remote-PDF actions and named sections.
 
 Tectonic downloads its packages on first use, then reuses its cache. Generated
 PDFs are versioned; auxiliary files and logs are ignored. A single paper can be

@@ -1,0 +1,235 @@
+[
+  {
+    "id": 1,
+    "file": "01-ask-for-sources.md",
+    "title": "Ask for sources before accepting a description",
+    "date": "2025-03-18",
+    "platforms": [
+      "ChatGPT"
+    ],
+    "excerpt_ids": [
+      "X001",
+      "X002"
+    ]
+  },
+  {
+    "id": 2,
+    "file": "02-author-scale-objectives.md",
+    "title": "The author sets the scaling objective",
+    "date": "2026-09-16",
+    "platforms": [
+      "Cursor"
+    ],
+    "excerpt_ids": [
+      "X003",
+      "X004"
+    ]
+  },
+  {
+    "id": 3,
+    "file": "03-demand-understandable-examples.md",
+    "title": "A demand for a concrete explanation",
+    "date": "2026-09-17",
+    "platforms": [
+      "Cursor"
+    ],
+    "excerpt_ids": [
+      "X005",
+      "X006"
+    ]
+  },
+  {
+    "id": 4,
+    "file": "04-return-to-xor.md",
+    "title": "Return to a simple placement rule",
+    "date": "2026-09-20",
+    "platforms": [
+      "Cursor"
+    ],
+    "excerpt_ids": [
+      "X007",
+      "X008"
+    ]
+  },
+  {
+    "id": 5,
+    "file": "05-challenge-the-tests.md",
+    "title": "Tests must challenge the implementation",
+    "date": "2026-09-21",
+    "platforms": [
+      "Cursor"
+    ],
+    "excerpt_ids": [
+      "X009",
+      "X010"
+    ]
+  },
+  {
+    "id": 6,
+    "file": "06-chatgpt-context-limit.md",
+    "title": "ChatGPT states the limit of its retrieved context",
+    "date": "2026-11-14",
+    "platforms": [
+      "ChatGPT"
+    ],
+    "excerpt_ids": [
+      "X011",
+      "X012"
+    ]
+  },
+  {
+    "id": 7,
+    "file": "07-claude-code-audit.md",
+    "title": "Claude Code records what it actually checked",
+    "date": "2026-11-16",
+    "platforms": [
+      "Claude Code"
+    ],
+    "excerpt_ids": [
+      "X013",
+      "X014"
+    ]
+  },
+  {
+    "id": 8,
+    "file": "08-checker-missing-results.md",
+    "title": "A checker could report success with missing results",
+    "date": "2026-11-20",
+    "platforms": [
+      "Codex"
+    ],
+    "excerpt_ids": [
+      "X015"
+    ]
+  },
+  {
+    "id": 9,
+    "file": "09-stop-on-reproduction-failure.md",
+    "title": "Stop publication when a reproduction check fails",
+    "date": "2026-11-20",
+    "platforms": [
+      "Codex"
+    ],
+    "excerpt_ids": [
+      "X016"
+    ]
+  },
+  {
+    "id": 10,
+    "file": "10-granular-relief.md",
+    "title": "The new vnode should help before the regional copy ends",
+    "date": "2026-11-21",
+    "platforms": [
+      "Codex"
+    ],
+    "excerpt_ids": [
+      "X017",
+      "X018"
+    ]
+  },
+  {
+    "id": 11,
+    "file": "11-revise-freeze-estimate.md",
+    "title": "Revise an optimistic freeze estimate",
+    "date": "2026-11-21",
+    "platforms": [
+      "Codex"
+    ],
+    "excerpt_ids": [
+      "X019"
+    ]
+  },
+  {
+    "id": 12,
+    "file": "12-cross-tool-integration.md",
+    "title": "Combine complementary work instead of benchmarking the wrong branch",
+    "date": "2026-11-21",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X020",
+      "X021",
+      "X022"
+    ]
+  },
+  {
+    "id": 13,
+    "file": "13-why-batch-and-bound.md",
+    "title": "Record why a performance fix was introduced",
+    "date": "2026-11-21",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X023",
+      "X024",
+      "X025"
+    ]
+  },
+  {
+    "id": 14,
+    "file": "14-remote-tests-in-stages.md",
+    "title": "Qualify remote elasticity incrementally",
+    "date": "2026-11-21",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X026",
+      "X027"
+    ]
+  },
+  {
+    "id": 15,
+    "file": "15-fair-vector-comparison.md",
+    "title": "Compare vector search at a fixed scan budget",
+    "date": "2026-11-22",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X028",
+      "X029"
+    ]
+  },
+  {
+    "id": 16,
+    "file": "16-style-and-standard.md",
+    "title": "Preserve the original style and aim at independent implementations",
+    "date": "2026-11-22",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X030",
+      "X031"
+    ]
+  },
+  {
+    "id": 17,
+    "file": "17-author-reviews-the-render.md",
+    "title": "The author catches visual defects and redirects the work",
+    "date": "2026-11-22",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X032",
+      "X033"
+    ]
+  },
+  {
+    "id": 18,
+    "file": "18-attribution-is-not-a-vote.md",
+    "title": "Attribution is checked against dated artifacts",
+    "date": "2026-11-21",
+    "platforms": [
+      "Antigravity"
+    ],
+    "excerpt_ids": [
+      "X034",
+      "X035"
+    ]
+  }
+]

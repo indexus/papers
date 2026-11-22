@@ -10,7 +10,7 @@
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Our whitepaper describes an index in which nodes and data share one binary tree~[2]. This paper describes how a node builds it. A node holds the zones closest to its address, accepts writes for them only when it holds the right to, stores them so that the sum of any zone is read without reading its records, hands zones over without ever letting two nodes write the same one, and sends the sums of its zones to the nodes that hold their parents. We state what is implemented, what was measured, and what is not built yet.
+\noindent \textbf{Abstract. }Our whitepaper describes an index in which nodes and data share one binary tree~[\ixref{2}]. This paper describes how a node builds it. A node holds the zones closest to its address, accepts writes for them only when it holds the right to, stores them so that the sum of any zone is read without reading its records, hands zones over without ever letting two nodes write the same one, and sends the sums of its zones to the nodes that hold their parents. We state what is implemented, what was measured, and what is not built yet.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
@@ -20,6 +20,13 @@ We separate what a node \emph{believes} from what it is \emph{allowed} to do. Be
 
 \paragraph{Three questions to keep separate.}
 For a given zone, ask: where should a request go, which disk may commit it, and how recent is the summary a reader sees? The active-node tree answers the first question, installed authority answers the second, and versioned child summaries answer the third. Learning a new node address does not silently change the other two answers.
+
+\paragraph{Companion papers.}
+\ixpaper{whitepaper} gives the end-to-end picture; \ixpaper{client} explains
+what the reader observes. \ixsection{properties}{benchmarks}{The properties paper}
+defines the benchmark scopes and compares experimental results.
+\ixsection{history}{verification}{The history paper} separates model proposals,
+executable checks and independent reproduction.
 
 \section{Nodes}
 A node's address is a leaf of the tree: 96 bits, written as a name of 16 characters. A node receives its name when it joins: chosen at random, close to a busy node it is meant to relieve, or so that it takes half of one of the largest parts of the tree.
@@ -31,7 +38,7 @@ A node's address is a leaf of the tree: 96 bits, written as a name of 16 charact
 \end{figure}
 
 \section{Holding a zone}
-A zone's address is its location's bits followed by its collection's name. A zone is held by the active node whose address is closest to it, closeness being the exclusive or of the two addresses read as a number~[3]. The first bit where two addresses differ decides, so the closest node is the one whose path in the tree leaves the zone's path last.
+A zone's address is its location's bits followed by its collection's name. A zone is held by the active node whose address is closest to it, closeness being the exclusive or of the two addresses read as a number~[\ixref{3}]. The first bit where two addresses differ decides, so the closest node is the one whose path in the tree leaves the zone's path last.
 
 \begin{figure}[H]
     \centering
@@ -41,7 +48,7 @@ A zone's address is its location's bits followed by its collection's name. A zon
 
 To find the holder quickly, a node arranges the active addresses in a compressed tree, where each branching tests one bit. Finding the holder of an address follows one branch per test, about $\log_2 N$ tests for $N$ nodes. Two nodes that know the same active nodes always find the same holder.
 
-\section{The right to write}
+\section{The right to write}\hypertarget{ix:authority}{}
 The holder computed above is a prediction: a node may not know yet that another one has joined. If writes followed that prediction, two nodes could write the same zone while they disagree. The right to accept writes is therefore a separate record.
 
 \Needspace{8\baselineskip}
@@ -51,7 +58,7 @@ A node accepts a write only if, inside the transaction that commits it, it finds
 
 For example, an entry node may still route zone C to the old holder. Once C has been emitted, that holder cannot commit another write under its old right. It forwards or refuses the request. After installation, the new holder can commit it. A stale route costs a retry or a hop; it is not permission for two disks to write the same zone.
 
-\section{Writing}
+\section{Writing}\hypertarget{ix:writes}{}
 The steps to write a record are:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
   \item The client sends the record and an identifier of its request to any node.
@@ -71,13 +78,13 @@ A node keeps all its records in one store. A record's key is its collection, its
     \caption{A zone is one range of keys, and its children are consecutive ranges. Each page stores the sums of its records.}
 \end{figure}
 
-The store follows the design of log-structured merge trees~[4]. Writes go to a log on disk and to memory. When memory is full it is written out as a sorted, immutable file, cut in pages of up to 256 records. Each page stores the sums of its records, and each group of 64 pages stores the sums of its pages. Files are merged in the background.
+The store follows the design of log-structured merge trees~[\ixref{4}]. Writes go to a log on disk and to memory. When memory is full it is written out as a sorted, immutable file, cut in pages of up to 256 records. Each page stores the sums of its records, and each group of 64 pages stores the sums of its pages. Files are merged in the background.
 
-The sum of a zone is read, not maintained. The store adds the sums of the groups and pages that lie entirely inside the zone's range, and reads only the records of the pages at its two edges. The cost depends on the number of pages, not on the number of records. When a record is replaced or deleted, the store writes a second row that carries the previous values negated, so that the sum of all rows always equals the sum of the current records; a merge removes such a row only together with the one it cancels. Sums are kept with a compensation term~[5], so that a negated row cancels its record exactly.
+The sum of a zone is read, not maintained. The store adds the sums of the groups and pages that lie entirely inside the zone's range, and reads only the records of the pages at its two edges. The cost depends on the number of pages, not on the number of records. When a record is replaced or deleted, the store writes a second row that carries the previous values negated, so that the sum of all rows always equals the sum of the current records; a merge removes such a row only together with the one it cancels. Sums are kept with a compensation term~[\ixref{5}], so that a negated row cancels its record exactly.
 
 Rights, receipts and sequence numbers are rows of the same store and are committed in the same operations as the records. A crash never separates a record from its receipt or from the right under which it was written.
 
-\section{Moving a zone}
+\section{Moving a zone}\hypertarget{ix:handoff}{}
 A node that receives too many writes is relieved by a new node whose address differs from its own in a single bit, deeper than any bit it shares with another node. The new node then holds exactly half of the busy node's part of the tree, and no other node loses anything.
 
 \begin{figure}[H]
@@ -126,7 +133,7 @@ Facts travel with every message between nodes: a node sends a short digest of wh
 
 Knowledge decides where to send. It never gives a right: learning that a zone was handed over tells a node where to forward writes, not that it may accept them.
 
-\section{Sums across nodes}
+\section{Sums across nodes}\hypertarget{ix:summaries}{}
 A node answers the sums of its zones from its store. When a zone is held by this node and its parent by another, the node is responsible for a \emph{boundary}: it sends the sum of the zone to the holder of the parent.
 
 \begin{figure}[H]
@@ -139,7 +146,7 @@ The node sends the summary itself, with a version and the digest of the collecti
 
 After a write, the boundary waits one second and sends the sum as it is then, which covers every write of that second. Sums for the same node are grouped, up to 512 per message. A failed message is retried after 3 seconds, then after longer delays up to 30 seconds. Every five seconds while it is active, and up to every two minutes when it is idle, a node also asks a few other nodes, in rotation, for the sums of its remote children, which repairs any lost message.
 
-\section{Replication}
+\section{Replication}\hypertarget{ix:replication}{}
 In the default non-replicated mode, each zone has one copy, on the disk of its holder. A restart loses nothing. A disk lost for good loses the zones it held, and no other node may take them over, since that would give them a second writer.
 
 Optional convergent replication addresses this limit without votes, leases, or synchronized clocks. It changes the write contract under partition: ordinary authority hand-over has one normal writer, while reachable fallback replicas may accept concurrent versions. Repair resolves those versions deterministically; it does not provide one global order or guarantee that every conflicting value survives. Each zone's replica set $R(z)$ is the three active nodes closest to $z$ by XOR on distinct machines, computed purely from the active set. In healthy mode, only the owner accepts writes and streams batches to the other two replicas' shadow stores, acknowledging after at least one replica confirms durability (or falling back to local durability after a timeout). Under a partition, reachable replicas accept fallback writes stamped with per-store dots $(\text{incarnation}, \text{counter})$ and a per-zone Lamport clock, serving reads marked degraded; on repair, versions merge deterministically by higher Lamport clock, then tombstone priority, then payload digest, which is associative, commutative, and idempotent. The initial account stopped at the transport-free core and deterministic fault simulator. As of 22 November 2026 (core \texttt{d689156}), optional shadow sessions, fallback logging, repair and degraded reads are wired into the node. Local lifecycle and fault-under-load tests exercise partition, crash and restart with durable stores and an in-process transport. The AWS measurements below retain their original non-replicated scope; they do not establish the performance or durability of replicated operation on remote machines.
@@ -147,7 +154,7 @@ Optional convergent replication addresses this limit without votes, leases, or s
 \section{Admission}
 When a network requires it, a node presents a certificate signed by the network's issuer, and a client presents a token with the scopes it may use, read or write. These credentials decide who may take part. They give no right over any zone. Two limits remain: a node presents its certificate as is, without signing its messages, so its secrecy relies on the encrypted connection; and the issuer does not yet check who asks it for a certificate or a token.
 
-\section{Measurements}\label{sec:measurements}
+\section{Measurements}\hypertarget{ix:measurements}{}\label{sec:measurements}
 We ran the reference node on dedicated NVMe machines (\texttt{i4i.xlarge}, one node per machine, \texttt{fsync} enabled, HTTP/3 over QUIC) and verified after each run that sampled and full audit read-backs lost zero acknowledged writes, created zero double-owned zones, and kept every collection total exact. At fixed per-node rates, the network sustained 47\,991 writes/s on 16 nodes, 95\,987/s on 32 nodes, and 190\,700/s on 64 nodes (99.3\% per-node efficiency against 16, with one pass on 64 red due to an unbalanced join layout). In open-loop ramps doubling every 60\,s, sustained throughput scaled from 14\,492/s on 4 nodes to 57\,679/s on 16 nodes (99.5\% linearity) at flat 262\,ms intended 99th-percentile latency. With on-demand node provisioning, the network absorbed 2$\times$ load doublings every 60\,s (4 to 8 nodes at 22\,386/s) and instant 2$\times$ steps (4 to 11 nodes at 16\,004/s, 65.5\,ms intended p99) with zero shed writes and zero lost keys. Under load, the total of a collection included a new write after at most 524\,ms at the median on 16 nodes.
 
 \section{Calculations}
@@ -173,12 +180,12 @@ A node holds what is closest to it, writes only what it holds the right to, read
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
-  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System (first version). 2024.
-  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2026.
-  \item P. Maymounkov and D. Mazi\`eres. Kademlia: A Peer-to-peer Information System Based on the XOR Metric. 2002.
-  \item P. O'Neil, E. Cheng, D. Gawlick and E. O'Neil. The Log-Structured Merge-Tree (LSM-Tree). 1996.
-  \item A. Neumaier. Rundungsfehleranalyse einiger Verfahren zur Summation endlicher Summen. 1974.
-  \item D. Ongaro and J. Ousterhout. In Search of an Understandable Consensus Algorithm. 2014.
+  \item \hypertarget{reference:1}{}R. Henriot. \ixbib{network2024} (first version). 2024.
+  \item \hypertarget{reference:2}{}R. Henriot. \ixbib{whitepaper}. 2026.
+  \item \hypertarget{reference:3}{}P. Maymounkov and D. Mazi\`eres. Kademlia: A Peer-to-peer Information System Based on the XOR Metric. 2002.
+  \item \hypertarget{reference:4}{}P. O'Neil, E. Cheng, D. Gawlick and E. O'Neil. The Log-Structured Merge-Tree (LSM-Tree). 1996.
+  \item \hypertarget{reference:5}{}A. Neumaier. Rundungsfehleranalyse einiger Verfahren zur Summation endlicher Summen. 1974.
+  \item \hypertarget{reference:6}{}D. Ongaro and J. Ousterhout. In Search of an Understandable Consensus Algorithm. 2014.
 \end{enumerate}
 
 \end{document}

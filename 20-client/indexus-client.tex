@@ -10,7 +10,7 @@
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Our whitepaper describes an index in which every zone keeps the exact sum of the records below it~[2]. This paper describes how a reader uses it. A client turns coordinates into locations, reads the sums of a zone's children in one request, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of our first paper~[1], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
+\noindent \textbf{Abstract. }Our whitepaper describes an index in which every zone keeps the exact sum of the records below it~[\ixref{2}]. This paper describes how a reader uses it. A client turns coordinates into locations, reads the sums of a zone's children in one request, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of our first paper~[\ixref{1}], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
@@ -21,7 +21,13 @@ We follow the whitepaper's words: a \emph{record} is one entry, a \emph{collecti
 \paragraph{A map as a worked example.}
 Suppose the view contains one city cell with 60 houses. At the next zoom the client asks for that cell's children, not for all 60 houses. It receives counts such as 15, 3, 33 and 9, draws the four cells, and reads deeper only where the screen needs detail. Nearby search has a different goal: eventually return individual houses in distance order. Both operations start from the same summaries.
 
-\section{Spaces}
+\paragraph{Companion papers.}
+\ixsection{whitepaper}{space}{The whitepaper's space example} introduces the geometry.
+\ixsection{network}{authority}{The network paper's authority section} explains why
+an outdated route cannot grant a second writer. The broader summary operations
+and their arithmetic limits are in \ixsection{properties}{algebra}{the properties paper}.
+
+\section{Spaces}\hypertarget{ix:spaces}{}
 A space is a list of dimensions. A dimension has a range and a distance: a sphere has latitude, longitude and the distance along the surface; a line has a start, an end and the difference of two values. When the mask allocates bits equally and $n$ divides 6, a space of $n$ coordinates cuts each of them $6/n$ times per character: a map of latitude and longitude cuts each three times per character.
 
 \begin{figure}[H]
@@ -62,7 +68,7 @@ A location is a path in the tree, and each of its prefixes is a zone. The parent
 
 The address is a delivery label, not a physical coordinate. The same geographic cell has different labels in collections with different offsets. Removing an offset recovers the common cell used later for composition.
 
-\section{Reading a zone}
+\section{Reading a zone}\hypertarget{ix:zone-read}{}
 A read of a zone answers the sums of its children: one row for the records placed exactly at the zone, and one row per non-empty child, with its count and the total of each number. It has at most 65 rows. When every record of a child lies in a single place, the row is given under that place, down to four characters below the zone; the client can then refine a map without reading further.
 
 \begin{figure}[H]
@@ -78,7 +84,7 @@ For example, the answer ``C: 33'' means that 33 records lie below C; it is not a
 \section{Finding nodes}
 A client starts from a few known nodes and has two ways to reach a zone. In the first, it chooses one node for its session, the known node closest to a random key, and lets that node forward each read to the holder of the zone. In the second, it computes the holder itself from the nodes it knows, sends each read there, and follows the answer when a node replies that the zone lives elsewhere. Reads for many zones are grouped, up to 128 per request.
 
-\section{Drawing a map}
+\section{Drawing a map}\hypertarget{ix:map}{}
 A map shows a region at a zoom. The zoom sets the size of the cells to draw. The client keeps the zones it has already read and descends them: a cell outside the view is skipped, a cell fine enough is drawn, a cell too coarse is replaced by its children if they are known. The children it lacks are exactly the zones it reads next.
 
 \begin{figure}[H]
@@ -90,7 +96,7 @@ A map shows a region at a zoom. The zoom sets the size of the cells to draw. The
 A parent remains drawn until all the records of its child have arrived, so the map never shows a hole while it refines. The view is read with a margin of a quarter of its size on each side, so that a small move does not trigger a read. Three neighbouring levels are prepared together, which lets the map blend from one zoom to the next.
 
 \section{Searching around a point}
-A feed, or a list of the nearest places, starts at an origin and goes outwards. The client uses the incremental algorithm of our first paper~[1], unchanged in its principle: it reads zones in layers, from coarse to fine, sorts what it holds by distance from the origin, and uses the counts of the zones to predict how many records lie within each distance. It stops reading as soon as enough records are certain to be closer than everything not yet read, and returns them; the next call continues from there.
+A feed, or a list of the nearest places, starts at an origin and goes outwards. The client uses the incremental algorithm of our first paper~[\ixref{1}], unchanged in its principle: it reads zones in layers, from coarse to fine, sorts what it holds by distance from the origin, and uses the counts of the zones to predict how many records lie within each distance. It stops reading as soon as enough records are certain to be closer than everything not yet read, and returns them; the next call continues from there.
 
 \begin{figure}[H]
     \centering
@@ -100,7 +106,7 @@ A feed, or a list of the nearest places, starts at an origin and goes outwards. 
 
 Two things changed since 2024. The zones selected in one step are read in a single request. And a zone of a thousand records or fewer is read as records rather than as sums, so that the last layer holds real records, each with its exact distance.
 
-\section{Combining collections}
+\section{Combining collections}\hypertarget{ix:composition}{}
 Two collections of the same space cut the world into the same cells, but write them with different characters, because their offsets differ. Removing the offset gives back the cell's integer coordinates and its resolution. The client joins two collections on these coordinates. This is a spatial join: it aligns cells, rather than assuming that the same record identifiers occur in both collections. A join on object identifiers, such as the proposed geo-semantic descent in the properties paper, is a separate operation.
 
 \begin{figure}[H]
@@ -114,7 +120,7 @@ For each cell of the first collection, the client finds the same cell, or the ne
 \section{Keeping data}
 The client keeps the answers it has read in memory, within a budget of 256~MB by default. When the budget is exceeded, the least recently used answers leave, except those the current view needs. The same answers are copied once to the graphics processor, which adds the rows of each cell to draw and writes one instance per cell. If the graphics device is lost, it is rebuilt from memory without reading the network again.
 
-\section{Freshness}
+\section{Freshness}\hypertarget{ix:freshness}{}
 A node answers a zone from its summaries, which include its own writes at once and the writes held by other nodes about a second later. A client may ask for an exact recount, which the node computes from the records of every holder of the zone. The map refreshes the zones in view at most every five seconds, and descends only into the zones whose counts changed.
 
 \Needspace{8\baselineskip}
@@ -132,8 +138,8 @@ The client reads sums, never counts. With the sums of a zone's children it draws
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
-  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
-  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2026.
+  \item \hypertarget{reference:1}{}R. Henriot. \ixbib{search2024}. 2024.
+  \item \hypertarget{reference:2}{}R. Henriot. \ixbib{whitepaper}. 2026.
 \end{enumerate}
 
 \end{document}

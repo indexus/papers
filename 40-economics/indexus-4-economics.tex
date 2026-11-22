@@ -31,6 +31,13 @@ Our answer is small. A read is paid when it is asked, a few satoshis at a time, 
 \paragraph{Reading the examples.}
 The figures distinguish the path of data from the path of money. A record goes from its producer to a host; a summary goes from the host to a reader; a payment, when required, goes back toward those who served and produced it. None of the example amounts is a measured price or a rule already enforced by the node.
 
+\paragraph{Companion papers.}
+\ixpaper{whitepaper} introduces zones and hosts.
+\ixsection{client}{zone-read}{The client paper} specifies the current read shape;
+\ixsection{network}{summaries}{the network paper} explains summary propagation.
+\ixsection{properties}{limits}{The properties paper's limits} distinguish current
+arithmetic and availability guarantees from the verifiable totals proposed here.
+
 \section{Who does what}
 
 Four roles appear around the map.
@@ -57,7 +64,7 @@ In a shared index the work is divided. The host pays for machines whether or not
 
 The application is the party that benefits from each read, so we propose that the application pays, per read, the host and the producer of what it reads. But not for everything.
 
-\section{What stays free}
+\section{What stays free}\hypertarget{ix:free}{}
 
 A shared index that charges for every read would keep out the student, the journalist and the new application that has no income yet. So we draw a line.
 
@@ -80,7 +87,7 @@ Serving a total is cheap: the host already keeps it. What is paid is what costs 
 
 The free number of reads is counted by each host, since there is no central account. A reader could pretend to be many readers and obtain more free reads. We accept this: the free reads are the cheap ones, and a host may at any time ask payment from a reader it does not want to serve for free.
 
-\section{Paying for one read}
+\section{Paying for one read}\hypertarget{ix:payment}{}
 
 The map now wants the weather of the last hour for one zone, say zone \texttt{AB}. This read is paid. We need a way to pay a very small amount, at once, to a host the map has never met.
 
@@ -203,7 +210,7 @@ So Indexus is meant to be a standard, not a product. The rules are written in a 
 
 We write a reference node and release it as free software under a licence that keeps it open. Client libraries are under a permissive licence, so that any application can include them. The specification and the name are meant to be held by a neutral foundation, and changes to go through public proposals.
 
-\section{Status}
+\section{Status}\hypertarget{ix:status}{}
 
 Everything in this paper is a proposal. None of it is implemented: today reads are free and no payment exists in the reference node.
 
@@ -215,14 +222,14 @@ The design aims at never holding money on behalf of someone else. This and every
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
-\item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2026.
-\item R. Henriot. Indexus: The Client. 2026.
-\item R. Henriot. Indexus: The Network. 2026.
-\item R. Henriot. Original series outline: Encoding, Spaces and Incremental Search; A Peer-to-Peer Protocol for Zones; Exact and Verifiable Aggregates. Historical working titles, 2026.
-\item Lightning Network specifications (BOLTs).
-\item L402: HTTP 402 Payment Required with Lightning invoices.
-\item IPFS: the InterPlanetary File System.
-\item Yjs: shared data types for collaborative editing.
+\item \hypertarget{reference:1}{}R. Henriot. \ixbib{whitepaper}. 2026.
+\item \hypertarget{reference:2}{}R. Henriot. \ixbib{client}. 2026.
+\item \hypertarget{reference:3}{}R. Henriot. \ixbib{network}. 2026.
+\item \hypertarget{reference:4}{}R. Henriot. Original series outline: Encoding, Spaces and Incremental Search; A Peer-to-Peer Protocol for Zones; Exact and Verifiable Aggregates. Historical working titles, 2026.
+\item \hypertarget{reference:5}{}Lightning Network specifications (BOLTs).
+\item \hypertarget{reference:6}{}L402: HTTP 402 Payment Required with Lightning invoices.
+\item \hypertarget{reference:7}{}IPFS: the InterPlanetary File System.
+\item \hypertarget{reference:8}{}Yjs: shared data types for collaborative editing.
 \end{enumerate}
 
 \end{document}

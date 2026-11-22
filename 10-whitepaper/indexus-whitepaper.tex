@@ -18,12 +18,19 @@ Data becomes useful when it can be found: the houses for sale near an address, t
 
 We propose an index that is a protocol rather than a service. Any party can run part of it, any reader can compute where a piece of data lives, and the answer does not depend on which node gives it. For maps, feeds and dashboards, the index also answers totals, how many and how much in a region, and those totals are exact.
 
-Our 2024 papers introduced the tree, the encoding of locations and the incremental search~[1,~2]. This paper describes the protocol as it is built today.
+Our 2024 papers introduced the tree, the encoding of locations and the incremental search~[\ixref{1},~\ixref{2}]. This paper describes the protocol as it is built today.
 
 \paragraph{One example throughout.}
 Imagine a collection of houses. Each house has a position and a price. A city view asks for counts and price totals in large cells; a street view asks for smaller cells. The records stay in one tree. The reader changes the depth at which it reads, rather than building another index for each zoom.
 
-\section{Tree}
+\paragraph{Companion papers.}
+\ixpaper{client} explains map refinement and nearby search.
+\ixpaper{network} details \ixsection{network}{handoff}{installed authority and granular transfer}.
+Definitions and workloads behind the figures are in
+\ixsection{properties}{benchmarks}{the properties paper's benchmark section};
+\ixpaper{economics} describes proposals, and \ixpaper{history} records provenance.
+
+\section{Tree}\hypertarget{ix:tree}{}
 Everything in Indexus is a position in one binary tree: the nodes of the network, the collections, the zones and the records.
 
 \begin{figure}[H]
@@ -42,7 +49,7 @@ We write positions with characters. In our examples a character is 2 bits, writt
 
 A prefix names a whole branch: C includes CA, CB, CC and CD in our four-letter drawings. A deeper prefix names a smaller part of the same tree. The drawings use four letters so that all branches fit on a page; the implementation uses 64.
 
-\section{Space}
+\section{Space}\hypertarget{ix:space}{}
 A record has coordinates: a latitude and a longitude, a time, or any measurable value. A \textbf{space} turns coordinates into a position in the tree by halving its dimensions one after the other. Each halving gives one bit: 1 for the upper half, 0 for the lower one. The \textbf{mask} says which dimension each bit cuts. The \textbf{offset} shifts each character by a value taken from the name of the collection, so that two collections of the same space are spread over different nodes.
 
 \begin{figure}[H]
@@ -53,7 +60,7 @@ A record has coordinates: a latitude and a longitude, a time, or any measurable 
 
 With latitude and longitude, a mask (latitude, longitude) and an offset BC, the point at latitude $-60$ and longitude $-45$ gets the location BD. Its first two bits are 00, shifted by B, which gives B; its next two bits are 01, shifted by C, which gives D.
 
-\section{Collection}
+\section{Collection}\hypertarget{ix:collection}{}
 A \textbf{record} is one entry: an identifier, a location and a few numbers, such as a count or a price. A \textbf{collection} is a named set of records that use the same space. A \textbf{zone} is a part of a collection: all the records whose location starts with the same characters. The zone C holds every record whose location starts with C, and the zone CB every record starting with CB. A map zoomed out reads large zones; zoomed in, it reads small ones.
 
 Each zone keeps its \textbf{summary}: how many records lie below it and one aggregate per number. By default each number is summed; a collection may also declare \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or linear-recurrence pairs \texttt{affine} $(a, b)$ combined in cell order. Because every column is an associative monoid, any cut of the tree read in cell order equals the root. A collection's geometry, coordinate bounds, bit mask, and column operations form a short canonical description whose SHA-256 hash is the collection's 16-character name, so every node and reader checks the rules against the name without a central authority.
@@ -131,7 +138,7 @@ As a collection grows, its zones spread over the network. Each new zone goes to 
 
 When a node is too busy, a new node joins at an address that differs from it by a single bit. The new node takes half of the busy node's part of the tree, and no other node loses anything. Zones move in small lots (at most 64 zones, targeting 1\,MiB, deepest and busiest first), so the new node begins accepting writes for installed lots while the old node keeps serving the rest. When a node is idle, it hands its part to a neighbour and leaves.
 
-\section{Moving a zone}
+\section{Moving a zone}\hypertarget{ix:handoff}{}
 When a zone changes holder, the two nodes may for a short time disagree on who holds it. If both accepted writes, the zone would exist in two versions. So the right to write is handed over explicitly:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
   \item The old holder copies the zone to the new one, and still accepts writes.
@@ -158,7 +165,7 @@ A smaller lot limits the work in one hand-over; it does not alone bound its dura
 
 Receipts move with the zone, so a request sent again after the move is still recognised. Each step is written on disk before the next one starts, and is resumed after a restart.
 
-\section{Sums across nodes}
+\section{Sums across nodes}\hypertarget{ix:summaries}{}
 A zone and its parent may be held by different nodes. The node that holds the zone sends its sum to the node that holds the parent. It sends the sum itself, not a difference. A message received twice, or late, then changes nothing: the parent keeps the latest sum of each child and adds them up. If C reports 33 and later 34, the parent replaces 33 with 34. It does not add 34 to 33. Repeating the message therefore cannot count the same child twice.
 
 \begin{figure}[H]
@@ -169,7 +176,7 @@ A zone and its parent may be held by different nodes. The node that holds the zo
 
 A node does not send a message for every write. It waits about one second and sends the latest sum. On 32 machines under load, the total of a whole collection included a new record after about one second.
 
-\section{Search}
+\section{Search}\hypertarget{ix:search}{}
 A map reads the zones of the area it shows, at the size given by its zoom. A feed, or any search around a point, reads zones in order of distance from its origin, layer by layer. The sums of the zones tell the search how many records lie within each distance, so it stops as soon as it has enough records closer than everything not yet read. This is the algorithm of our first paper, now used by the reference client.
 
 \begin{figure}[H]
@@ -194,9 +201,9 @@ We have described an index that no single party has to run. Nodes and data share
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
-  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
-  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System (first version). 2024.
-  \item P. Maymounkov and D. Mazi\`eres. Kademlia: A Peer-to-peer Information System Based on the XOR Metric. 2002.
+  \item \hypertarget{reference:1}{}R. Henriot. \ixbib{search2024}. 2024.
+  \item \hypertarget{reference:2}{}R. Henriot. \ixbib{network2024} (first version). 2024.
+  \item \hypertarget{reference:3}{}P. Maymounkov and D. Mazi\`eres. Kademlia: A Peer-to-peer Information System Based on the XOR Metric. 2002.
 \end{enumerate}
 
 \end{document}

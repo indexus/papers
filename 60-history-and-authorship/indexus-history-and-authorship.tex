@@ -18,7 +18,15 @@ Technical papers normally present a finished artifact as if it arrived in a stra
 
 We believe the right response is complete honesty about provenance. A reader should be able to tell what originated with the human author, what was refined or implemented with AI assistance, how every claim was verified independently of the model that wrote it, and what the full iterative trajectory looked like.
 
-\section{Chronology of Development}
+\paragraph{Companion papers and source discussions.}
+The two original papers remain the starting point:
+\ixpaper{search2024} and \ixpaper{network2024} (2024).
+\ixpaper{whitepaper}, \ixpaper{client} and \ixpaper{network} describe the current
+system; \ixpaper{properties} separates the measured applications from hypotheses.
+The accompanying \href{https://github.com/indexus/papers/tree/main/ai-transparency}{AI transparency archive}
+provides selected dated exchanges and their evidential limits.
+
+\section{Chronology of Development}\hypertarget{ix:chronology}{}
 The project evolved through four phases. The early outline called its two 2026 phases ``H1'' and ``H2''; those labels are retained as provenance, not as dates of experimental execution. The cluster campaigns cited here ran in November 2026.
 
 \begin{figure}[H]
@@ -28,7 +36,7 @@ The project evolved through four phases. The early outline called its two 2026 p
 \end{figure}
 
 \begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
-  \item \textbf{2024 --- Foundations (solo work).} The author conceived the core model and published two initial papers on \texttt{indexus.io} under CC~BY~4.0: \emph{Indexus: A Peer-to-Peer Search Algorithm}~[1] and \emph{Indexus: A Peer-to-Peer Data Indexing System}~[2], accompanied by hand-drawn TikZiT diagrams and initial prototypes. All fundamental primitives were set here: one binary tree shared by nodes, collections and records; BASE4/BASE64 prefix encoding with bit masks and collection offsets; incremental nearby search by concentric layers; and delegation of zones to XOR-closest nodes.
+  \item \textbf{2024 --- Foundations (solo work).} The author conceived the core model and published two initial papers on \texttt{indexus.io} under CC~BY~4.0: \emph{Indexus: A Peer-to-Peer Search Algorithm}~[\ixref{1}] and \emph{Indexus: A Peer-to-Peer Data Indexing System}~[\ixref{2}], accompanied by hand-drawn TikZiT diagrams and initial prototypes. All fundamental primitives were set here: one binary tree shared by nodes, collections and records; BASE4/BASE64 prefix encoding with bit masks and collection offsets; incremental nearby search by concentric layers; and delegation of zones to XOR-closest nodes.
   \item \textbf{2025 --- Core engine and visual client.} The protocol was implemented as a Go node (\texttt{core}), a JavaScript SDK (\texttt{sdk-js}), a management dashboard (\texttt{dashboard}), and live browser applications (\texttt{experiences}: \emph{Explore} for weather, real estate and 3D LiDAR scenes, \emph{Drawing}, and \emph{Chronicle}). The end-to-end columnar path from disk pages to a browser WebGPU arena was designed and built during this phase.
   \item \textbf{2026 --- Protocol phase (original outline: H1).} The codebase was reorganized into seven strict unidirectional layers: tree, authority, store, wire, walk, gpu and bords. The store evolved into the \texttt{zonelog} engine. Write authority was formalized as a certificate-chain CRDT with commit-time fencing; hand-overs were redesigned into granular lots (\texttt{FLIP-UNIT}); and open-loop benchmarks were run on dedicated AWS NVMe clusters up to 64 vnodes (190\,700 writes/s). A separate 4-to-16-vnode ramp measured 99.5\% linearity; other campaigns exercised live elastic scaling.
   \item \textbf{2026 --- Algebra phase (original outline: H2).} Zone summaries were generalized from sums to arbitrary associative monoids (\texttt{sum}, \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, \texttt{affine}) under self-certifying \texttt{IXC1} descriptors. Two measured applications were established on the same primitive: continual learning with exact unlearning (archived on Zenodo with independent reproduction) and dynamic SPFresh/LIRE vector search beating static IVF at 1\,M vectors.
@@ -58,7 +66,7 @@ XOR delegation; replication left open & Durable grants, per-lot authority transf
 \paragraph{Repository update, 22 November 2026.}
 The initial 2026 papers described the convergent replica core as simulated and its storage integration as future work. In snapshot \texttt{d689156}, that integration includes shadow sessions, fallback logs, degraded reads and automatic peer-to-peer repair. Commits \texttt{03deabe} and \texttt{93e7624} add node-level lifecycle and partition/crash/restart tests. The history therefore retains both milestones: the original simulation result and the later local runtime validation. These commits do not turn earlier unreplicated AWS measurements into a replicated-fault benchmark.
 
-\section{Author Contributions: Vision, Ideas, and Aspirations}
+\section{Author Contributions: Vision, Ideas, and Aspirations}\hypertarget{ix:author}{}
 The conceptual identity and direction of Indexus come from Remi Henriot:
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item \textbf{The core unification}: placing nodes, collections, zones and records in a single binary prefix tree so that ownership, splitting and parent aggregation follow from one address geometry without a central coordinator.
@@ -68,7 +76,7 @@ The conceptual identity and direction of Indexus come from Remi Henriot:
   \item \textbf{Research steering and taste}: deciding which directions to pursue (continual learning, vector search without rebuilds, world-model regularization), insisting on simplicity, demanding honest comparisons against strong baselines, and rejecting mechanisms that broke the single-tree invariant.
 \end{itemize}
 
-\section{Where AI Models Assisted}
+\section{Where AI Models Assisted}\hypertarget{ix:ai}{}
 During 2025 and 2026, frontier coding and reasoning models (including Claude, Codex and Gemini) were used extensively as technical collaborators under the author's direction. Their contributions fell into six concrete areas:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
   \item \textbf{Formalization of invariants and proofs}: articulating exact safety conditions (\texttt{AUTH-1..4}, \texttt{MAP-1..2}, \texttt{HOT-1}, \texttt{ACT-1}, \texttt{GOS-1}), checking CRDT join laws, and deriving the exact IEEE~754 dyadic quantization bound $D_a$.
@@ -79,7 +87,7 @@ During 2025 and 2026, frontier coding and reasoning models (including Claude, Co
   \item \textbf{Drafting and typesetting}: editing the 2026 paper series into uniform prose and generating vector TikZiT-compatible diagrams from the author's 2024 visual vocabulary.
 \end{enumerate}
 
-\section{Iterative Method and Verification}
+\section{Iterative Method and Verification}\hypertarget{ix:verification}{}
 AI models accelerate exploration, but they can also hallucinate proofs, overstate novelty, or hide regressions. To prevent that, the project operated as a closed verification loop:
 
 \begin{figure}[H]
@@ -91,17 +99,21 @@ AI models accelerate exploration, but they can also hallucinate proofs, overstat
 The verification record distinguishes a model-generated proposal from executable checks and, where available, independent reproduction:
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item \textbf{Protocol invariants}: enforced by unit tests, Go's race detector, fuzzers and durability audits checking zero lost keys and zero double-owned writes.
-  \item \textbf{Cross-model independent reproduction}: the continual-learning experiment was independently reproduced by a separate agent on a separate machine and then verified on Linux x86\_64 with 39/39 checks and 0 discrepancy across 3\,507 compared values (Zenodo DOI \nolinkurl{10.5281/zenodo.24404468}).
+  \item \textbf{Cross-model independent reproduction}: the continual-learning experiment was independently reproduced by a separate agent on a separate machine and then verified on Linux x86\_64 with 39/39 checks and 0 discrepancy across 3\,507 compared values (Zenodo DOI \href{https://doi.org/10.5281/zenodo.24404468}{\nolinkurl{10.5281/zenodo.24404468}}).
   \item \textbf{Explicit epistemic tags}: ideas that have not yet been measured on real data remain marked as \emph{hypothesis} rather than presented as results.
 \end{itemize}
 Ultimate scientific and engineering responsibility for every design choice, experiment and published claim rests solely with the author.
 
 Commit history records changes and their dates; by itself it does not establish who first proposed an idea or which model authored a passage. The author contribution account above is therefore kept distinct from measured system results. Conversation transcripts, original drafts and reproduction artifacts provide the finer provenance promised in the next section.
 
-\section{Open Transcripts and the Development Collection}
-Two concrete transparency commitments accompany the public release of the 2026 series:
+\section{Open Transcripts and the Development Collection}\hypertarget{ix:transcripts}{}
+An initial \href{https://github.com/indexus/papers/tree/main/ai-transparency}{curated discussion archive} now accompanies this series: 18 episodes and 35 verbatim excerpts from ChatGPT, Codex, Claude Code, Antigravity and Cursor, selected from nine conversation records. Each excerpt has its source message identifier, recorded date, role and integrity hash. The surrounding editorial note explains the decision, its relevance to a paper and the limit of what the quote establishes.
+
+This is a sample, not a complete transcript collection. The located Claude Code session supports a read-only audit contribution; it does not document every Claude-assisted research step. Forwarded briefs are labelled as such. Intermediate failures are retained, including a reproduction checker that accepted missing outputs and a freeze estimate corrected after further code reading. User-facing messages are selected; credentials, unrelated personal material, tool payloads and private reasoning are excluded.
+
+Two broader transparency commitments remain:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
-  \item \textbf{Published AI conversation transcripts.} Alongside the papers and code repositories, we will publish the conversations conducted with AI models during the design, debugging, benchmarking and writing of Indexus (redacted only for credentials or private operational details). Readers will be able to inspect not only the final results, but the false starts, corrections and iterative refinements that produced them.
+  \item \textbf{Broader transcript publication.} The current selection is a first step. We intend to extend it with further source conversations from the design, debugging, benchmarking and writing of Indexus, with explicit omissions for credentials and private operational details. Readers should be able to follow false starts, corrections and iterative refinements, rather than only a retrospective success story.
   \item \textbf{An Indexus collection of its own development.} As a dogfooding exercise, we will index the project's full trajectory---commits, experiments, benchmarks, paper revisions and conversation turns---into a public Indexus collection ordered by time and subsystem. Any reader will be able to zoom in from the two-year overview down to an individual session or benchmark run, demonstrating both the iterative nature of human--AI work and the protocol itself.
 \end{enumerate}
 
@@ -112,10 +124,10 @@ Our long-term goal is to publish Indexus as an \textbf{open protocol standard}--
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
-  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
-  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2024 / 2026.
-  \item R. Henriot. Indexus: Properties, Benchmarks, and Directions. 2026.
-  \item R. Henriot. Continual Learning and Exact Unlearning by Zone Sums (reproduction archive). Zenodo, DOI 10.5281/zenodo.24404468, November 2026.
+  \item \hypertarget{reference:1}{}R. Henriot. \ixbib{search2024}. 2024.
+  \item \hypertarget{reference:2}{}R. Henriot. \ixbib{network2024} (2024) / \ixbib{whitepaper} (2026).
+  \item \hypertarget{reference:3}{}R. Henriot. \ixbib{properties}. 2026.
+  \item \hypertarget{reference:4}{}R. Henriot. Continual Learning and Exact Unlearning by Zone Sums (reproduction archive). Zenodo, DOI 10.5281/zenodo.24404468, November 2026.
 \end{enumerate}
 
 \end{document}
