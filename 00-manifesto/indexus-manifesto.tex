@@ -1,17 +1,18 @@
 \documentclass[11pt]{article}
 \usepackage{../common/indexus}
+\usepackage{../figkit/ixfig}
 
 \begin{document}
 
 \title{The Indexus Manifesto: Data as a Commons}
 \author{Remi Henriot \\
-        research@indexus.io}
-\date{}
+        research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
 
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Data is found through indexes, and indexing tends to concentrate: the more offers and readers an index gathers, the more useful it becomes relative to any other, and the party that operates it decides what is found, in which order and on which terms. We describe a different arrangement: producers publish signed records once into an open, peer-to-peer index that no single party operates; independent hosts store and serve it; applications compose what they need without holding the data; and the people who host and produce are paid for what is read. This manifesto states the principles behind the Indexus protocol and the four papers that specify it.
+\noindent \textbf{Abstract. }Data is found through indexes, and indexing tends to concentrate: the more offers and readers an index gathers, the more useful it becomes relative to any other, and the party that operates it decides what is found, in which order and on which terms. We describe a different arrangement: producers publish signed records once into an open, peer-to-peer index that no single party operates; independent hosts store and serve it; applications compose what they need without holding the data; and the people who host and produce are paid for what is read. This manifesto states the principles behind the Indexus protocol and the papers that specify it.
 \vspace{1em}\end{abstract}
 
 \section*{The problem}
@@ -27,12 +28,13 @@ Indexus addresses this point: it makes the index itself shared. The index is a p
 
 \begin{figure}[H]
     \centering
-    \resizebox{\textwidth}{!}{\input{figures/silos.tikz}}
+    \ixnew{figures/silos.tikz}
     \caption{Left, each application indexes the same sources on its own, or depends on one operator's index. Right, the sources are indexed once in a shared index that no single party operates, and every application is a view on it.}
     \label{fig:silos}
 \end{figure}
 
 \section*{Principles}
+These principles describe the network we aim to build. The final status section separates the running index from the proposed verification, payment and governance mechanisms.
 
 \subsection*{1. Data is produced once and read everywhere}
 A record should be published once, by the party who produced it, into an index that anyone can read and anyone can host. Reading it should not require copying it. A new application should start from the data that already exists, not from an empty database and a scraping job.
@@ -68,15 +70,17 @@ There is no central server to switch off. Nodes run on ordinary machines, on any
 Every claim about scale, latency or exactness is published with the scripts that reproduce it. What is implemented, what is measured and what is only proposed are labelled as such in every paper.
 
 \section*{Where we are}
-The index exists and runs. Writes are acknowledged only once durable, totals are exact at every zone, and on sixteen machines the network has sustained more than fifty thousand acknowledged writes per second with exact totals and no loss, scaling linearly with the number of machines in the range we have measured. Replication across three copies is being built and modelled before it is trusted. Verifiable sums, payments and the formal specification are proposals.
+The index exists and runs. Writes are acknowledged only once durable, totals are exact at every zone, and on sixteen machines the network has sustained more than fifty thousand acknowledged writes per second with exact totals and no loss, scaling linearly with the number of machines in the range we have measured. Replication across three copies was first modelled separately. By 22 November 2026, optional shadow storage, fallback writes and repair were integrated and passed local node fault tests; the cluster results above do not measure that mode. Verifiable sums, payments and the formal specification are proposals.
 
-The four papers that accompany this manifesto describe the system from the bottom up:
+The original four-part outline described the system from the bottom up:
 \begin{enumerate}[leftmargin=1.5em]
   \item \textit{Encoding, Spaces and Incremental Search}: one tree for addresses, collections and records, and how a feed or a map reads it.
   \item \textit{A Peer-to-Peer Protocol for Zones}: who holds which zone, how zones move between nodes, and what an acknowledgement guarantees.
   \item \textit{Exact and Verifiable Aggregates}: how every zone keeps an exact sum, how fast parents follow, and how a reader checks a total.
   \item \textit{Paying for Open Data}: how hosts and producers are paid, and how the protocol becomes a standard with many implementations.
 \end{enumerate}
+
+The current series keeps this outline as its historical starting point. It separates the whitepaper, client and network, followed by economics, properties and applications, and development history. The original four titles above describe the plan, rather than the titles of published companion papers.
 
 \section*{An invitation}
 We are looking for producers who want their data read without giving it away, for hosts who want to run part of a common infrastructure, for developers who want to build applications on data they do not have to collect, and for people who want to write a second implementation and prove that the specification stands on its own. The goal is not one more database. It is to make the next application cheaper to build than the last one, because the data it needs is already there, shared, exact and paid for fairly.

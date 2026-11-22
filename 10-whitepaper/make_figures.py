@@ -1,7 +1,17 @@
+"""Reproducible TikZiT figures; run from any working directory."""
+from pathlib import Path
 import sys
-sys.path.insert(0, "/home/claude/papers2/figkit")
-from ixfig import Fig, tree16, plane, table, box, arrow, _pos
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent / "figkit"))
+from ixfig import Fig, tree16, plane, table, box, arrow
 
+def lines(*parts):
+    return r"\shortstack[c]{" + r"\\".join(parts) + "}"
+
+def save(name, f):
+    target = HERE / "figures" / (name + ".tikz")
+    target.parent.mkdir(exist_ok=True)
+    target.write_text(f.code())
 NET = ["AB", "AC", "AD", "BC", "CA", "CC", "DA", "DB", "DD"]
 out = {}
 
@@ -13,8 +23,8 @@ f = Fig()
 plane(f, x0=0, y0=4.2, div=1, shaded=[(0, 0)], labels={(0, 0): "@"})
 plane(f, x0=0, y0=0, div=2, shaded=[(0, 1), (0, 0), (1, 0)],
       labels={(0, 1): "A", (1, 1): "B", (0, 0): "C", (1, 0): "D"})
-table(f, 11.2, 6.6, [("A", "15"), ("B", "3"), ("C", "33"), ("D", "9")], title="Zone @  =  60")
-table(f, 11.2, 2.6, [("at C", "4"), ("CB", "9"), ("CC", "10"), ("CD", "10")], title="Zone C  =  33")
+table(f, 11.2, 6.6, [("A", "15"), ("B", "3"), ("C", "33"), ("D", "9")], title="Zone @  =  60", w2=.9, rh=.7)
+table(f, 11.2, 2.6, [("at C", "4"), ("CB", "9"), ("CC", "10"), ("CD", "10")], title="Zone C  =  33", w2=.9, rh=.7)
 out["sums"] = f
 
 # Hot split: donor CA, newcomer CB = CA with one bit flipped (guard respected).
@@ -48,7 +58,7 @@ for i, n in enumerate(names):
 for k in range(9):
     x = 2.2 + k * 1.778
     f.path([(x, -1.2), (x + 1.6, -1.2), (x + 1.6, -0.7), (x, -0.7)], "surface", close=True)
-f.node(-0.2, -0.95, "pages", "tiny")
+f.node(0.5, -0.95, "pages", "tiny")
 f.node(9.1, 1.25, "one zone = one contiguous range of keys; its children follow each other", "tiny")
 f.node(10.2, -1.75, "each page stores the sums of its rows: a zone sum adds page sums, not records", "tiny")
 out["keys"] = f
@@ -71,6 +81,26 @@ f = tree16(show=NET + ["BB", "CB"], labels=NET + ["BB", "CB"], thick=["CA", "BC"
            node_text={"": "@ = 60", "10": "C = 33"})
 out["summary"] = f
 
+
+# A join becomes useful one installed lot at a time. Each cell is a lot,
+# not a fixed duration or a fixed amount of client traffic.
+f = Fig()
+for base,moved,title in [(0,0,"before join"),(7.7,1,"first lot installed"),(15.4,3,"later lots installed")]:
+    f.node(base+2.7,3.4,title,"tiny")
+    f.node(base,2.4,"lot","tiny");f.node(base+3.4,2.4,"accepting writes","tiny")
+    for i,zone in enumerate("ABCD"):
+        y=1.4-i*1.5
+        box(f,base,y,zone,w=1.1,h=.7)
+        box(f,base+3.4,y,"new vnode" if i<moved else "old vnode",w=3.2,h=.7)
+        arrow(f,(base+.55,y),(base+1.8,y))
+    f.node(base+2.7,-4.1,f"{4-moved} lots on old; {moved} on new","tiny")
+out["progressive"] = f
 for name, fig in out.items():
-    open(f"figures/{name}.tikz", "w").write(fig.code())
-print(sorted(out))
+    save(name, fig)
+    if name in {"owner", "keys", "split", "handoff", "summary", "progressive"}:
+        target = HERE.parent / "30-network" / "figures" / (name + ".tikz")
+        target.parent.mkdir(exist_ok=True)
+        target.write_text(fig.code())
+# The client uses exactly the same sums example.
+(HERE.parent / "20-client" / "figures" / "sums.tikz").write_text(out["sums"].code())
+print("whitepaper, client sums and network figures regenerated")

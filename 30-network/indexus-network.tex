@@ -1,26 +1,12 @@
 \documentclass[11pt]{article}
-\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
-\usepackage{mathptmx}
-\usepackage[T1]{fontenc}
-\usepackage{titlesec,titling,abstract}
-\usepackage{amsmath}
-\usepackage{float,graphicx,enumitem}
-\usepackage[hidelinks]{hyperref}
+\usepackage{../common/indexus}
 \usepackage{../figkit/ixfig}
-
-\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection.}{0.5em}{}
-\pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
-\posttitle{\par\end{center}\vskip 0.5em}
-\preauthor{\vspace{0em}\begin{center}\small}
-\postauthor{\vspace{-4em}\end{center}}
-\renewcommand{\abstractname}{}
-\renewcommand{\abstracttextfont}{\normalfont\small}
 
 \begin{document}
 
 \title{Indexus: The Network}
-\author{Remi Henriot \\ research@indexus.io}
-\date{}
+\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
 \maketitle
 
 \begin{abstract}
@@ -32,12 +18,15 @@ A node is a program running on one machine with one disk. It has five tasks: hol
 
 We separate what a node \emph{believes} from what it is \emph{allowed} to do. Beliefs, which nodes are active and where data lives, may be late; they only decide where to send a request. Rights, which node may accept writes for a zone, are never inferred from beliefs; they are handed over explicitly and checked on disk.
 
+\paragraph{Three questions to keep separate.}
+For a given zone, ask: where should a request go, which disk may commit it, and how recent is the summary a reader sees? The active-node tree answers the first question, installed authority answers the second, and versioned child summaries answer the third. Learning a new node address does not silently change the other two answers.
+
 \section{Nodes}
 A node's address is a leaf of the tree: 96 bits, written as a name of 16 characters. A node receives its name when it joins: chosen at random, close to a busy node it is meant to relieve, or so that it takes half of one of the largest parts of the tree.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=10cm]{orig/network.png}
+    \ixfig[10cm]{../figkit/orig/p2p-network.tikz}
     \caption{Network of nodes}
 \end{figure}
 
@@ -55,9 +44,12 @@ To find the holder quickly, a node arranges the active addresses in a compressed
 \section{The right to write}
 The holder computed above is a prediction: a node may not know yet that another one has joined. If writes followed that prediction, two nodes could write the same zone while they disagree. The right to accept writes is therefore a separate record.
 
+\Needspace{8\baselineskip}
 All rights descend from a first one, covering the whole tree, held by the first node. When a node gives part of its region to another, it writes a certificate that consumes its own right and divides the region into new rights that cover it exactly. A right can be consumed once. For every address there is therefore exactly one current right, and it names one node on one disk.
 
 A node accepts a write only if, inside the transaction that commits it, it finds that the current right for the zone names this node and this disk, that this right is installed on its disk, and that no hand-over of the zone is in progress. A node that only heard of a certificate has not installed it. A late belief can make a write take a longer path, or be refused and retried; it cannot make two nodes accept it.
+
+For example, an entry node may still route zone C to the old holder. Once C has been emitted, that holder cannot commit another write under its old right. It forwards or refuses the request. After installation, the new holder can commit it. A stale route costs a retry or a hop; it is not permission for two disks to write the same zone.
 
 \section{Writing}
 The steps to write a record are:
@@ -75,7 +67,7 @@ A node keeps all its records in one store. A record's key is its collection, its
 
 \begin{figure}[H]
     \centering
-    \ixnew[0.6]{figures/keys.tikz}
+    \ixnew{figures/keys.tikz}
     \caption{A zone is one range of keys, and its children are consecutive ranges. Each page stores the sums of its records.}
 \end{figure}
 
@@ -94,6 +86,7 @@ A node that receives too many writes is relieved by a new node whose address dif
     \caption{Node CA is busy. Node CB, one bit away, takes the half of CA's part on its side.}
 \end{figure}
 
+\Needspace{15\baselineskip}
 The zones of that half move from the old node to the new one. The old node first copies them while it still accepts writes, and sends the writes that arrive meanwhile. Then each zone is handed over in four steps, each written to disk before the next one starts:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
   \item \emph{Freeze.} The old node stops accepting writes for the zone and records its final state.
@@ -104,11 +97,21 @@ The zones of that half move from the old node to the new one. The old node first
 
 \begin{figure}[H]
     \centering
-    \ixnew[0.6]{figures/handoff.tikz}
+    \ixnew{figures/handoff.tikz}
     \caption{A zone moves. Between freeze and install nobody accepts writes for it; never two nodes.}
 \end{figure}
 
-Zones move children first, then parents, up to 64 at a time, so that the other zones of the node keep accepting writes. A step interrupted by a restart is resumed, never undone. When a node has been idle for a while, it hands its whole part to a neighbour whose part contains it, by the same steps, and leaves.
+Zones move children first, then parents, in small lots of at most 64 zones targeting 1\,MiB, ordered deepest and busiest first. Each lot is copied in one read transaction and caught up by sequence number while the old node stays writable; once a lot installs, the new node accepts writes for it at once while the remaining lots keep serving on the old node. A final paged closure drains late-born zones and seals the region. A step interrupted by a restart is resumed, never undone. When a node has been idle for a while, it hands its whole part to a neighbour whose part contains it, by the same steps, and leaves.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/progressive.tikz}
+    \caption{Installed lots become writable immediately. The old vnode continues serving the lots it still owns; the join need not finish before the new vnode helps.}
+\end{figure}
+
+There are three useful times to measure: the first installed lot, the write pause of each lot, and the completion of the whole join. The first determines when relief begins. The second determines what a client of that lot experiences. The third includes all remaining copies and closure. A good first-lot time does not prove that the longest pause is short.
+
+Under sustained creation of zones, the bounded warm-drain may fence the residual region to make closure progress. Paged scans reduce lock holding during that closure, but neither paging nor a 64-zone lot is a proof of a size-independent end-to-end freeze. Such a bound needs measurements of the slowest disk, transfer and residual catch-up path. Lots also differ in bytes and traffic: half of an address range need not carry half of the load.
 
 \section{Knowledge}
 Each node keeps what it knows of the network: the active nodes, their disks, the rights given and the transfers made. These facts only accumulate, and two nodes that hold the same facts draw the same conclusions, whatever the order in which they learned them.
@@ -117,7 +120,7 @@ Facts travel with every message between nodes: a node sends a short digest of wh
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{orig/routing.png}
+    \ixfig[13cm]{../figkit/orig/p2p-routing.tikz}
     \caption{Routing table (N=4, k=1)}
 \end{figure}
 
@@ -132,20 +135,20 @@ A node answers the sums of its zones from its store. When a zone is held by this
     \caption{Zone C, held by CA, sends its sum to zone @, held by BC.}
 \end{figure}
 
-The node sends the sum itself, with a version, and never a difference. The parent keeps the latest version received from each child and replaces it; a message received twice or late changes nothing, and a missing message is not counted as zero. The parent's own sum is then its local records, minus its local copies of the remote children, plus their received sums.
+The node sends the summary itself, with a version and the digest of the collection's description, and never a difference. The parent keeps the latest version received from each child and replaces it, combining children in cell order; a message received twice or late changes nothing, and a missing message is not counted as zero. Because replacement is versioned and children are ordered deterministically, any associative monoid (\texttt{sum}, \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or \texttt{affine} pairs) converges. For all-sum collections, the parent's sum is its local records minus its local copies of remote children plus their received sums; for other schemas, the parent folds its uncovered local records with the remote children's values.
 
 After a write, the boundary waits one second and sends the sum as it is then, which covers every write of that second. Sums for the same node are grouped, up to 512 per message. A failed message is retried after 3 seconds, then after longer delays up to 30 seconds. Every five seconds while it is active, and up to every two minutes when it is idle, a node also asks a few other nodes, in rotation, for the sums of its remote children, which repairs any lost message.
 
 \section{Replication}
-Today each zone has one copy, on the disk of its holder. A restart loses nothing. A disk lost for good loses the zones it held, and no other node may take them over, since that would give them a second writer.
+In the default non-replicated mode, each zone has one copy, on the disk of its holder. A restart loses nothing. A disk lost for good loses the zones it held, and no other node may take them over, since that would give them a second writer.
 
-The design that removes this limit holds each group of zones on three machines. One proposes the writes, and a write is acknowledged once two of the three have stored it. Two majorities of three always share a machine, so the remaining machines hold every acknowledged write, and they choose a new proposer as in Raft~[6]. Rights then belong to the group rather than to one disk. The rules have been checked on a model under randomly injected faults, and the log that counts the majority has been written and tested on its own. Neither is yet used by the running node, and the choice of a new proposer is not written.
+Optional convergent replication addresses this limit without votes, leases, or synchronized clocks. It changes the write contract under partition: ordinary authority hand-over has one normal writer, while reachable fallback replicas may accept concurrent versions. Repair resolves those versions deterministically; it does not provide one global order or guarantee that every conflicting value survives. Each zone's replica set $R(z)$ is the three active nodes closest to $z$ by XOR on distinct machines, computed purely from the active set. In healthy mode, only the owner accepts writes and streams batches to the other two replicas' shadow stores, acknowledging after at least one replica confirms durability (or falling back to local durability after a timeout). Under a partition, reachable replicas accept fallback writes stamped with per-store dots $(\text{incarnation}, \text{counter})$ and a per-zone Lamport clock, serving reads marked degraded; on repair, versions merge deterministically by higher Lamport clock, then tombstone priority, then payload digest, which is associative, commutative, and idempotent. The initial account stopped at the transport-free core and deterministic fault simulator. As of 22 November 2026 (core \texttt{d689156}), optional shadow sessions, fallback logging, repair and degraded reads are wired into the node. Local lifecycle and fault-under-load tests exercise partition, crash and restart with durable stores and an in-process transport. The AWS measurements below retain their original non-replicated scope; they do not establish the performance or durability of replicated operation on remote machines.
 
 \section{Admission}
 When a network requires it, a node presents a certificate signed by the network's issuer, and a client presents a token with the scopes it may use, read or write. These credentials decide who may take part. They give no right over any zone. Two limits remain: a node presents its certificate as is, without signing its messages, so its secrecy relies on the encrypted connection; and the issuer does not yet check who asks it for a certificate or a token.
 
-\section{Measurements}
-We ran the reference node on rented machines and raised the rate of writes step by step, checking after each step that every acknowledged write could be read back and that every total was exact. From 4 to 16 machines, each node sustained the same rate whatever the size of the network. On 16 machines with local disks, the network acknowledged 52\,440 writes per second. On 32 machines it acknowledged 72\,964 writes per second with no write lost and exact totals, and up to 101\,665 at saturation, 1.94 times the maximum on 16 machines. At that rate the busiest node used most of its processor. Under load, the total of a whole collection included a new write after about one second at the median and four seconds at the 99th percentile.
+\section{Measurements}\label{sec:measurements}
+We ran the reference node on dedicated NVMe machines (\texttt{i4i.xlarge}, one node per machine, \texttt{fsync} enabled, HTTP/3 over QUIC) and verified after each run that sampled and full audit read-backs lost zero acknowledged writes, created zero double-owned zones, and kept every collection total exact. At fixed per-node rates, the network sustained 47\,991 writes/s on 16 nodes, 95\,987/s on 32 nodes, and 190\,700/s on 64 nodes (99.3\% per-node efficiency against 16, with one pass on 64 red due to an unbalanced join layout). In open-loop ramps doubling every 60\,s, sustained throughput scaled from 14\,492/s on 4 nodes to 57\,679/s on 16 nodes (99.5\% linearity) at flat 262\,ms intended 99th-percentile latency. With on-demand node provisioning, the network absorbed 2$\times$ load doublings every 60\,s (4 to 8 nodes at 22\,386/s) and instant 2$\times$ steps (4 to 11 nodes at 16\,004/s, 65.5\,ms intended p99) with zero shed writes and zero lost keys. Under load, the total of a collection included a new write after at most 524\,ms at the median on 16 nodes.
 
 \section{Calculations}
 \textit{Group commit.} With groups of $B$ writes and a disk that takes $f$ to make a group durable, each acknowledged write pays $f / B$ of a disk operation. With $B = 256$, one disk operation serves 256 acknowledgements.
@@ -158,11 +161,15 @@ We ran the reference node on rented machines and raised the rate of writes step 
 
 \textit{Durability.} If a disk is lost with probability $p$ before it is replaced, a write held on one disk is lost with probability $p$; held on two of three disks, with probability $p^2$. For $p = 0.01$: one in a hundred, against one in ten thousand.
 
-\section{Status}
-Implemented and tested: the tree of addresses, holding zones, the rights and their check on disk, writing with receipts, the store and its sums, the hand-over of zones, the relief of busy nodes and the departure of idle ones, knowledge and gossip, and sums across nodes. Measured: the figures of Section~12. Not built: three copies of each zone. Known issue under correction: a write that arrives while its zone's sum is being sent may wait for the next repair round to reach the parent.
+These probability figures are an independence illustration, not a measured durability guarantee. They assume independent disk failures and that the write really reached two durable copies. Acknowledgements allowed to fall back to one local disk do not receive the same protection, and shared-machine or shared-provider failures can correlate losses.
 
+\Needspace{11\baselineskip}
+\section{Status}
+Implemented and tested: the tree of addresses, holding zones, the rights and their check on disk, writing with receipts, the store with compensated sums and typed monoid columns up to 4\,096 metrics, self-certifying collection descriptions, granular lot hand-offs with paged closure, the relief of busy nodes and the departure of idle ones, linear-cost knowledge with bucketed gossip, and summaries across nodes. Measured: the figures of Section~\ref{sec:measurements}. Optional convergent replication has local node test coverage as dated above; replicated AWS fault campaigns and differential knowledge payloads remain open.
+
+\Needspace{9\baselineskip}
 \section{Conclusion}
-A node holds what is closest to it, writes only what it holds the right to, reads sums from its own storage, and passes zones and sums to other nodes by explicit, durable steps. Beliefs may lag behind the network; rights never do. This is what lets nodes run by different parties share one index without a coordinator, while every acknowledged write is kept once and every total stays exact.
+A node holds what is closest to it, writes only what it holds the right to, reads sums from its own storage, and passes zones and sums to other nodes by explicit, durable steps. Beliefs may lag behind the network; rights never do. This is what lets nodes run by different parties share one index without a coordinator, while normal writes are kept once through restart and transfer, and child contributions are replaced without double-counting. Permanent disk loss, degraded fallback and summary freshness have the separate limits stated above.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]

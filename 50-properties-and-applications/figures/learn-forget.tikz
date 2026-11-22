@@ -1,0 +1,47 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-2.5, 1.25) {};
+		\node [style=none] (2) at (2.5, 1.25) {};
+		\node [style=none] (3) at (2.5, 2.75) {};
+		\node [style=none] (4) at (-2.5, 2.75) {};
+		\node [style=tiny] (5) at (0, 2) {\shortstack[c]{insert record\\fixed features x, label y}};
+		\node [style=none] (6) at (-2.5, -2.75) {};
+		\node [style=none] (7) at (2.5, -2.75) {};
+		\node [style=none] (8) at (2.5, -1.25) {};
+		\node [style=none] (9) at (-2.5, -1.25) {};
+		\node [style=tiny] (10) at (0, -2) {\shortstack[c]{delete record\\same features and label}};
+		\node [style=none] (11) at (6, -1.1) {};
+		\node [style=none] (12) at (12, -1.1) {};
+		\node [style=none] (13) at (12, 1.1) {};
+		\node [style=none] (14) at (6, 1.1) {};
+		\node [style=tiny] (15) at (9, 0) {\shortstack[c]{zone sufficient statistics\\count and additive\\feature totals}};
+		\node [style=none] (16) at (15.5, -1.1) {};
+		\node [style=none] (17) at (21.5, -1.1) {};
+		\node [style=none] (18) at (21.5, 1.1) {};
+		\node [style=none] (19) at (15.5, 1.1) {};
+		\node [style=tiny] (20) at (18.5, 0) {\shortstack[c]{read the region's totals\\solve the linear model\\on demand}};
+		\node [style=none] (21) at (2.5, 2) {};
+		\node [style=none] (22) at (4.7, 2) {};
+		\node [style=none] (23) at (4.7, 0.6) {};
+		\node [style=none] (24) at (6, 0.6) {};
+		\node [style=none] (25) at (2.5, -2) {};
+		\node [style=none] (26) at (4.7, -2) {};
+		\node [style=none] (27) at (4.7, -0.6) {};
+		\node [style=none] (28) at (6, -0.6) {};
+		\node [style=tiny] (29) at (4.3, 3) {\shortstack[c]{add\\contribution}};
+		\node [style=tiny] (30) at (4.3, -3) {\shortstack[c]{subtract\\contribution}};
+		\node [style=none] (31) at (12, 0) {};
+		\node [style=none] (32) at (15.5, 0) {};
+		\node [style=tiny] (33) at (13.75, 0.25) {read totals};
+		\node [style=tiny] (34) at (9, -4.4) {the encoder stays fixed; only the additive statistics change};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=thin] (16.center) to (17.center) to (18.center) to (19.center) to cycle;
+		\draw [style=arrow] (21.center) to (22.center) to (23.center) to (24.center);
+		\draw [style=arrow] (25.center) to (26.center) to (27.center) to (28.center);
+		\draw [style=arrow] (31.center) to (32.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

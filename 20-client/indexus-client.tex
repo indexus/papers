@@ -1,27 +1,12 @@
 \documentclass[11pt]{article}
-\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
-\usepackage{mathptmx}
-\usepackage[T1]{fontenc}
-\usepackage{titlesec,titling,abstract}
-\usepackage{amsmath}
-\usepackage{float,graphicx,enumitem}
-\usepackage{algorithm,algpseudocode}
-\usepackage[hidelinks]{hyperref}
+\usepackage{../common/indexus}
 \usepackage{../figkit/ixfig}
-
-\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection.}{0.5em}{}
-\pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
-\posttitle{\par\end{center}\vskip 0.5em}
-\preauthor{\vspace{0em}\begin{center}\small}
-\postauthor{\vspace{-4em}\end{center}}
-\renewcommand{\abstractname}{}
-\renewcommand{\abstracttextfont}{\normalfont\small}
 
 \begin{document}
 
 \title{Indexus: The Client}
-\author{Remi Henriot \\ research@indexus.io}
-\date{}
+\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
 \maketitle
 
 \begin{abstract}
@@ -33,12 +18,15 @@ A reader of the index wants two things. A map wants totals: how many records, an
 
 We follow the whitepaper's words: a \emph{record} is one entry, a \emph{collection} a named set of records sharing a space, a \emph{zone} the records whose location starts with the same characters, and the \emph{sum} of a zone its count and the totals of its numbers.
 
+\paragraph{A map as a worked example.}
+Suppose the view contains one city cell with 60 houses. At the next zoom the client asks for that cell's children, not for all 60 houses. It receives counts such as 15, 3, 33 and 9, draws the four cells, and reads deeper only where the screen needs detail. Nearby search has a different goal: eventually return individual houses in distance order. Both operations start from the same summaries.
+
 \section{Spaces}
-A space is a list of dimensions. A dimension has a range and a distance: a sphere has latitude, longitude and the distance along the surface; a line has a start, an end and the difference of two values. A space of $n$ coordinates cuts each of them $6/n$ times per character: a map of latitude and longitude cuts each three times per character.
+A space is a list of dimensions. A dimension has a range and a distance: a sphere has latitude, longitude and the distance along the surface; a line has a start, an end and the difference of two values. When the mask allocates bits equally and $n$ divides 6, a space of $n$ coordinates cuts each of them $6/n$ times per character: a map of latitude and longitude cuts each three times per character.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=12cm]{orig/masks.png}
+    \ixfig[12cm]{../figkit/orig/masks.tikz}
     \caption{Two subdivisions of the same space}
 \end{figure}
 
@@ -68,9 +56,11 @@ A location is a path in the tree, and each of its prefixes is a zone. The parent
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=10cm]{orig/encoded.png}
+    \ixfig[10cm]{../figkit/orig/encoded.tikz}
     \caption{Encoded tree (BASE4)}
 \end{figure}
+
+The address is a delivery label, not a physical coordinate. The same geographic cell has different labels in collections with different offsets. Removing an offset recovers the common cell used later for composition.
 
 \section{Reading a zone}
 A read of a zone answers the sums of its children: one row for the records placed exactly at the zone, and one row per non-empty child, with its count and the total of each number. It has at most 65 rows. When every record of a child lies in a single place, the row is given under that place, down to four characters below the zone; the client can then refine a map without reading further.
@@ -82,6 +72,8 @@ A read of a zone answers the sums of its children: one row for the records place
 \end{figure}
 
 Rows travel as columns of numbers: the keys, the counts, then each metric. A browser reads them where they arrive and hands them to its graphics processor without building one object per row. A client may ask for some metrics only; the sums are still those of whole records.
+
+For example, the answer ``C: 33'' means that 33 records lie below C; it is not a list of 33 records. If the user zooms into C, the next answer may contain ``at C: 4'', ``CB: 9'', ``CC: 10'' and ``CD: 10''. Those four counts add back to 33. The row at C matters: records need not all lie in leaf zones.
 
 \section{Finding nodes}
 A client starts from a few known nodes and has two ways to reach a zone. In the first, it chooses one node for its session, the known node closest to a random key, and lets that node forward each read to the holder of the zone. In the second, it computes the holder itself from the nodes it knows, sends each read there, and follows the answer when a node replies that the zone lives elsewhere. Reads for many zones are grouped, up to 128 per request.
@@ -102,18 +94,18 @@ A feed, or a list of the nearest places, starts at an origin and goes outwards. 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=14cm]{orig/layers.png}
+    \ixfig[14cm]{../figkit/orig/layers.tikz}
     \caption{Layers and concentric circles}
 \end{figure}
 
 Two things changed since 2024. The zones selected in one step are read in a single request. And a zone of a thousand records or fewer is read as records rather than as sums, so that the last layer holds real records, each with its exact distance.
 
 \section{Combining collections}
-Two collections of the same space cut the world into the same cells, but write them with different characters, because their offsets differ. Removing the offset gives back the cell's integer coordinates and its resolution. The client joins two collections on these coordinates.
+Two collections of the same space cut the world into the same cells, but write them with different characters, because their offsets differ. Removing the offset gives back the cell's integer coordinates and its resolution. The client joins two collections on these coordinates. This is a spatial join: it aligns cells, rather than assuming that the same record identifiers occur in both collections. A join on object identifiers, such as the proposed geo-semantic descent in the properties paper, is a separate operation.
 
 \begin{figure}[H]
     \centering
-    \ixnew[0.5]{figures/compose.tikz}
+    \ixnew{figures/compose.tikz}
     \caption{The same cell is D in a collection of houses (offset B) and B in a weather collection (offset D). Without the offset both are the cell (0,0).}
 \end{figure}
 
@@ -124,6 +116,9 @@ The client keeps the answers it has read in memory, within a budget of 256~MB by
 
 \section{Freshness}
 A node answers a zone from its summaries, which include its own writes at once and the writes held by other nodes about a second later. A client may ask for an exact recount, which the node computes from the records of every holder of the zone. The map refreshes the zones in view at most every five seconds, and descends only into the zones whose counts changed.
+
+\Needspace{8\baselineskip}
+Exact totals and fresh totals answer different questions. A stored summary can be an exact aggregate of the child versions already received while still missing a more recent remote write. Likewise, a correct answer cached by a map may age until its next refresh. The delay of propagation and the delay of refreshing should be measured separately from numerical correctness.
 
 \section{Calculations}
 \textit{Size of an answer.} A row costs 8 bytes plus 4 bytes per metric. A zone whose 64 children all exist, with 4 metrics, is answered in 1\,620 bytes; a request of 128 such zones in about 205 kilobytes.

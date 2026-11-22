@@ -1,0 +1,228 @@
+\documentclass[11pt]{article}
+\usepackage{../common/indexus}
+\usepackage{../figkit/ixfig}
+\newcommand{\fig}[4][]{\begin{figure}[H]\centering\vspace{0.3em}\ixnew{figures/#2.tikz}\caption{#3}\label{fig:#4}\end{figure}}
+
+\begin{document}
+
+\title{Indexus: Paying for Open Data}
+\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Abstract. }The whitepaper, client and network papers describe an index that is shared: producers publish records into it, independent machines host it, and any application reads it. A shared index still has costs. This paper proposes who pays them, and how. Reading public base data stays free. Beyond it, a read is paid when it is asked, in small amounts, over an existing payment network, and the payment is shared between the machine that answered and the producer of the data. There is no new token. We follow one example throughout: a map that reads a land registry, the weather and the user's own notes. Everything in this paper is a proposal.
+\vspace{1em}\end{abstract}
+
+\section{Introduction}
+
+Consider a map being zoomed. It shows a city, and on top of the city three kinds of information: the parcels of the public land registry, the weather of the last hour, and the notes the user has written about places.
+
+In Indexus these are three \emph{collections}. A collection is a set of \emph{records} published by one source: a parcel, a weather measurement, a note. The map does not copy them. It asks for the part of each collection that is on the screen, and draws the three answers on top of each other.
+
+\fig{layers}{The map reads three collections over the same squares of the city.}{layers}
+
+The earlier papers explain how this works. Space is cut into squares called \emph{zones}, each zone is cut again into smaller zones, and every zone keeps the exact total of the records it contains. Machines called \emph{nodes} store the zones and answer the readers. So when the map shows sixteen squares, it asks for sixteen zones and receives sixteen totals, at any zoom.
+
+This paper asks a different question. The nodes need disks and bandwidth. The weather service spends money to produce its measurements. Who pays for this, and how, without giving the index back to a single owner?
+
+Our answer is small. A read is paid when it is asked, a few satoshis at a time, and the money goes directly to those who did the work. A satoshi, written \emph{sat}, is the smallest unit of bitcoin: one hundred-millionth of a bitcoin, well under a cent. All amounts in this paper are examples. Indexus sets no price.
+
+\paragraph{Reading the examples.}
+The figures distinguish the path of data from the path of money. A record goes from its producer to a host; a summary goes from the host to a reader; a payment, when required, goes back toward those who served and produced it. None of the example amounts is a measured price or a rule already enforced by the node.
+
+\section{Who does what}
+
+Four roles appear around the map.
+
+The \textbf{producer} creates the records and signs them. The land registry is a producer, the weather service is a producer, and the user who writes notes is a producer too.
+
+The \textbf{host} runs nodes. It stores zones and answers the readers who ask for them.
+
+The \textbf{application} reads zones from several collections and composes them. Here it is the map. It owns no data.
+
+The \textbf{user} looks at the application.
+
+\fig{roles}{The four roles. Records go from the producer to the host, totals from the host to the application.}{roles}
+
+One party may play several roles: a weather service can host its own collection, and the user's notes live on the user's own node. But the roles do not need each other's permission. A new application needs no contract with a producer. A new producer needs no agreement with an application. This separation is what the payment must preserve.
+
+How the application is paid by its users, if at all, is its own business. We only look at the three other roles.
+
+\section{A shared index has costs}
+
+When one company owns the data, the index and the application, the question of who pays does not arise: the company pays for everything and earns from the application.
+
+In a shared index the work is divided. The host pays for machines whether or not it runs an application. The producer pays to measure, survey or write whether or not anyone reads it through a given host. If neither is paid, the hosts leave and the data goes stale.
+
+The application is the party that benefits from each read, so we propose that the application pays, per read, the host and the producer of what it reads. But not for everything.
+
+\section{What stays free}
+
+A shared index that charges for every read would keep out the student, the journalist and the new application that has no income yet. So we draw a line.
+
+\begin{guarantee}{Public base data is free to read}
+For a collection declared public by its producer, a host serves the totals of its zones without payment, up to a published number of reads per reader.
+\end{guarantee}
+
+Serving a total is cheap: the host already keeps it. What is paid is what costs more than that:
+
+\begin{itemize}[leftmargin=1.5em,itemsep=0pt,topsep=0pt]
+\item \emph{freshness}: the weather of the last hour, the sales of the last week;
+\item \emph{volume}: reads beyond the free number, for an application with many users;
+\item \emph{detail}: reading the records themselves, with their files, instead of totals;
+\item \emph{premium collections}: collections whose producer asks a price for every read.
+\end{itemize}
+
+\begin{example}
+\textbf{The map.} The land registry is public: its totals are free. The weather is public too, and yesterday's weather is free, but the last hour is paid. The user's notes are private: they stay on the user's own node, are never published, and have no price.
+\end{example}
+
+The free number of reads is counted by each host, since there is no central account. A reader could pretend to be many readers and obtain more free reads. We accept this: the free reads are the cheap ones, and a host may at any time ask payment from a reader it does not want to serve for free.
+
+\section{Paying for one read}
+
+The map now wants the weather of the last hour for one zone, say zone \texttt{AB}. This read is paid. We need a way to pay a very small amount, at once, to a host the map has never met.
+
+We use two existing tools.
+
+\textbf{Lightning} is a payment network built on Bitcoin. It lets two parties who have never met exchange very small payments in about a second, and the payer receives a proof that the payment was made.
+
+\textbf{L402} is a convention for paying a web request with Lightning. The server answers ``payment required'' with a bill, called an invoice; the client pays it and repeats the request with the proof of payment.
+
+With them, a paid read has three moments: ask, pay, receive.
+
+\fig{pay}{One paid read. The host states its price before anything is paid; the map pays and asks again with the proof.}{pay}
+
+The host needs no account for the map and keeps no list of customers. The proof of payment is enough.
+
+\begin{guarantee}{The price is shown before any payment}
+A paid read is first answered by its price: the total, the part for the host, the part for the producer, and what it buys. A reader never pays an amount it was not shown.
+\end{guarantee}
+
+The map can also say no. If the price of a zone is too high, it shows the free weather of an hour ago instead.
+
+One payment per read would be slow for a map that reads sixteen zones each time it moves. So the map may pay for several reads at once: it pays 48 sat and receives the right to sixteen reads. The price is still per read; only the payments are grouped.
+
+\section{Sharing the payment}
+
+The 3 sat of the read reward two parties. The host spent a disk read and some bandwidth. The weather service produced the measurements that were summed.
+
+The price therefore has two parts. The producer publishes its part with the collection: here 2 sat per read. The host adds its own: here 1 sat.
+
+\fig{split}{One read at 3 sat. The map pays the host; the host keeps its part and passes the producer's part on.}{split}
+
+The simplest way is shown in the figure: the map pays the host once, and the host passes the producer's part on, a few times a day. The host gives the map a signed receipt for each paid read, so that the producer can compare what was read with what it received.
+
+Another way is that the map pays each party directly: two payments, and nobody ever holds money that belongs to someone else. We do not know yet which is better. Both are allowed, and the price announcement says which one applies.
+
+\begin{example}
+\textbf{One screen of the map.} The screen shows sixteen zones.\\[3pt]
+\begin{tabular}{@{}lrrr@{}}
+ & reads & to the host & to the producer\\
+land registry (free) & 16 & 0 & 0\\
+weather, last hour & 16 & $16\times 1 = 16$ sat & $16\times 2 = 32$ sat\\
+the user's notes (private) & 16 & -- & --
+\end{tabular}\\[3pt]
+The screen costs 48 sat: 16 to the host of the weather, 32 to the weather service.
+\end{example}
+
+\section{A zone has one price}
+
+In an ordinary database, the cost of a question depends on the data it touches. The total of a city requires reading the city. The seller cannot tell the price before doing the work, and the buyer cannot know it in advance.
+
+In Indexus a zone read does not go through the records. Every zone already keeps its total, updated when a record is written or deleted. In the pricing example, reading zone \texttt{AB} returns the totals of its four children, \texttt{ABA} to \texttt{ABD}: four lines, whether the zone holds ten records or ten million.
+
+\fig{zoneprice}{Zone \texttt{AB} holds 9\,429 records, almost all in \texttt{ABA}. Reading it returns four lines. Empty children are drawn explicitly in this pricing example.}{zoneprice}
+
+\begin{guarantee}{A zone has one price whatever lies below it}
+The price of reading the totals of a zone depends on the collection and on what is asked, such as the freshness. It does not depend on the number of records in the zone, nor on its size on the map.
+\end{guarantee}
+
+With the real alphabet of 64 characters a zone has 64 children instead of four, and the pricing rule is the same. The reference client read omits empty children and may add one row for records placed directly at the requested zone: at most 65 rows. The four-line diagram is a padded illustration, not a different wire-format guarantee.
+
+So a price list is a few lines that a producer and a host can publish, and the map can compute the cost of a screen before reading it: the number of zones times the price of one. This is how we found 48 sat above.
+
+Reading the records themselves is different. Their number grows with the data, so they are sold by the page: so many sat for the next fifty records.
+
+Paying also raises the question of trust: a paid answer that is wrong is worse than a free one. The original outline called its proposed verifiable-aggregate paper ``Paper III. That proposal would let every total be checked against the signatures of the producers; it remains future work. If that verification mechanism is built, the reader could pay for a checkable answer. A payment receipt alone only shows what was paid; it is not a proof that a total is correct.
+
+\section{Why no new token}
+
+Several decentralised networks create their own currency, a token, to pay their participants. We do not, for three reasons.
+
+A price needs a stable unit, not a new one. Hosts pay for their machines in ordinary money. A token adds an exchange rate between the cost of serving and the reward for it, and that rate moves for reasons that have nothing to do with data.
+
+A token must be issued, and someone receives the first units. This gives its holders an interest in the token itself, apart from whether the data is good.
+
+A reader should not have to buy a new asset to look at a map. An application that can pay over Lightning can read every paid collection.
+
+The payment network also stays replaceable. Indexus defines a price, its two parts and the way to announce them. If another way to pay per read becomes preferable, the announcement can name it.
+
+This choice has a cost. Without a token there is nothing to give the first hosts before applications pay. The first hosts will be the producers themselves and those who want the data to be served.
+
+\section{Competitors in one collection}
+
+Until now each collection had one producer. A collection can also be shared by several.
+
+Take three rental agencies in the same city. Today each has its own site, or all three list their flats on a portal. A tenant searches where the flats are indexed. Whoever operates the index that tenants query sets the order of the results, the conditions of access and the price of being listed.
+
+In Indexus the three agencies can publish into the same collection. Each signs its own records. Each can host a node. A tenant's map reads one zone and receives the flats of the three agencies, summed together.
+
+\fig{agencies}{Three agencies publish into one collection. A reader of the zone receives one total.}{agencies}
+
+\begin{example}
+\textbf{One district.} Agency 1 has 20 flats there, agency 2 has 15 and agency 3 has 7. The zone answers: 42 flats, total rent 39\,900, so an average of 950 per month. Opening a flat shows the agency that signed it, and its contact.
+\end{example}
+
+No agency operates the index, so none decides how the others appear.
+
+\begin{guarantee}{The index ranks nothing}
+The index returns records by distance, in space or in time, from the point the reader asks about. The order is the same for every producer. Any other ranking is made by an application, and another application may rank differently on the same data.
+\end{guarantee}
+
+Payment follows the same rule. A read of the zone is paid to the host that served it, as before. The index takes no commission on the rental itself, because it is not a party to it.
+
+\section{Heavy files and live editing}
+
+Two more tools complete the picture. Neither is ours.
+
+\textbf{Heavy files elsewhere.} A parcel has a shape, a building may have a 3D model, a flat has photos. These files are heavy and are never summed. Keeping them in the zones would make hosts pay for storage that the totals do not need. We propose to keep them on IPFS, a network where a file is named by the fingerprint of its content and can be fetched from anyone who has it. The record holds only that name. Since the producer signs the record, the signature covers the file too.
+
+\textbf{Editing before publishing.} A producer rarely publishes a finished collection at once. A team corrects parcel boundaries, the user writes notes over several days. Yjs is a library that lets several people edit the same document at the same time and end up with the same result, without a central server. We propose that drafts are edited with Yjs and that only the finished state is signed and published as records. The index never contains half-written data.
+
+\fig{stack}{Each layer does one thing. Indexus keeps no ledger and stores no heavy file.}{stack}
+
+\section{A standard with several implementations}
+
+All of the above only holds if no single party can change the rules: what a total means, in which order records are returned, how a price is announced.
+
+So Indexus is meant to be a standard, not a product. The rules are written in a public specification. Tests are derived from the specification. Any program that passes the tests can join the network, and several independent programs should exist, as is the case for Lightning or for the protocols of the Internet.
+
+\fig{standard}{Every implementation is checked against the tests, not against our program.}{standard}
+
+We write a reference node and release it as free software under a licence that keeps it open. Client libraries are under a permissive licence, so that any application can include them. The specification and the name are meant to be held by a neutral foundation, and changes to go through public proposals.
+
+\section{Status}
+
+Everything in this paper is a proposal. None of it is implemented: today reads are free and no payment exists in the reference node.
+
+What exists is described in the whitepaper, client and network papers: the tree, the nodes, the exact totals of every zone, measured on several machines. The verification of totals, on which paid answers would rely, remains the proposal of the original Paper III outline, rather than an implemented guarantee.
+
+We intend to proceed in order: first publish prices and count what would have been paid, without money; then pay hosts; then share with producers.
+
+The design aims at never holding money on behalf of someone else. This and every other legal aspect remain to be validated by counsel in each country.
+
+\section*{References}
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
+\item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2026.
+\item R. Henriot. Indexus: The Client. 2026.
+\item R. Henriot. Indexus: The Network. 2026.
+\item R. Henriot. Original series outline: Encoding, Spaces and Incremental Search; A Peer-to-Peer Protocol for Zones; Exact and Verifiable Aggregates. Historical working titles, 2026.
+\item Lightning Network specifications (BOLTs).
+\item L402: HTTP 402 Payment Required with Lightning invoices.
+\item IPFS: the InterPlanetary File System.
+\item Yjs: shared data types for collaborative editing.
+\end{enumerate}
+
+\end{document}

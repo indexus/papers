@@ -1,0 +1,302 @@
+\documentclass[11pt]{article}
+\usepackage{../common/indexus}
+\usepackage{../figkit/ixfig}
+
+\begin{document}
+
+\title{Indexus: Properties, Benchmarks, and Directions}
+\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Abstract. }Indexus projects any multidimensional space into a single binary tree of 96-bit addresses shared by nodes, collections, zones and records~[1,~2]. This paper collects the mathematical guarantees of that primitive, its measured system performance on dedicated hardware, and two measured applications built on the same algebra: continual learning with exact unlearning, and dynamic vector search without rebuilds. We distinguish throughout between what is measured on a cluster, what is measured in simulation or on one node, and what remains a hypothesis for future work.
+\vspace{1em}\end{abstract}
+
+\section{Introduction}
+Earlier papers in this series introduced the binary tree, the client search algorithm, and the peer-to-peer node protocol~[1--4]. Once the core engine was built and measured under load, a more general picture emerged. Indexus is not only a geographic store of counts; it is a single distributed primitive:
+\begin{quote}
+\emph{A monoid of summaries folded over a prefix tree, where each zone has one writer at a time and strictly increasing versions.}
+\end{quote}
+
+An application fits this primitive whenever its answer over a region composes from its answers over sub-regions, with bounded state per zone. When that criterion holds, the index serves exact answers at any resolution, updates continuously, and scales without a central coordinator.
+
+To prevent ideas from being mistaken for results, every claim in this paper carries its epistemic status: \textbf{measured} (backed by numbers on a named workload), \textbf{prototyped} (running code without a decisive benchmark), or \textbf{hypothesis} (reasoning only).
+
+\paragraph{Continuity with the original papers.}
+The 2024 search paper introduced incremental nearby queries, shared coordinate spaces and progressive loading. Its aggregation section used abelian-group properties. The companion network draft introduced XOR delegation and explicitly left replication open. The 2026 series retains that tree, its masks, its collection offsets and its visual vocabulary. Versioned replacement of child contributions now makes the same structure useful for ordered monoids and sufficient statistics; these are extensions of the original primitive, not a replacement for its search model.
+
+\paragraph{How to read this paper.}
+Start with a city divided into cells. Each cell stores a short answer, such as a house count and a price total. A larger cell combines the answers of its children. The next sections ask what must remain true when those children live on different machines, when machines join, and when a count is replaced by a more general statistic. The benchmark and application sections then test different parts of that claim; they are not all measurements of one deployed configuration.
+
+\section{One Address Space and Three Planes}
+Every zone and every virtual node (vnode) lives in $\{0,1\}^{96}$, written as 16 characters of 6 bits. A zone is canonically identified by the pair $(\text{collection}, \text{location})$, and its routing address is $\mathrm{ID}(z) = \mathrm{bits}(\text{location}) \parallel \mathrm{bits}(\text{collection})$ padded to 96 bits. Given the local set of active vnodes $V_{\mathrm{active}}$, the owner of a zone is a pure geometric function:
+\[
+\mathrm{Owner}(z, V_{\mathrm{active}}) = \arg\min_{v \in V_{\mathrm{active}}} \bigl(\mathrm{ID}(z) \oplus \mathrm{ID}(v)\bigr).
+\]
+This single function decides three things that other systems separate: who holds a zone, where a split places a new vnode, and who holds the parent zone to which summaries are pushed.
+
+Correctness depends on keeping three planes strictly separate:
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Logical view}: the tree walked by a reader (\texttt{frontier}, \texttt{visited}, \texttt{bounds}). Child markers indicate existence, never ownership.
+  \item \textbf{Routing topology}: the local membership set $V_{\mathrm{active}}$ used to predict the XOR owner. A stale topology causes a forward or a retry, never a second writer.
+  \item \textbf{Write authority}: durable grants and certificate chains on disk. A write commits only if the storage transaction verifies an unconsumed grant for that zone on that disk, with no hand-over barrier closed.
+\end{enumerate}
+
+\section{Convergence and Authority Guarantees}
+Indexus separates its \emph{control plane} from its \emph{replicated data plane}. The initial 2026 account described the latter as a transport-free core verified in deterministic simulation. The dated runtime update below records the subsequent storage and mesh integration; the earlier benchmark campaigns retain their original scope.
+
+\paragraph{Intuition before the guarantees.}
+Routing is an address book; authority is the installed permission to commit. Two address books can disagree while only one disk has that permission. A summary is a third object: a versioned answer about records, which may arrive later than the records themselves. The formulas below formalize these separate responsibilities.
+
+\subsection{Authority Frontier CRDT}
+A CRDT is a replicated data type whose states merge to the same result despite different delivery orders. Here it describes the durable authority history, rather than allowing arbitrary nodes to invent write rights. All write rights descend from one genesis grant covering $\{0,1\}^{96}$. Each grant has at most one successor certificate, persisted before emission and retained across restarts. For any address, two replicas therefore hold two prefixes of one causal chain. Defining the frontier $F(H)$ of a history $H$ as the highest grant per address, merging two histories satisfies:
+\[
+F(H_1 \cup H_2) = F(H_1) \sqcup F(H_2),
+\]
+where $\sqcup$ keeps, per address, the grant of greater height. This join is associative, commutative and idempotent (a join-semilattice). Two distinct successors of the same grant have equal height and distinct tokens on a shared address, so $\sqcup$ rejects forks symmetrically. Memory is bounded by $O(\text{leaves})$ rather than by the total number of certificates ever issued.
+
+Two local properties allow the cluster to grow without global coordination:
+\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Context-free activation}: adding vnodes only shrinks XOR cells, so $\mathrm{Cell}(V, v) \subseteq \mathrm{Cell}(\{r, v\}, v)$ for any view $V$ containing the root $r$ and $v$.
+  \item \textbf{Local hot-split guard}: if a donor $D$ holds a terminal grant $R$ whose deepest constrained bit is $g-1$, placing a newcomer at $J = D \oplus e_b$ with $b \ge g$ cedes $R \wedge (\text{bit } b = J[b])$ without altering any third vnode's XOR cell. Disjoint hot-splits commute.
+\end{itemize}
+
+\subsection{Gossip and Granular Hand-Over}
+Active holders are grouped into at most 97 Kademlia-style buckets by common prefix length with the local node. Each round contacts one peer per non-empty bucket, so updates propagate in $O(\log N)$ messages per round and at most $\mathrm{depth}$ rounds (measured: 3 to 4 rounds on 1\,024 random vnodes, 3 rounds on a skewed trie).
+
+When a region moves to a new vnode, the transfer splits into lots of at most 64 zones targeting 1\,MiB, ordered deepest and busiest first. Each lot is copied by batched snapshots, caught up via zone sequence numbers, certified and installed durably. The receiver begins accepting writes for installed lots while the donor continues serving the rest of the region.
+
+\subsection{Convergent Data Replication}
+Without replication, a zone has at most one writer; losing its only disk loses that copy and makes the zone unavailable. Initially verified in simulation, the convergent replication core (\texttt{internal/replication/convergent}) places each zone on the 3 closest active vnodes on distinct machines, $R(z)[0..2]$. Each write carries a unique dot $(\text{incarnation}, \text{counter})$ and a zone-local Lamport clock \texttt{ver}. Two versions of the same record ID are ordered totally without physical clocks by: (1) larger \texttt{ver}, (2) tombstone over live value at equal \texttt{ver}, and (3) smaller payload digest at tie. This makes record-set merge an associative, commutative, idempotent LWW-element-set. Under normal operation, $R(z)[0]$ is the sole writer and replicates asynchronously; under partition, reachable replicas accept writes in a fallback log marked \texttt{degraded} and reconcile when the owner returns.
+
+\paragraph{Runtime update, 22 November 2026.}
+At repository snapshot \texttt{d689156}, shadow sessions, fallback logs, degraded reads, owner-suspicion heartbeats and peer-to-peer repair are wired into storage and the mesh. Commits \texttt{03deabe} and \texttt{93e7624} add node-level lifecycle and fault-under-load tests covering partition, fallback, repair and crash/restart. These are local runtime tests with durable stores and an in-process transport, not a new AWS fault campaign. Replication is optional: its normal owner path and its explicitly degraded fallback path must not be confused with the single-writer guarantee of the unreplicated mode. The 2024 open replication question and the earlier simulation-only milestone remain part of the development history.
+
+\section{Monoid Column Algebra and Self-Certifying Collections}
+A monoid is a summary value, an operation for combining two such values, and an empty value. The operation must be associative: grouping three inputs differently gives the same algebraic answer. It need not be commutative: changing their order may change the answer. Counts use addition and zero; a minimum uses the smaller value and an empty sentinel. Ordered operations, such as applying affine transforms, keep a fixed cell order.
+
+For a concrete example, four child counts 15, 3, 33 and 9 give 60. If the third count becomes 34, its parent replaces 33 with 34 and obtains 61. A repeated report of 34 leaves 61 unchanged. The network's delivery order is handled by versions, while the summary operation handles composition.
+
+Because a parent replaces the versioned contribution of each child rather than applying unversioned deltas, \emph{any associative monoid with identity converges} under duplicate, delayed or reordered messages. Commutativity, invertibility and idempotence are not required.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}L@{}}
+\toprule
+Kind & Algebra and inverse & Removal or ordered fold \\
+\midrule
+\texttt{sum} & Abelian group; invertible (Neumaier) & $O(1)$ delta, no rescan \\
+\texttt{min}, \texttt{max} & Semilattice; not invertible & Rescan only if the removed row held the extreme; harmonic expectation $H_n-1$ \\
+\texttt{first}, \texttt{last} & Ordered monoid; not invertible & Strict cell order, then record ID \\
+\texttt{affine} $(a,b)$ & Ordered, non-commutative monoid; not invertible & $(a_1,b_1)\circ(a_2,b_2)$\newline $=(a_1a_2,\;a_2b_1+b_2)$ \\
+\bottomrule
+\end{tabularx}
+\caption{Column monoids implemented in \texttt{internal/algebra} (up to 4\,096 columns per collection).}
+\end{table}
+
+Here $H_n=\sum_{i=1}^{n}1/i$ is the harmonic number. The rescan count is a workload expectation, not a worst-case deletion bound: deleting the current minimum or maximum repeatedly can require repeated rescans.
+
+\paragraph{Cut independence.}
+For every zone $P$, its summary is
+\[
+\mathrm{Summary}(P) = \mathrm{Direct}(P) \;\circ\; \bigodot_{c \in \mathrm{Children}(P)} \mathrm{Summary}(c),
+\]
+folded in canonical cell order. Any complete cut of the tree read in address order yields the same value as the root (verified across 1\,000 random sparse layouts). A range $[u, v]$ is covered by at most $2(2^c - 1)$ zones per level ($2^c - 1$ for a prefix). Measured fold cost on 8 columns (2 vCPU) is 41\,ns for sums, 55\,ns for mixed sum/min/max, and 229\,ns for four affine pairs. For linear recurrences $h \leftarrow a h + b$, any of 4\,096 prefixes is read in at most 12 zones and matches the sequential scan.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/monoid-cut.tikz}
+    \caption{Cut independence: two different cuts of the tree produce the same monoid fold.}
+\end{figure}
+
+\paragraph{Arithmetic scope.}
+Cut independence is the algebraic property. Floating-point addition and affine composition can differ in their last bits across fold orders; Neumaier compensation does not turn binary64 into exact real arithmetic. Integer sums remain exact while the sum of absolute values stays within $2^{53}$. This distinction is why the unlearning study below separates observed numerical agreement from the reproducible-sum direction in Section~\ref{sec:directions}.
+
+\paragraph{Exact dyadic quantization and \texttt{IXC1}.}
+Two programs must agree on which side of every cell boundary a coordinate falls. A tiny rounding disagreement would send the same record to different zones. ``Dyadic'' means repeated halving; the condition below limits the depth so that binary64 calculations reproduce the intended exact halvings. The descriptor then makes the chosen geometry and summary rules checkable from the collection name.
+A collection is defined by a canonical binary descriptor \texttt{IXC1} (32 to 185 bytes): address geometry $(c, W)$ (bits per character and address width), a 16-byte nonce, permitted record depths $[lo, hi]$, bounded axes $[\min_a, \max_a]$ with bit schedule $\sigma$ (or $k=0$ opaque addresses), and column kinds. IEEE~754 \texttt{binary64} bisection matches exact dyadic quantization bit for bit up to depth $D_a$ satisfying
+\[
+\max(|\min_a|, |\max_a|) \le 2^{53 + \min\bigl(v_2(\min_a),\; v_2(\Delta_a) - n\bigr)},
+\]
+where $\Delta_a = \max_a - \min_a$, $n$ is the number of halvings along axis $a$, and $v_2$ is the 2-adic valuation, the exponent of two in an exact binary value. \texttt{IXC1} rejects any axis exceeding $D_a$, so Go nodes, JavaScript clients and WebGPU shaders compute identical cell addresses. The collection's 16-character name is the first 96 bits of $\mathrm{SHA\text{-}256}(\texttt{"indexus.collection.v1\textbackslash 0"} \parallel \mathrm{IXC1})$. Every node and reader verifies the algebra against the name without trusting a central directory.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/ixc1-cert.tikz}
+    \caption{Self-certifying collection descriptor \texttt{IXC1}: the name commits to geometry, space and algebra.}
+\end{figure}
+
+\section{System Benchmarks (Measured on AWS)}
+All cluster campaigns ran on dedicated \texttt{i4i.xlarge} instances in \texttt{eu-west-3} (1 vnode per machine, local NVMe, \texttt{fsync} enabled, HTTP/3 over QUIC and TLS, \texttt{c6i.4xlarge} load generators).
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\linewidth}{@{}p{0.21\linewidth}rrrL@{}}
+\toprule
+Workload / nodes & Rate/s & Per vnode & p99 & Audit \\
+\midrule
+Fixed passes / 16\newline 3 passes & 47\,991 & 3\,000 & $\le524$\,ms & PASS; 0 lost, 0 double \\
+Fixed passes / 32\newline 3 passes & 95\,987 & 3\,000 & $\le524$\,ms & PASS; 0 lost, 0 double \\
+Fixed passes / 64\newline passes 1 \& 3 & \textbf{190\,700} & 2\,980 & $\le524$\,ms & PASS; 99.3\% efficiency vs 16 \\
+Open-loop ramp / 4 & 14\,492 & 3\,623 & 262\,ms & PASS; 1.63\,M keys \\
+Open-loop ramp / 8 & 28\,902--33\,024 & 3\,613--4\,128 & 262--524\,ms & PASS; 3.10\,M keys \\
+Open-loop ramp / 16 & \textbf{57\,679} & 3\,605 & 262\,ms & PASS; 5.99\,M keys; 99.5\% linearity \\
+\bottomrule
+\end{tabularx}
+\caption{Horizontal scaling on dedicated NVMe nodes with \texttt{fsync} and HTTP/3.}
+\end{table}
+
+\paragraph{Live elasticity.}
+In local hand-over benchmarks (512\,MiB across 65\,536 zones, HTTP + \texttt{fsync}), granular lot transfer reduced time to first receiver acknowledgement from 51.89\,s to \textbf{2.38\,s} (63.5\,ms mean lot pause, 272.7\,ms maximum client ACK, 67\,100 ACKs audited). On AWS, live elastic ramps absorbed four $2\times$ load doublings every 60\,s (4 $\to$ 8 vnodes at 22\,386/s, splits completing in 26.1--40.6\,s) and instant $2\times$ step jumps (4 $\to$ 11 vnodes at 16\,004/s, 65.5\,ms intended p99, 8 live splits in 7.5--13.0\,s) with zero lost or double-owned writes.
+
+\paragraph{Reading these measurements.}
+The fixed passes and the open-loop ramps are separate campaigns. The ramp p99 is measured from the intended arrival time, including client queueing; its \texttt{best\_green} is the highest ten-second window with at least 99\% acknowledged, no shed arrivals and intended p99 at most one second. The 99.5\% figure compares the named 4- and 16-vnode runs; it is not a latency bound for every window. The AWS audits combine sampled key read-back (20\,000 keys per cited ramp), collection totals and zone-ownership checks. Counts such as 5.99\,M name the acknowledged population, not an exhaustive reread of every payload.
+
+The ramp tool's zero-second absorption value means that its first five-second window already reaches 95\% acknowledged. Machine provisioning, first-zone activation and completion of a hand-over are separate events. Warm closure may force a regional fence when late-zone creation stops draining; installed lots continue to serve, but remaining zones do not acquire a workload-independent freeze bound.
+
+\paragraph{Concurrent-read extension, 22 November 2026.}
+Later AWS runs add key reads and collection-total reads to the ramp. At eight fixed vnodes, run \texttt{074513} records 22\,401 writes/s at \texttt{best\_green}, 71\,485 key reads (32.8\,ms p99, no misses or errors) and 71\,645 total reads (65.5\,ms p99); its audit passes on a 1.80\,M-ACK population. Elastic run \texttt{075254}, from four to eight vnodes, records 3\,837 writes/s, 33\,977 key reads and 34\,021 total reads, both at 524.3\,ms p99, with a passing 286\,k-ACK audit. Reported total deficits are about 2\,135 and 386 items respectively: summary freshness is a separate property from durable key read-back. These runs extend the earlier campaigns rather than replacing their figures, and do not establish replicated fault-under-load performance on AWS.
+
+\section{Case Study 1: Continual Learning and Exact Unlearning}
+\noindent\emph{Measured application.}
+An encoder turns a text into a vector of numbers. ``Frozen means that this transformation is held fixed while records are added or removed. A sufficient statistic is a small collection of totals from which the chosen model can be solved, without reading the original training records again. With a frozen encoder, linear models (ridge regression, shared-covariance LDA, nearest class mean, naive Bayes) depend only on additive sufficient statistics: $n$, $\Sigma y$, $\Sigma x y^\top$, and $\Sigma x x^\top$. In Indexus, learning is a write, forgetting is a deletion, and the model for any region or time window is solved on demand from zone sums.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/learn-forget.tikz}
+    \caption{Learning and forgetting with a fixed encoder: update additive statistics, then solve the model from the totals. This diagram describes the restricted model family, not general neural-network unlearning.}
+\end{figure}
+
+The workloads are HuffPost (209\,527 articles, 42 classes, 2012--2022) and AG News (127\,600 texts, 4 classes). Both use frozen 384-dimensional encoders: \texttt{all-MiniLM-L6-v2} and \texttt{bge-small-en-v1.5}. The independent zero-discrepancy reproduction is archived on Zenodo (DOI \nolinkurl{10.5281/zenodo.24404468}). The measured results are:
+\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Order and partition invariance}: 0 predictions changed across 1 to 64 partitions (weights within $9\times 10^{-15}$); bit-identical totals in \texttt{zonelog} under two write orders.
+  \item \textbf{Exact unlearning}: removing 10\% random records, one class, or one year yields predictions identical to full retraining; membership-inference AUC drops from \textbf{0.74} to \textbf{0.4995} (random chance).
+  \item \textbf{Numerical stability}: Neumaier float64 sums remain stable to $10^{-16}$ over 4\,000 insert/delete cycles (float32 drifts to $8\times 10^{-6}$ and flips predictions).
+  \item \textbf{Class-incremental accuracy and speed}: 89--90\% on AG News and 55--58\% on HuffPost (matching joint training, vs 25\% and 15\% for online SGD); integrating 11 years takes 0.04--2\,s vs 312--482\,s for retraining ($400\times$--$10\,000\times$ faster).
+  \item \textbf{Honest limits}: 3--5 points below a trained probe on 42 classes ($-2.1$ points with 4\,096 random Fourier features); full $384\times 384$ covariance requires 74\,304 columns whereas v1 caps a single collection at 4\,096 ($k \le 89$, or multi-collection block joins); multi-node bit-exactness across arbitrary splits requires reproducible sums (Section~\ref{sec:directions}).
+\end{itemize}
+
+\section{Case Study 2: Dynamic Vector Search Without Rebuilds}
+\noindent\emph{Measured prototype.}
+A vector search asks for the records closest to a query vector. Scanning every vector gives a direct answer but costs more as the collection grows. A posting groups nearby vectors so that a query can inspect promising groups first. SPFresh~[5] maintains a fresh vector index via postings (clusters around centroids) updated by LIRE (local split, neighbor reassignment, and merge). Indexus zones with opaque addresses ($k=0$) already hold what a posting needs: count $n$, vector sum $\Sigma x$ (centroid $\mu_Z = \Sigma x / n$), and one scalar sum $\Sigma \|x\|^2$ giving exact zone variance $\sigma_Z^2 = \Sigma \|x\|^2 / n - \|\mu_Z\|^2$. Every inner zone automatically carries the centroid and variance of its entire subtree, so no separate centroid index is needed.
+
+To obey Indexus's addressing rule, the tree grows \textbf{downward only} (\texttt{growDown}): when a leaf's parent is full, the leaf becomes an inner zone with two leaf children; nothing above a split ever changes address.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/lire-tree.tikz}
+    \caption{Dynamic centroid tree (\texttt{growDown}): beam descent and variance-adjusted scoring using one extra \texttt{sum} column.}
+\end{figure}
+
+\Needspace{13\baselineskip}
+\paragraph{Six levers that beat static IVF.}
+Starting from the baseline \texttt{lire-tree} prototype, systematic ablation under a strict \emph{fixed vector-scan budget} (0.5\%, 1.0\%, 2.0\% of live vectors) isolated six Indexus-compatible improvements:
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Two-hop farthest-pair split seeding} + 12 Lloyd iterations (vs 2 random points + 6 iterations).
+  \item \textbf{Full LIRE reassignment}: enabled on \texttt{splitDown} and extended to cousin leaves via a small tree beam search ($K=12$), not only direct siblings.
+  \item \textbf{Write beam} (\texttt{writeBeam} $= 4$) during insertion, avoiding misrouting by coarse inner centroids.
+  \item \textbf{Tighter posting capacity} (\texttt{cap} $= 128$ or $64$ vs $256$) for sharper Voronoi cells at equal scan budget.
+  \item \textbf{SPFresh RNG boundary replication}: replicate a vector to its second-nearest leaf only if $d_2 \le (1+\epsilon)^2 d_1$ and $\|c_1 - c_2\|^2 \cdot \mathrm{RNGFactor} \ge d_2$ ($\mathrm{RNGFactor} = 1.2$ in 128d, $2.0$ in 1\,536d). Unlike naive replication (+100\% entries, 0 gain), RNG replication adds only \textbf{1--8\% entries} while gaining $+1$ to $+2$ recall points.
+  \item \textbf{Variance-penalized or cosine scoring}: subtracting $\sigma_Z$ hurts in high dimension, because loose clusters dilute density; \emph{adding} $0.5\,\sigma_Z^2$ ($\mathrm{score}(q, Z) = \|q - \mu_Z\|^2 + 0.5\,\sigma_Z^2$, using 1 extra \texttt{sum} column $\Sigma\|x\|^2$) or normalizing centroids (\texttt{cos}) adds $+0.8$ to $+2.2$ recall points at zero extra vector scans.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\linewidth}{@{}Lrrrrrrr@{}}
+\toprule
+Configuration & Zones & Entries/live & Build & C/q & 0.5\% & 1.0\% & 2.0\% \\
+\midrule
+Static IVF-6it ($k = \text{live}/95$) & 8\,947 & 1.00 & 2m\,40s & 8\,947 & 0.852 & 0.936 & 0.979 \\
+Baseline \texttt{lire-tree} (64d, cap 256) & 4\,764 & 1.00 & 18.0\,s & 4\,117 & 0.807 & 0.909 & 0.967 \\
+\textbf{Tuned 16d, cap 128} (\texttt{beam256 cos}) & 9\,646 & \textbf{1.00} & \textbf{43.1\,s} & 4\,839 & \textbf{0.876} & \textbf{0.943} & \textbf{0.980} \\
+\textbf{Tuned + RNG 32d, cap 128} (\texttt{beam256 cos}) & 10\,341 & \textbf{1.08} & \textbf{53.5\,s} & \textbf{3\,634} & \textbf{0.874} & \textbf{0.949} & \textbf{0.982} \\
+\bottomrule
+\end{tabularx}
+\caption{Recall@10 on SIFT 1M at fixed vector-scan budgets: 0.5\%, 1.0\% and 2.0\%. The workload has 1\,000\,000 inserts, 149\,999 deletes (150k rounded), 850k live vectors and 500 queries. C/q counts centroids per query.}
+\end{table}
+
+The same pattern holds against a stronger 12-iteration static IVF on SIFT 200k: +2.2 to +3.0 points and a $5\times$--$11\times$ faster build. With 1\,536-dimensional OpenAI \texttt{text-\allowbreak embedding-\allowbreak 3-\allowbreak small} vectors (63\,326 live), recall is 0.699 / 0.788 / 0.857, against 0.698 / 0.780 / 0.849 for static IVF. The build is 3.8$\times$ faster, with 1.01 entries/live.
+
+Write amplification stays at 1.08--1.20 vectors moved per insert. Bringing this into production nodes still requires one owner-local operation: idempotent record moves during a split.
+
+\section{Research Directions and Explicit Limits}\label{sec:directions}
+We list only directions grounded directly in the monoid primitive, with their current status.
+
+\paragraph{Parallel descents (Geo $\times$ Semantic) [\emph{Hypothesis}].}
+An object is written to two collections sharing its ID: a geographic tree $G$ (carrying a reduced semantic centroid per map zone) and a vector tree $V$ (carrying 64 map-region count sums per vector zone). At query time, an exact count read from $G$ selects the plan: scan $G$ directly when few objects fall in the region, prune $V$ via its map sums when many do, or intersect both leaves in between. Beyond filtered top-$k$, this serves \emph{semantic heatmaps} over a whole region without scanning individual documents.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/parallel-descent.tikz}
+    \caption{Parallel descent across a geographic collection $G$ and a vector collection $V$ sharing record IDs.}
+\end{figure}
+
+\Needspace{11\baselineskip}
+\paragraph{SIGReg / Epps--Pulley per zone for World Models [\emph{Hypothesis}].}
+Representation collapse means that an encoder maps many different inputs to almost the same output. A global average can conceal a problem limited to one region or sensor. The proposed diagnostic stores per-zone totals that describe the shape of the embeddings, so that a reader can examine a smaller region without fetching all its vectors. The following statistic is the mathematical form of those totals.
+
+LeJEPA and LeWorldModel~[6,~7] prevent representation collapse using \emph{SIGReg}, which projects embeddings onto $M$ random unit directions ($z_{j,m} = \langle \mathbf{a}_m, \mathbf{h}_j \rangle$) and evaluates the Epps--Pulley goodness-of-fit statistic via the empirical characteristic function:
+\[
+\operatorname{Re}[\varphi_Z(t_k)] = \frac{1}{N}\sum_{j \in Z} \cos(t_k z_j), \qquad
+\operatorname{Im}[\varphi_Z(t_k)] = \frac{1}{N}\sum_{j \in Z} \sin(t_k z_j).
+\]
+The empirical characteristic-function statistics are \emph{exact as a \texttt{sum} monoid}; normalization and the final goodness-of-fit loss are computed from those sums. By parity ($\cos$ even, $\sin$ odd), $M = 64$ directions and $K = 8$ positive frequencies (equivalent to 17 symmetric points) require only $64 \times 2 \times 8 + 1 = 1\,025$ \texttt{sum} columns---fitting inside Indexus v1 without changing the engine. This enables local collapse and OOD drift detection per region, time window or sensor even when the global batch looks Gaussian, and reciprocally makes SIGReg encoders (whose latent variables are provably linearly identifiable~[7]) a natural fit for Indexus linear heads and isotropic LIRE partitions.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/sigreg-zone.tikz}
+    \caption{Hierarchical Epps--Pulley / SIGReg sketch in 1\,025 \texttt{sum} columns. Loss values illustrate the proposed local-collapse diagnostic; they are not an additional measured experiment.}
+\end{figure}
+
+\paragraph{Other targeted directions.}
+\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Continuous 3D LoD and client WebGPU inference} [\emph{Prototyped / Hypothesis}]: orders 0, 1, 2 spatial moments ($\Sigma w, \Sigma w p, \Sigma w p p^\top$) are pure \texttt{sum} columns defining an oriented 3D ellipsoid per zone, streamed directly in \texttt{IXB2} blocks to the WebGPU arena of \texttt{sdk-js} and \texttt{Explore}.
+  \item \textbf{Probabilistic occupancy maps} [\emph{Hypothesis}]: Bayesian sensor fusion in log-odds is plain addition (\texttt{sum}), yielding a coordinator-free multi-resolution OctoMap for robotics fleets.
+  \item \textbf{Mergeable sketches in v1} [\emph{Hypothesis}]: HyperLogLog (\texttt{max} per register) and Count-Min (\texttt{sum}) work without new column types, though HLL is best suited to append-only streams because frequent deletes across many \texttt{max} registers trigger zone rescans.
+  \item \textbf{Reproducible sums and verifiable registries} [\emph{Hypothesis}]: replacing Neumaier with exact fixed-point or superaccumulator sums eliminates audit tolerances across arbitrary splits; combined with \texttt{IXC1} and exact unlearning, it enables third-party verifiable analytical registries.
+  \item \textbf{Differential privacy tree mechanism} [\emph{Hypothesis}]: applies directly to fixed dyadic spaces; adaptive splits leak topology unless split decisions also spend privacy budget.
+\end{itemize}
+
+\paragraph{Explicit non-guarantees.}
+Indexus does not bound convergence delay under network partitions, does not provide cross-zone atomic snapshots across concurrent hand-overs, and, with replication disabled, trades availability of a crashed disk's zones for coordinator-free single-writer safety. The newer optional replicated runtime is locally tested; its AWS fault, throughput and recovery costs require separate qualification. In convergent fallback mode, non-commutative monoids (\texttt{first}, \texttt{last}, \texttt{affine}) must be recomputed from the merged LWW record set rather than merged directly.
+
+\section{Related Work}
+No single mechanism in Indexus is without precedent: XOR ownership of spatial cells appears in Walkad~[8], trie-as-peer-set splitting in P-Grid~[9] and CAN~[10], routing-implied aggregation in DAT~[11] and SDIMS~[12], storage-enforced fencing in distributed consensus stores such as Scatter~[13], summation-form unlearning in Cao and Yang~[14], hierarchical regression in Regression Cubes~[15], and in-place posting maintenance in SPFresh~[5]. What distinguishes Indexus is their unification under \textbf{one pure XOR function} governing placement, splitting and aggregation parents, with coordinator-free commit-time write exclusivity, self-certifying monoid schemas (\texttt{IXC1}), and end-to-end columnar delivery to the client GPU.
+
+\section{Conclusion}
+We have described the monoid-over-a-tree primitive, its mathematical properties, measured scaling and live elasticity on dedicated NVMe hardware, and two measured applications: continual learning with exact unlearning, and dynamic vector search beating static IVF at 1\,M scale. Parallel geo-semantic descents, hierarchical SIGReg diagnostics for world models and verifiable analytical registries remain testable research directions.
+
+The next step is an open protocol standard specifying canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}) and exact dyadic addressing, with shared conformance vectors for independent implementations in different languages to interoperate on one network. Correspondence, reviews and collaboration: \texttt{research@indexus.io}.
+
+\clearpage
+\section*{References}
+\small
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
+  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
+  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2024 / 2026.
+  \item R. Henriot. Indexus: The Client. 2026.
+  \item R. Henriot. Indexus: The Network. 2026.
+  \item Y. Xu et al. SPFresh: Incremental In-Place Update for Billion-Scale Vector Search. SOSP 2023.
+  \item R. Balestriero and Y. LeCun. LeJEPA: Provable and Scalable Self-Supervised Learning Without the Heuristics. 2025.
+  \item D. Klindt, Y. LeCun, and R. Balestriero. When Does LeJEPA Learn a World Model? 2026.
+  \item M. Varvello, C. Diot, and E. Biersack. A Walkable Kademlia Network for Virtual Worlds. IPTPS 2009.
+  \item K. Aberer et al. P-Grid: A Self-Organizing Structured P2P System. SIGMOD Record, 2003.
+  \item S. Ratnasamy et al. A Scalable Content-Addressable Network. SIGCOMM 2001.
+  \item M. Cai and K. Hwang. Distributed Aggregation Algorithms with Load-Balancing. IPDPS 2007.
+  \item P. Yalagandula and M. Dahlin. A Scalable Distributed Information Management System. SIGCOMM 2004.
+  \item L. Glendenning et al. Scalable Consistency in Scatter. SOSP 2011.
+  \item Y. Cao and J. Yang. Towards Making Systems Forget with Machine Unlearning. IEEE S\&P 2015.
+  \item Y. Chen et al. Regression Cubes with Lossless Compression and Aggregation. IEEE TKDE 2006.
+\end{enumerate}
+
+\end{document}

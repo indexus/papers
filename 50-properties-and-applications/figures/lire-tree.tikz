@@ -1,0 +1,77 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (4.8, 4.25) {};
+		\node [style=none] (2) at (11.2, 4.25) {};
+		\node [style=none] (3) at (11.2, 5.75) {};
+		\node [style=none] (4) at (4.8, 5.75) {};
+		\node [style=tiny] (5) at (8, 5) {\shortstack[c]{subtree statistics\\$n,\ \Sigma x,\ \Sigma\|x\|^2$}};
+		\node [style=none] (6) at (-2.5, 0.75) {};
+		\node [style=none] (7) at (2.5, 0.75) {};
+		\node [style=none] (8) at (2.5, 2.25) {};
+		\node [style=none] (9) at (-2.5, 2.25) {};
+		\node [style=tiny] (10) at (0, 1.5) {\shortstack[c]{zone 0\\$\mu_0,\ \sigma_0^2$}};
+		\node [style=none] (11) at (5.5, 0.75) {};
+		\node [style=none] (12) at (10.5, 0.75) {};
+		\node [style=none] (13) at (10.5, 2.25) {};
+		\node [style=none] (14) at (5.5, 2.25) {};
+		\node [style=tiny] (15) at (8, 1.5) {\shortstack[c]{zone 1\\$\mu_1,\ \sigma_1^2$}};
+		\node [style=none] (16) at (13.5, 0.75) {};
+		\node [style=none] (17) at (18.5, 0.75) {};
+		\node [style=none] (18) at (18.5, 2.25) {};
+		\node [style=none] (19) at (13.5, 2.25) {};
+		\node [style=tiny] (20) at (16, 1.5) {\shortstack[c]{zone 2\\$\mu_2,\ \sigma_2^2$}};
+		\node [style=none] (21) at (5.3, 4.25) {};
+		\node [style=none] (22) at (0, 2.25) {};
+		\node [style=none] (23) at (8, 4.25) {};
+		\node [style=none] (24) at (8, 2.25) {};
+		\node [style=none] (25) at (10.7, 4.25) {};
+		\node [style=none] (26) at (16, 2.25) {};
+		\node [style=none] (27) at (-3.1, -2.55) {};
+		\node [style=none] (28) at (-0.1, -2.55) {};
+		\node [style=none] (29) at (-0.1, -1.45) {};
+		\node [style=none] (30) at (-3.1, -1.45) {};
+		\node [style=tiny] (31) at (-1.6, -2) {leaf 00};
+		\node [style=none] (32) at (1, -2.55) {};
+		\node [style=none] (33) at (4, -2.55) {};
+		\node [style=none] (34) at (4, -1.45) {};
+		\node [style=none] (35) at (1, -1.45) {};
+		\node [style=tiny] (36) at (2.5, -2) {leaf 01};
+		\node [style=none] (37) at (4.6, -2.55) {};
+		\node [style=none] (38) at (7.6, -2.55) {};
+		\node [style=none] (39) at (7.6, -1.45) {};
+		\node [style=none] (40) at (4.6, -1.45) {};
+		\node [style=tiny] (41) at (6.1, -2) {leaf 10};
+		\node [style=none] (42) at (8.7, -2.55) {};
+		\node [style=none] (43) at (11.7, -2.55) {};
+		\node [style=none] (44) at (11.7, -1.45) {};
+		\node [style=none] (45) at (8.7, -1.45) {};
+		\node [style=tiny] (46) at (10.2, -2) {leaf 11};
+		\node [style=none] (47) at (-0.8, 0.75) {};
+		\node [style=none] (48) at (-1.6, -1.45) {};
+		\node [style=none] (49) at (0.8, 0.75) {};
+		\node [style=none] (50) at (2.5, -1.45) {};
+		\node [style=none] (51) at (7.2, 0.75) {};
+		\node [style=none] (52) at (6.1, -1.45) {};
+		\node [style=none] (53) at (8.8, 0.75) {};
+		\node [style=none] (54) at (10.2, -1.45) {};
+		\node [style=tiny] (55) at (16, -2) {pruned};
+		\node [style=tiny] (56) at (7.5, -4.15) {\shortstack[c]{$\mathrm{score}(q,Z)=\|q-\mu_Z\|^2+0.5\,\sigma_Z^2$\\one extra sum column: $\Sigma\|x\|^2$}};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=thin] (16.center) to (17.center) to (18.center) to (19.center) to cycle;
+		\draw [style=arrow] (21.center) to (22.center);
+		\draw [style=arrow] (23.center) to (24.center);
+		\draw [style=arrow] (25.center) to (26.center);
+		\draw [style=thin] (27.center) to (28.center) to (29.center) to (30.center) to cycle;
+		\draw [style=thin] (32.center) to (33.center) to (34.center) to (35.center) to cycle;
+		\draw [style=thin] (37.center) to (38.center) to (39.center) to (40.center) to cycle;
+		\draw [style=thin] (42.center) to (43.center) to (44.center) to (45.center) to cycle;
+		\draw [style=arrow] (47.center) to (48.center);
+		\draw [style=arrow] (49.center) to (50.center);
+		\draw [style=arrow] (51.center) to (52.center);
+		\draw [style=arrow] (53.center) to (54.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

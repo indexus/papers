@@ -1,30 +1,16 @@
 \documentclass[11pt]{article}
-\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
-\usepackage{mathptmx}
-\usepackage[T1]{fontenc}
-\usepackage{titlesec,titling,abstract}
-\usepackage{amsmath}
-\usepackage{float,graphicx,enumitem}
-\usepackage[hidelinks]{hyperref}
+\usepackage{../common/indexus}
 \usepackage{../figkit/ixfig}
-
-\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection.}{0.5em}{}
-\pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
-\posttitle{\par\end{center}\vskip 0.5em}
-\preauthor{\vspace{0em}\begin{center}\small}
-\postauthor{\vspace{-4em}\end{center}}
-\renewcommand{\abstractname}{}
-\renewcommand{\abstracttextfont}{\normalfont\small}
 
 \begin{document}
 
 \title{Indexus: A Peer-to-Peer Data Indexing System}
-\author{Remi Henriot \\ research@indexus.io}
-\date{}
+\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }We propose an index of data that no single party has to operate. Nodes and data share one binary tree. Records are placed in zones by their coordinates, each zone keeps the exact sum of what lies below it, and each zone is held by the node closest to it in the tree. Any node or reader can compute where a zone is. A zone has one writer at a time, an acknowledged write is never lost or counted twice, and the totals stay exact when zones move from one node to another.
+\noindent \textbf{Abstract. }We propose an index of data that no single party has to operate. Nodes and data share one binary tree. Records are placed in zones by their coordinates, each zone keeps the exact sum of what lies below it, and each zone is held by the node closest to it in the tree. Any node or reader can compute where a zone is. In the normal authority path, a zone has one writer at a time, acknowledged writes survive restarts and are not counted twice, and the totals stay exact when zones move from one node to another.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
@@ -34,12 +20,15 @@ We propose an index that is a protocol rather than a service. Any party can run 
 
 Our 2024 papers introduced the tree, the encoding of locations and the incremental search~[1,~2]. This paper describes the protocol as it is built today.
 
+\paragraph{One example throughout.}
+Imagine a collection of houses. Each house has a position and a price. A city view asks for counts and price totals in large cells; a street view asks for smaller cells. The records stay in one tree. The reader changes the depth at which it reads, rather than building another index for each zoom.
+
 \section{Tree}
 Everything in Indexus is a position in one binary tree: the nodes of the network, the collections, the zones and the records.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=10cm]{orig/tree.png}
+    \ixfig[10cm]{../figkit/orig/tree.tikz}
     \caption{Binary tree}
 \end{figure}
 
@@ -47,16 +36,18 @@ We write positions with characters. In our examples a character is 2 bits, writt
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=10cm]{orig/encoded.png}
+    \ixfig[10cm]{../figkit/orig/encoded.tikz}
     \caption{Encoded tree (BASE4)}
 \end{figure}
+
+A prefix names a whole branch: C includes CA, CB, CC and CD in our four-letter drawings. A deeper prefix names a smaller part of the same tree. The drawings use four letters so that all branches fit on a page; the implementation uses 64.
 
 \section{Space}
 A record has coordinates: a latitude and a longitude, a time, or any measurable value. A \textbf{space} turns coordinates into a position in the tree by halving its dimensions one after the other. Each halving gives one bit: 1 for the upper half, 0 for the lower one. The \textbf{mask} says which dimension each bit cuts. The \textbf{offset} shifts each character by a value taken from the name of the collection, so that two collections of the same space are spread over different nodes.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=12cm]{orig/masks.png}
+    \ixfig[12cm]{../figkit/orig/masks.tikz}
     \caption{Two subdivisions of the same space}
 \end{figure}
 
@@ -65,11 +56,11 @@ With latitude and longitude, a mask (latitude, longitude) and an offset BC, the 
 \section{Collection}
 A \textbf{record} is one entry: an identifier, a location and a few numbers, such as a count or a price. A \textbf{collection} is a named set of records that use the same space. A \textbf{zone} is a part of a collection: all the records whose location starts with the same characters. The zone C holds every record whose location starts with C, and the zone CB every record starting with CB. A map zoomed out reads large zones; zoomed in, it reads small ones.
 
-Each zone keeps its \textbf{sum}: how many records lie below it and the sum of each of their numbers. The sum of a zone is the sum of its records plus the sums of its children. A deleted record is subtracted.
+Each zone keeps its \textbf{summary}: how many records lie below it and one aggregate per number. By default each number is summed; a collection may also declare \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or linear-recurrence pairs \texttt{affine} $(a, b)$ combined in cell order. Because every column is an associative monoid, any cut of the tree read in cell order equals the root. A collection's geometry, coordinate bounds, bit mask, and column operations form a short canonical description whose SHA-256 hash is the collection's 16-character name, so every node and reader checks the rules against the name without a central authority.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=15cm]{orig/collection.png}
+    \ixfig[15cm]{../figkit/orig/collection.tikz}
     \caption{Collection, set and items}
 \end{figure}
 
@@ -80,7 +71,7 @@ A \textbf{node} is a machine taking part in the protocol. Its address is also a 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=10cm]{orig/network.png}
+    \ixfig[10cm]{../figkit/orig/p2p-network.tikz}
     \caption{Network of nodes}
 \end{figure}
 
@@ -92,6 +83,8 @@ A zone also has an address: its location followed by the name of its collection.
     \caption{Zone C of collection BB has the address CB. Node CA is the closest: it holds the zone.}
 \end{figure}
 
+This address calculation predicts where a request should go. It does not by itself grant permission to write: during a transfer, a node must also hold the installed right described below. Keeping those two rules separate is what makes stale routing safe.
+
 \section{Routing}
 Nodes share what they know of the network: which nodes are active, and which node holds which part of the tree. This knowledge only grows, and two nodes that have received the same news agree.
 
@@ -99,10 +92,11 @@ At regular intervals each node contacts one node in each group of its routing ta
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{orig/routing.png}
+    \ixfig[13cm]{../figkit/orig/p2p-routing.tikz}
     \caption{Routing table (N=4, k=1)}
 \end{figure}
 
+\Needspace{10\baselineskip}
 \section{Writing}
 The steps to write a record are:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
@@ -119,23 +113,23 @@ As a collection grows, its zones spread over the network. Each new zone goes to 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{orig/delegation-1.png}
+    \ixfig[13cm]{../figkit/orig/p2p-delegation-1.tikz}
     \caption{Delegation - representation at t1}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{orig/delegation-2.png}
+    \ixfig[13cm]{../figkit/orig/p2p-delegation-2.tikz}
     \caption{Delegation - representation at t2}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{orig/delegation-3.png}
+    \ixfig[13cm]{../figkit/orig/p2p-delegation-3.tikz}
     \caption{Delegation - representation at t3}
 \end{figure}
 
-When a node is too busy, a new node joins at an address that differs from it by a single bit. The new node takes half of the busy node's part of the tree, and no other node loses anything. When a node is idle, it hands its part to a neighbour and leaves.
+When a node is too busy, a new node joins at an address that differs from it by a single bit. The new node takes half of the busy node's part of the tree, and no other node loses anything. Zones move in small lots (at most 64 zones, targeting 1\,MiB, deepest and busiest first), so the new node begins accepting writes for installed lots while the old node keeps serving the rest. When a node is idle, it hands its part to a neighbour and leaves.
 
 \section{Moving a zone}
 When a zone changes holder, the two nodes may for a short time disagree on who holds it. If both accepted writes, the zone would exist in two versions. So the right to write is handed over explicitly:
@@ -148,14 +142,24 @@ When a zone changes holder, the two nodes may for a short time disagree on who h
 
 \begin{figure}[H]
     \centering
-    \ixnew[0.6]{figures/handoff.tikz}
+    \ixnew{figures/handoff.tikz}
     \caption{A zone moves. For a short time nobody accepts writes for it; never two nodes.}
 \end{figure}
+
+The short pause concerns the lot being handed over, rather than every zone in the region. For example, after lot A is installed, its writes go to the new node while lots B, C and D still use the old one. Waiting for all four before enabling A would throw away the benefit of granular transfer.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/progressive.tikz}
+    \caption{Progressive relief: writes follow each installed lot. Four lots illustrate the mechanism; equal-sized cells do not imply equal traffic or equal transfer times.}
+\end{figure}
+
+A smaller lot limits the work in one hand-over; it does not alone bound its duration. Disk latency, the writes to catch up and the network still matter. The implementation can also fence the residual region to finish a join under continuous zone creation. Thus early service and complete join are different milestones, and a universal freeze bound is not yet established.
 
 Receipts move with the zone, so a request sent again after the move is still recognised. Each step is written on disk before the next one starts, and is resumed after a restart.
 
 \section{Sums across nodes}
-A zone and its parent may be held by different nodes. The node that holds the zone sends its sum to the node that holds the parent. It sends the sum itself, not a difference. A message received twice, or late, then changes nothing: the parent keeps the latest sum of each child and adds them up.
+A zone and its parent may be held by different nodes. The node that holds the zone sends its sum to the node that holds the parent. It sends the sum itself, not a difference. A message received twice, or late, then changes nothing: the parent keeps the latest sum of each child and adds them up. If C reports 33 and later 34, the parent replaces 33 with 34. It does not add 34 to 33. Repeating the message therefore cannot count the same child twice.
 
 \begin{figure}[H]
     \centering
@@ -170,7 +174,7 @@ A map reads the zones of the area it shows, at the size given by its zoom. A fee
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=15cm]{orig/layers.png}
+    \ixfig[15cm]{../figkit/orig/layers.tikz}
     \caption{Layers and concentric circles}
 \end{figure}
 
@@ -183,10 +187,10 @@ Collections that use the same space can be read together: a map can show propert
 
 \textit{Writing.} A write reaches its holder directly, or after one forward.
 
-\textit{Measured.} From 4 to 16 machines, each node sustained the same rate of writes whatever the size of the network. On 32 machines the network acknowledged 72\,964 writes per second with no write lost and exact totals, and up to 101\,665 at saturation, nearly twice the maximum on 16 machines.
+\textit{Measured.} On dedicated NVMe machines with durable disk writes (\texttt{fsync}) and HTTP/3, acknowledged throughput scaled linearly: 48\,000 writes/s on 16 nodes, 96\,000/s on 32 nodes, and 190\,700/s on 64 nodes (99.3\% per-node efficiency against 16). In open-loop ramps from 4 to 16 nodes, sustained throughput scaled from 14\,492/s to 57\,679/s (99.5\% linearity) at flat 262\,ms intended 99th-percentile latency. Under live elastic scaling on demand, the network absorbed 2$\times$ load doublings every 60\,s (4 to 8 nodes at 22\,386/s) and instant 2$\times$ steps (4 to 11 nodes at 16\,004/s, 65.5\,ms intended p99) with zero lost or double-owned writes.
 
 \section{Conclusion}
-We have described an index that no single party has to run. Nodes and data share one tree, so the place of every zone follows from addresses. Every zone keeps an exact sum, and parents follow their children by absolute values. The right to write is handed over explicitly, so that a zone never has two writers and an acknowledged write is never lost. What remains is to keep each zone on three machines, so that the loss of one disk loses nothing, and to let a reader check a total served by a node it does not know.
+We have described an index that no single party has to run. Nodes and data share one tree, so the place of every zone follows from addresses. Every zone keeps an exact monoid summary, and parents follow their children by versioned absolute values. The right to write is handed over explicitly in small lots, so that the normal authority path has at most one writer per zone and preserves acknowledged writes through hand-over and restart. The initial account left three-replica integration open. By 22 November 2026, optional replication is integrated and passes local node fault tests; qualifying it on remote machines remains separate work. Verifying a total served by an untrusted node also remains a proposal. A durable local acknowledgement protects against a restart, not by itself against permanent loss of that disk.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]

@@ -1,0 +1,56 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-3.75, 2.25) {};
+		\node [style=none] (2) at (3.75, 2.25) {};
+		\node [style=none] (3) at (3.75, 3.75) {};
+		\node [style=none] (4) at (-3.75, 3.75) {};
+		\node [style=tiny] (5) at (0, 3) {\shortstack[c]{Author\\vision, primitives, questions}};
+		\node [style=none] (6) at (9, 2.25) {};
+		\node [style=none] (7) at (17, 2.25) {};
+		\node [style=none] (8) at (17, 3.75) {};
+		\node [style=none] (9) at (9, 3.75) {};
+		\node [style=tiny] (10) at (13, 3) {\shortstack[c]{Models\\formalize, simplify, implement}};
+		\node [style=none] (11) at (9, -1.75) {};
+		\node [style=none] (12) at (17, -1.75) {};
+		\node [style=none] (13) at (17, -0.25) {};
+		\node [style=none] (14) at (9, -0.25) {};
+		\node [style=tiny] (15) at (13, -1) {\shortstack[c]{Tests and benchmarks\\independent reproduction}};
+		\node [style=none] (16) at (-3.75, -1.75) {};
+		\node [style=none] (17) at (3.75, -1.75) {};
+		\node [style=none] (18) at (3.75, -0.25) {};
+		\node [style=none] (19) at (-3.75, -0.25) {};
+		\node [style=tiny] (20) at (0, -1) {\shortstack[c]{Author\\audit, decide, redirect}};
+		\node [style=none] (21) at (3.75, 3) {};
+		\node [style=none] (22) at (9, 3) {};
+		\node [style=tiny] (23) at (6.4, 3.65) {direction};
+		\node [style=none] (24) at (13, 2.25) {};
+		\node [style=none] (25) at (13, -0.25) {};
+		\node [style=tiny] (26) at (15.4, 1) {\shortstack[c]{code and\\proofs}};
+		\node [style=none] (27) at (9, -1) {};
+		\node [style=none] (28) at (3.75, -1) {};
+		\node [style=tiny] (29) at (6.4, -0.25) {measured facts};
+		\node [style=none] (30) at (0, -0.25) {};
+		\node [style=none] (31) at (0, 2.25) {};
+		\node [style=tiny] (32) at (-2.1, 1) {\shortstack[c]{next\\iteration}};
+		\node [style=none] (33) at (0.5, -4.95) {};
+		\node [style=none] (34) at (12.5, -4.95) {};
+		\node [style=none] (35) at (12.5, -3.45) {};
+		\node [style=none] (36) at (0.5, -3.45) {};
+		\node [style=tiny] (37) at (6.5, -4.2) {\shortstack[c]{Planned public archive\\papers, transcripts, Indexus collection}};
+		\node [style=none] (38) at (6.5, -1) {};
+		\node [style=none] (39) at (6.5, -3.45) {};
+		\node [style=tiny] (40) at (9.4, -2.4) {\shortstack[c]{record each\\iteration}};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=thin] (16.center) to (17.center) to (18.center) to (19.center) to cycle;
+		\draw [style=arrow] (21.center) to (22.center);
+		\draw [style=arrow] (24.center) to (25.center);
+		\draw [style=arrow] (27.center) to (28.center);
+		\draw [style=arrow] (30.center) to (31.center);
+		\draw [style=thin] (33.center) to (34.center) to (35.center) to (36.center) to cycle;
+		\draw [style=arrow] (38.center) to (39.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

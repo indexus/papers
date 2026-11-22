@@ -1,0 +1,121 @@
+\documentclass[11pt]{article}
+\usepackage{../common/indexus}
+\usepackage{../figkit/ixfig}
+
+\begin{document}
+
+\title{Indexus: Development History, Authorship, and Human--AI Collaboration}
+\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\date{November 2026}
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Abstract. }Indexus grew over two years from two solo protocol papers in 2024 into a distributed Go engine, a WebGPU client stack, dedicated cluster benchmarks, and a series of mathematical and machine-learning extensions in 2026. Throughout the second phase, frontier AI models assisted heavily in formalization, simplification, implementation and experimental verification. Rather than hiding that process, this paper records the chronology of the project, delineates clearly between the author's original ideas and where models contributed, and states our commitment to publish the underlying AI conversation logs and index them as a public Indexus collection.
+\vspace{1em}\end{abstract}
+
+\section{Introduction}
+Technical papers normally present a finished artifact as if it arrived in a straight line. In practice, systems research is iterative, full of dead ends, refactorings and revised hypotheses. Today, a second factor makes transparency even more important: large language models can now participate substantively in formalizing proofs, writing code, running benchmarks and editing prose.
+
+We believe the right response is complete honesty about provenance. A reader should be able to tell what originated with the human author, what was refined or implemented with AI assistance, how every claim was verified independently of the model that wrote it, and what the full iterative trajectory looked like.
+
+\section{Chronology of Development}
+The project evolved through four phases. The early outline called its two 2026 phases ``H1'' and ``H2''; those labels are retained as provenance, not as dates of experimental execution. The cluster campaigns cited here ran in November 2026.
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/timeline.tikz}
+    \caption{Chronology of Indexus from the 2024 solo papers to the 2026 public series.}
+\end{figure}
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
+  \item \textbf{2024 --- Foundations (solo work).} The author conceived the core model and published two initial papers on \texttt{indexus.io} under CC~BY~4.0: \emph{Indexus: A Peer-to-Peer Search Algorithm}~[1] and \emph{Indexus: A Peer-to-Peer Data Indexing System}~[2], accompanied by hand-drawn TikZiT diagrams and initial prototypes. All fundamental primitives were set here: one binary tree shared by nodes, collections and records; BASE4/BASE64 prefix encoding with bit masks and collection offsets; incremental nearby search by concentric layers; and delegation of zones to XOR-closest nodes.
+  \item \textbf{2025 --- Core engine and visual client.} The protocol was implemented as a Go node (\texttt{core}), a JavaScript SDK (\texttt{sdk-js}), a management dashboard (\texttt{dashboard}), and live browser applications (\texttt{experiences}: \emph{Explore} for weather, real estate and 3D LiDAR scenes, \emph{Drawing}, and \emph{Chronicle}). The end-to-end columnar path from disk pages to a browser WebGPU arena was designed and built during this phase.
+  \item \textbf{2026 --- Protocol phase (original outline: H1).} The codebase was reorganized into seven strict unidirectional layers: tree, authority, store, wire, walk, gpu and bords. The store evolved into the \texttt{zonelog} engine. Write authority was formalized as a certificate-chain CRDT with commit-time fencing; hand-overs were redesigned into granular lots (\texttt{FLIP-UNIT}); and open-loop benchmarks were run on dedicated AWS NVMe clusters up to 64 vnodes (190\,700 writes/s). A separate 4-to-16-vnode ramp measured 99.5\% linearity; other campaigns exercised live elastic scaling.
+  \item \textbf{2026 --- Algebra phase (original outline: H2).} Zone summaries were generalized from sums to arbitrary associative monoids (\texttt{sum}, \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, \texttt{affine}) under self-certifying \texttt{IXC1} descriptors. Two measured applications were established on the same primitive: continual learning with exact unlearning (archived on Zenodo with independent reproduction) and dynamic SPFresh/LIRE vector search beating static IVF at 1\,M vectors.
+\end{enumerate}
+
+\section{What Stayed and What Became Explicit}
+The 2024 papers remain the historical starting point, not an account retroactively rewritten to contain the 2026 implementation. They called zones \emph{sets} and records \emph{items}. The newer vocabulary names the same nesting structure, while the durable authority protocol and the broader algebra make its contracts more explicit.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\linewidth}{@{}LLL@{}}
+\toprule
+2024 account & 2026 extension & Continuity \\
+\midrule
+Masks, offsets and one binary space & Canonical \texttt{IXC1} descriptors and checked dyadic bounds & Nodes and data still share one tree \\
+Incremental nearby search, layers and progressive loading & Columnar \texttt{IXB2}/\texttt{IXRB} delivery and the WebGPU client & Readers refine the same address space \\
+Counts and abelian-group properties & Ordered monoids and versioned absolute child contributions & A region composes from its subregions \\
+XOR delegation; replication left open & Durable grants, per-lot authority transfer and later replication integration & Placement knowledge alone grants no write right \\
+\bottomrule
+\end{tabularx}
+\caption{Continuity from the original search and network papers.}
+\end{table}
+
+\paragraph{Repository update, 22 November 2026.}
+The initial 2026 papers described the convergent replica core as simulated and its storage integration as future work. In snapshot \texttt{d689156}, that integration includes shadow sessions, fallback logs, degraded reads and automatic peer-to-peer repair. Commits \texttt{03deabe} and \texttt{93e7624} add node-level lifecycle and partition/crash/restart tests. The history therefore retains both milestones: the original simulation result and the later local runtime validation. These commits do not turn earlier unreplicated AWS measurements into a replicated-fault benchmark.
+
+\section{Author Contributions: Vision, Ideas, and Aspirations}
+The conceptual identity and direction of Indexus come from Remi Henriot:
+\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{The core unification}: placing nodes, collections, zones and records in a single binary prefix tree so that ownership, splitting and parent aggregation follow from one address geometry without a central coordinator.
+  \item \textbf{Spatial encoding and search}: the bit-interleaved masks, per-collection character offsets, exact zone summaries, and the incremental nearby-search algorithm using concentric layers.
+  \item \textbf{Aspiration for an open indexing protocol}: the goal---stated in the 2024 papers and the 2026 manifesto---of an index that behaves as a neutral protocol rather than a centralized service, where independent producers publish collections in shared spaces that clients compose directly.
+  \item \textbf{End-to-end visual computing}: the choice to stream columnar zone blocks directly into WebGPU shaders so that real-world datasets (LiDAR, weather, property sales) render and compose interactively in the browser.
+  \item \textbf{Research steering and taste}: deciding which directions to pursue (continual learning, vector search without rebuilds, world-model regularization), insisting on simplicity, demanding honest comparisons against strong baselines, and rejecting mechanisms that broke the single-tree invariant.
+\end{itemize}
+
+\section{Where AI Models Assisted}
+During 2025 and 2026, frontier coding and reasoning models (including Claude, Codex and Gemini) were used extensively as technical collaborators under the author's direction. Their contributions fell into six concrete areas:
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Formalization of invariants and proofs}: articulating exact safety conditions (\texttt{AUTH-1..4}, \texttt{MAP-1..2}, \texttt{HOT-1}, \texttt{ACT-1}, \texttt{GOS-1}), checking CRDT join laws, and deriving the exact IEEE~754 dyadic quantization bound $D_a$.
+  \item \textbf{Simplification and refactoring}: removing unused paths, checking layer boundaries, merging duplicate logic and preserving the single-tree model.
+  \item \textbf{Implementation and test engineering}: writing Go and JavaScript modules, fuzzers, deterministic replication simulators, race-detector suites, and AWS benchmark harnesses.
+  \item \textbf{Literature cross-checking}: comparing Indexus mechanism by mechanism against prior art (Walkad, P-Grid, CAN, Scatter, SDIMS, DAT, SPFresh, Regression Cubes, Cao and Yang) and explicitly downgrading novelty claims wherever precedent was found.
+  \item \textbf{Mathematical connections and ablations}: generalizing the propagation protocol from abelian sums to arbitrary associative monoids, running the continual-learning and SPFresh/LIRE ablations (including variance-adjusted scoring via $\Sigma\|x\|^2$), and identifying exact \texttt{sum}-monoid sufficient statistics for Epps--Pulley / SIGReg.
+  \item \textbf{Drafting and typesetting}: editing the 2026 paper series into uniform prose and generating vector TikZiT-compatible diagrams from the author's 2024 visual vocabulary.
+\end{enumerate}
+
+\section{Iterative Method and Verification}
+AI models accelerate exploration, but they can also hallucinate proofs, overstate novelty, or hide regressions. To prevent that, the project operated as a closed verification loop:
+
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/loop.tikz}
+    \caption{Human--AI iteration, independent checks and the planned public archive.}
+\end{figure}
+
+The verification record distinguishes a model-generated proposal from executable checks and, where available, independent reproduction:
+\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Protocol invariants}: enforced by unit tests, Go's race detector, fuzzers and durability audits checking zero lost keys and zero double-owned writes.
+  \item \textbf{Cross-model independent reproduction}: the continual-learning experiment was independently reproduced by a separate agent on a separate machine and then verified on Linux x86\_64 with 39/39 checks and 0 discrepancy across 3\,507 compared values (Zenodo DOI \nolinkurl{10.5281/zenodo.24404468}).
+  \item \textbf{Explicit epistemic tags}: ideas that have not yet been measured on real data remain marked as \emph{hypothesis} rather than presented as results.
+\end{itemize}
+Ultimate scientific and engineering responsibility for every design choice, experiment and published claim rests solely with the author.
+
+Commit history records changes and their dates; by itself it does not establish who first proposed an idea or which model authored a passage. The author contribution account above is therefore kept distinct from measured system results. Conversation transcripts, original drafts and reproduction artifacts provide the finer provenance promised in the next section.
+
+\section{Open Transcripts and the Development Collection}
+Two concrete transparency commitments accompany the public release of the 2026 series:
+\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
+  \item \textbf{Published AI conversation transcripts.} Alongside the papers and code repositories, we will publish the conversations conducted with AI models during the design, debugging, benchmarking and writing of Indexus (redacted only for credentials or private operational details). Readers will be able to inspect not only the final results, but the false starts, corrections and iterative refinements that produced them.
+  \item \textbf{An Indexus collection of its own development.} As a dogfooding exercise, we will index the project's full trajectory---commits, experiments, benchmarks, paper revisions and conversation turns---into a public Indexus collection ordered by time and subsystem. Any reader will be able to zoom in from the two-year overview down to an individual session or benchmark run, demonstrating both the iterative nature of human--AI work and the protocol itself.
+\end{enumerate}
+
+\section{Licenses, Open Standard, and Public Release}
+All papers in the Indexus series are prepared for publication on \texttt{indexus.io} under the \textbf{Creative Commons Attribution 4.0 International (CC BY 4.0)} license, continuing the open licensing of the 2024 papers. The accompanying repositories (\texttt{core}, \texttt{sdk-js}, \texttt{experiences}, \texttt{papers} and the public transcript archive) are being prepared for public release under clear open licenses, with reproducible benchmark scripts and archived dataset references.
+
+Our long-term goal is to publish Indexus as an \textbf{open protocol standard}---specifying the address space, canonical collection descriptors (\texttt{IXC1}), wire blocks (\texttt{IXB2}, \texttt{IXRB}), authority certificates and conformance test vectors---so that independent implementations can be built in different languages and interoperate cleanly without relying on a single reference codebase. Questions, reviews and collaboration proposals are welcome at \texttt{research@indexus.io}.
+
+\section*{References}
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
+  \item R. Henriot. Indexus: A Peer-to-Peer Search Algorithm. 2024.
+  \item R. Henriot. Indexus: A Peer-to-Peer Data Indexing System. 2024 / 2026.
+  \item R. Henriot. Indexus: Properties, Benchmarks, and Directions. 2026.
+  \item R. Henriot. Continual Learning and Exact Unlearning by Zone Sums (reproduction archive). Zenodo, DOI 10.5281/zenodo.24404468, November 2026.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,40 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-1.5, -0.45) {};
+		\node [style=none] (2) at (1.5, -0.45) {};
+		\node [style=none] (3) at (1.5, 0.45) {};
+		\node [style=none] (4) at (-1.5, 0.45) {};
+		\node [style=tiny] (5) at (0, 0) {map};
+		\node [style=none] (6) at (15.5, -0.45) {};
+		\node [style=none] (7) at (18.5, -0.45) {};
+		\node [style=none] (8) at (18.5, 0.45) {};
+		\node [style=none] (9) at (15.5, 0.45) {};
+		\node [style=tiny] (10) at (17, 0) {host};
+		\node [style=none] (11) at (0, -0.45) {};
+		\node [style=none] (12) at (0, -8.2) {};
+		\node [style=none] (13) at (17, -0.45) {};
+		\node [style=none] (14) at (17, -8.2) {};
+		\node [style=none] (15) at (0, -1.7) {};
+		\node [style=none] (16) at (17, -1.7) {};
+		\node [style=tiny] (17) at (8.5, -1.45) {1. ask: weather of zone AB, last hour};
+		\node [style=none] (18) at (17, -3.7) {};
+		\node [style=none] (19) at (0, -3.7) {};
+		\node [style=tiny] (20) at (8.5, -3.45) {2. price: 3 sat and an invoice};
+		\node [style=none] (21) at (0, -5.7) {};
+		\node [style=none] (22) at (17, -5.7) {};
+		\node [style=tiny] (23) at (8.5, -5.45) {3. ask again with proof of payment};
+		\node [style=none] (24) at (17, -7.7) {};
+		\node [style=none] (25) at (0, -7.7) {};
+		\node [style=tiny] (26) at (8.5, -7.45) {4. receive the answer and receipt};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=dashed edge] (11.center) to (12.center);
+		\draw [style=dashed edge] (13.center) to (14.center);
+		\draw [style=arrow] (15.center) to (16.center);
+		\draw [style=arrow] (18.center) to (19.center);
+		\draw [style=arrow] (21.center) to (22.center);
+		\draw [style=arrow] (24.center) to (25.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

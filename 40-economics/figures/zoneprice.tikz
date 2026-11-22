@@ -1,0 +1,63 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (1.5, 2) {};
+		\node [style=none] (2) at (5, 2) {};
+		\node [style=none] (3) at (6.5, 4) {};
+		\node [style=none] (4) at (3, 4) {};
+		\node [style=none] (5) at (0, 0) {};
+		\node [style=none] (6) at (7, 0) {};
+		\node [style=none] (7) at (10, 4) {};
+		\node [style=none] (8) at (3, 4) {};
+		\node [style=none] (9) at (3.5, 0) {};
+		\node [style=none] (10) at (6.5, 4) {};
+		\node [style=none] (11) at (1.5, 2) {};
+		\node [style=none] (12) at (8.5, 2) {};
+		\node [style=normal] (13) at (7.5, 3) {ABB};
+		\node [style=normal] (14) at (2.5, 1) {ABC};
+		\node [style=normal] (15) at (6, 1) {ABD};
+		\node [style=tiny] (16) at (3.9, 3.65) {ABA};
+		\node [style=item] (17) at (2.44, 2.32) {};
+		\node [style=item] (18) at (3.35, 2.6) {};
+		\node [style=item] (19) at (4.04, 2.4) {};
+		\node [style=item] (20) at (3.06, 2.96) {};
+		\node [style=item] (21) at (4.85, 2.92) {};
+		\node [style=item] (22) at (4.36, 3.2) {};
+		\node [style=none] (23) at (10.8, 2) {};
+		\node [style=none] (24) at (14, 2) {};
+		\node [style=tiny] (25) at (12.4, 2.25) {read AB};
+		\node [style=tiny] (26) at (16.5, 3.95) {total: 9429};
+		\node [style=none] (27) at (14.5, 3.5) {};
+		\node [style=none] (28) at (18.5, 3.5) {};
+		\node [style=none] (29) at (18.5, 0.3) {};
+		\node [style=none] (30) at (14.5, 0.3) {};
+		\node [style=none] (31) at (16.7, 3.5) {};
+		\node [style=none] (32) at (16.7, 0.3) {};
+		\node [style=tiny] (33) at (15.6, 3.1) {ABA};
+		\node [style=tiny] (34) at (17.6, 3.1) {9412};
+		\node [style=none] (35) at (14.5, 2.7) {};
+		\node [style=none] (36) at (18.5, 2.7) {};
+		\node [style=tiny] (37) at (15.6, 2.3) {ABB};
+		\node [style=tiny] (38) at (17.6, 2.3) {2};
+		\node [style=none] (39) at (14.5, 1.9) {};
+		\node [style=none] (40) at (18.5, 1.9) {};
+		\node [style=tiny] (41) at (15.6, 1.5) {ABC};
+		\node [style=tiny] (42) at (17.6, 1.5) {1};
+		\node [style=none] (43) at (14.5, 1.1) {};
+		\node [style=none] (44) at (18.5, 1.1) {};
+		\node [style=tiny] (45) at (15.6, 0.7) {ABD};
+		\node [style=tiny] (46) at (17.6, 0.7) {14};
+		\node [style=tiny] (47) at (9, -1) {four child rows, whether the zone is empty or holds millions of records};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=surface] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (5.center) to (6.center) to (7.center) to (8.center) to cycle;
+		\draw [style=thin] (9.center) to (10.center);
+		\draw [style=thin] (11.center) to (12.center);
+		\draw [style=arrow] (23.center) to (24.center);
+		\draw [style=thin] (27.center) to (28.center) to (29.center) to (30.center) to cycle;
+		\draw [style=thin] (31.center) to (32.center);
+		\draw [style=thin] (35.center) to (36.center);
+		\draw [style=thin] (39.center) to (40.center);
+		\draw [style=thin] (43.center) to (44.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

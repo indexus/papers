@@ -1,0 +1,61 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (0, 8.4) {};
+		\node [style=none] (2) at (3, 8.4) {};
+		\node [style=none] (3) at (5, 9.9) {};
+		\node [style=none] (4) at (2, 9.9) {};
+		\node [style=none] (5) at (0, 8.4) {};
+		\node [style=none] (6) at (6, 8.4) {};
+		\node [style=none] (7) at (10, 11.4) {};
+		\node [style=none] (8) at (4, 11.4) {};
+		\node [style=none] (9) at (3, 8.4) {};
+		\node [style=none] (10) at (7, 11.4) {};
+		\node [style=none] (11) at (2, 9.9) {};
+		\node [style=none] (12) at (8, 9.9) {};
+		\node [style=normal] (13) at (2.5, 9.15) {AB};
+		\node [style=tiny] (14) at (15, 9.9) {land registry: public};
+		\node [style=none] (15) at (0, 4.2) {};
+		\node [style=none] (16) at (3, 4.2) {};
+		\node [style=none] (17) at (5, 5.7) {};
+		\node [style=none] (18) at (2, 5.7) {};
+		\node [style=none] (19) at (0, 4.2) {};
+		\node [style=none] (20) at (6, 4.2) {};
+		\node [style=none] (21) at (10, 7.2) {};
+		\node [style=none] (22) at (4, 7.2) {};
+		\node [style=none] (23) at (3, 4.2) {};
+		\node [style=none] (24) at (7, 7.2) {};
+		\node [style=none] (25) at (2, 5.7) {};
+		\node [style=none] (26) at (8, 5.7) {};
+		\node [style=normal] (27) at (2.5, 4.95) {AB};
+		\node [style=tiny] (28) at (15, 5.7) {weather: public; fresh hour paid};
+		\node [style=none] (29) at (0, 0) {};
+		\node [style=none] (30) at (3, 0) {};
+		\node [style=none] (31) at (5, 1.5) {};
+		\node [style=none] (32) at (2, 1.5) {};
+		\node [style=none] (33) at (0, 0) {};
+		\node [style=none] (34) at (6, 0) {};
+		\node [style=none] (35) at (10, 3) {};
+		\node [style=none] (36) at (4, 3) {};
+		\node [style=none] (37) at (3, 0) {};
+		\node [style=none] (38) at (7, 3) {};
+		\node [style=none] (39) at (2, 1.5) {};
+		\node [style=none] (40) at (8, 1.5) {};
+		\node [style=normal] (41) at (2.5, 0.75) {AB};
+		\node [style=tiny] (42) at (15, 1.5) {user notes: private};
+		\node [style=tiny] (43) at (10, -1) {same Space; independent collections};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=surface] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (5.center) to (6.center) to (7.center) to (8.center) to cycle;
+		\draw [style=thin] (9.center) to (10.center);
+		\draw [style=thin] (11.center) to (12.center);
+		\draw [style=surface] (15.center) to (16.center) to (17.center) to (18.center) to cycle;
+		\draw [style=thin] (19.center) to (20.center) to (21.center) to (22.center) to cycle;
+		\draw [style=thin] (23.center) to (24.center);
+		\draw [style=thin] (25.center) to (26.center);
+		\draw [style=surface] (29.center) to (30.center) to (31.center) to (32.center) to cycle;
+		\draw [style=thin] (33.center) to (34.center) to (35.center) to (36.center) to cycle;
+		\draw [style=thin] (37.center) to (38.center);
+		\draw [style=thin] (39.center) to (40.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

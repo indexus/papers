@@ -1,0 +1,39 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-4.9, 0.7) {};
+		\node [style=none] (2) at (4.9, 0.7) {};
+		\node [style=none] (3) at (4.9, 3.3) {};
+		\node [style=none] (4) at (-4.9, 3.3) {};
+		\node [style=tiny] (5) at (0, 2) {\shortstack[c]{2024\\Solo papers\\Tree, encoding, nearby search, delegation}};
+		\node [style=none] (6) at (7.9, 0.7) {};
+		\node [style=none] (7) at (17.7, 0.7) {};
+		\node [style=none] (8) at (17.7, 3.3) {};
+		\node [style=none] (9) at (7.9, 3.3) {};
+		\node [style=tiny] (10) at (12.8, 2) {\shortstack[c]{2025\\Go core and JavaScript SDK\\WebGPU client and Explore}};
+		\node [style=none] (11) at (7.9, -3.3) {};
+		\node [style=none] (12) at (17.7, -3.3) {};
+		\node [style=none] (13) at (17.7, -0.7) {};
+		\node [style=none] (14) at (7.9, -0.7) {};
+		\node [style=tiny] (15) at (12.8, -2) {\shortstack[c]{2026: protocol phase (outline H1)\\CRDT authority; FLIP-UNIT\\AWS cluster campaigns}};
+		\node [style=none] (16) at (-4.9, -3.3) {};
+		\node [style=none] (17) at (4.9, -3.3) {};
+		\node [style=none] (18) at (4.9, -0.7) {};
+		\node [style=none] (19) at (-4.9, -0.7) {};
+		\node [style=tiny] (20) at (0, -2) {\shortstack[c]{2026: algebra phase (outline H2)\\IXC1 and monoids\\Continual learning; SPFresh 1M}};
+		\node [style=none] (21) at (4.9, 2) {};
+		\node [style=none] (22) at (7.9, 2) {};
+		\node [style=none] (23) at (12.8, 0.7) {};
+		\node [style=none] (24) at (12.8, -0.7) {};
+		\node [style=none] (25) at (7.9, -2) {};
+		\node [style=none] (26) at (4.9, -2) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=thin] (16.center) to (17.center) to (18.center) to (19.center) to cycle;
+		\draw [style=arrow] (21.center) to (22.center);
+		\draw [style=arrow] (23.center) to (24.center);
+		\draw [style=arrow] (25.center) to (26.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

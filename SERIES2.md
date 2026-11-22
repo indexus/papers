@@ -1,3 +1,11 @@
+# Historical planning note
+
+This document preserves an earlier outline, including its original working
+paths and proposed titles. It is not the current build guide. See [README.md](README.md)
+for the current series and reproducible build commands.
+
+---
+
 # Indexus series, third version: concepts, then construction
 
 Code: /home/claude/code/core (Go, branch main, read only) and /home/claude/code/sdk

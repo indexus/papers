@@ -1,0 +1,43 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-1.7, -0.5) {};
+		\node [style=none] (2) at (1.7, -0.5) {};
+		\node [style=none] (3) at (1.7, 0.5) {};
+		\node [style=none] (4) at (-1.7, 0.5) {};
+		\node [style=tiny] (5) at (0, 0) {producer};
+		\node [style=none] (6) at (4.3, -0.5) {};
+		\node [style=none] (7) at (7.7, -0.5) {};
+		\node [style=none] (8) at (7.7, 0.5) {};
+		\node [style=none] (9) at (4.3, 0.5) {};
+		\node [style=tiny] (10) at (6, 0) {host};
+		\node [style=none] (11) at (10.3, -0.5) {};
+		\node [style=none] (12) at (13.7, -0.5) {};
+		\node [style=none] (13) at (13.7, 0.5) {};
+		\node [style=none] (14) at (10.3, 0.5) {};
+		\node [style=tiny] (15) at (12, 0) {application};
+		\node [style=none] (16) at (16.3, -0.5) {};
+		\node [style=none] (17) at (19.7, -0.5) {};
+		\node [style=none] (18) at (19.7, 0.5) {};
+		\node [style=none] (19) at (16.3, 0.5) {};
+		\node [style=tiny] (20) at (18, 0) {user};
+		\node [style=none] (21) at (1.7, 0) {};
+		\node [style=none] (22) at (4.3, 0) {};
+		\node [style=tiny] (23) at (3, 0.25) {signed records};
+		\node [style=none] (24) at (7.7, 0) {};
+		\node [style=none] (25) at (10.3, 0) {};
+		\node [style=tiny] (26) at (9, 0.25) {zone totals};
+		\node [style=none] (27) at (13.7, 0) {};
+		\node [style=none] (28) at (16.3, 0) {};
+		\node [style=tiny] (29) at (15, 0.25) {view};
+		\node [style=tiny] (30) at (9, -1.8) {one party may play several roles; no role owns the shared index};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=thin] (16.center) to (17.center) to (18.center) to (19.center) to cycle;
+		\draw [style=arrow] (21.center) to (22.center);
+		\draw [style=arrow] (24.center) to (25.center);
+		\draw [style=arrow] (27.center) to (28.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

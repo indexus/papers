@@ -53,7 +53,7 @@
 		\node [style=none] (51) at (18.024, -1.2) {};
 		\node [style=none] (52) at (18.024, -0.7) {};
 		\node [style=none] (53) at (16.424, -0.7) {};
-		\node [style=tiny] (54) at (-0.2, -0.95) {pages};
+		\node [style=tiny] (54) at (0.5, -0.95) {pages};
 		\node [style=tiny] (55) at (9.1, 1.25) {one zone = one contiguous range of keys; its children follow each other};
 		\node [style=tiny] (56) at (10.2, -1.75) {each page stores the sums of its rows: a zone sum adds page sums, not records};
 	\end{pgfonlayer}

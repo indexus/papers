@@ -8,17 +8,26 @@
 \RequirePackage[T1]{fontenc}
 \RequirePackage{titlesec,titling,abstract}
 \RequirePackage{algorithm,algpseudocode}
-\RequirePackage{float,anyfontsize,etoolbox,graphicx,enumitem,amsmath,amssymb}
+\RequirePackage{float,etoolbox,graphicx,enumitem,amsmath,amssymb,booktabs,tabularx}
 \RequirePackage[most]{tcolorbox}
 \RequirePackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds,shapes.geometric,decorations.pathreplacing,patterns}
 \RequirePackage[hidelinks]{hyperref}
-\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection}{1em}{}
-\titleformat{\subsection}[block]{\normalfont\fontsize{12pt}{14pt}\bfseries}{\thesubsection}{1em}{}
+\titleformat{\section}[block]{\normalfont\fontsize{13pt}{15pt}\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}[block]{\normalfont\fontsize{11.5pt}{13.5pt}\bfseries}{\thesubsection}{0.5em}{}
 \pretitle{\vspace{-6em}\begin{center}\fontsize{14pt}{16pt}\bfseries}
 \posttitle{\par\end{center}\vskip 0.5em}
 \preauthor{\vspace{0em}\begin{center}\small}
-\postauthor{\vspace{-4em}\end{center}}
+\postauthor{\par\end{center}\vspace{-0.75em}}
+\predate{\begin{center}\small}
+\postdate{\par\end{center}\vspace{-0.5em}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setlength{\emergencystretch}{1.5em}
+\setlength{\intextsep}{14pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{16pt plus 3pt minus 2pt}
+\raggedbottom
+\clubpenalty=10000
+\widowpenalty=10000
 \renewcommand{\abstractname}{}
 \renewcommand{\abstractnamefont}{\normalfont\small\bfseries}
 \renewcommand{\abstracttextfont}{\normalfont\small}
