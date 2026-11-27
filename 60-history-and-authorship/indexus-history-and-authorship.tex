@@ -5,12 +5,13 @@
 \begin{document}
 
 \title{Indexus: Development History, Authorship, and Human--AI Collaboration}
-\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\author{\ixbyline}
+\hypersetup{pdftitle={Indexus: Development History, Authorship, and Human–AI Collaboration}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Two papers written by Remi Henriot in 2024 introduced the tree, the address encoding and the search algorithm. This account follows those ideas into a Go engine, a WebGPU client and the experiments of November 2026. It identifies decisions the author attributes to his own work, contributions made with AI assistance and the artifacts a reader can check. One example follows a placement change from a plausible hypothesis to a comparison on AWS. The accompanying archive provides selected exchanges with the tools used during development.
+\noindent \textbf{Abstract. }Two papers written by Rémi Henriot in 2024 introduced the tree, the address encoding and the search algorithm. This account follows those ideas into a Go engine, a WebGPU client and the experiments of November 2026. It identifies decisions the author attributes to his own work, contributions made with AI assistance and the artifacts a reader can check. One example follows a placement change from a plausible hypothesis to a comparison on AWS. The accompanying archive provides selected exchanges with the tools used during development.
 
 \vspace{1em}\end{abstract}
 
@@ -78,7 +79,7 @@ Two changes made the distinction measurable. The planner began ranking work usin
 The next experiment varied when competing donors could retry. One policy reopened the placement service to all of them together. The other spread their retries over time. In paired AWS runs, spreading retries reduced calls but increased the median wait for a receiver's first write among requests that reached service. The team retained the first policy. The \href{https://github.com/indexus/core/blob/e4b9072/docs/benchmarks/aws-placement-100-20261127/granular50/aws-pair.md}{paired run record} preserves both outcomes. \ixsection{properties}{elasticity}{The properties paper} gives the workloads, sample sizes and audit limits so readers can check that decision.
 
 \section{Author Contributions: Vision, Ideas, and Aspirations}\hypertarget{ix:author}{}
-The conceptual identity and direction of Indexus come from Remi Henriot:
+The conceptual identity and direction of Indexus come from Rémi Henriot:
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item \textbf{The core unification}: placing nodes, collections, zones and records in a single binary prefix tree so that ownership, splitting and parent aggregation follow from one address geometry without a central coordinator.
   \item \textbf{Spatial encoding and search}: the bit-interleaved masks, per-collection character offsets, exact zone summaries, and the incremental nearby-search algorithm using concentric layers.
@@ -88,7 +89,17 @@ The conceptual identity and direction of Indexus come from Remi Henriot:
 \end{itemize}
 
 \section{Where AI Models Assisted}\hypertarget{ix:ai}{}
-During 2025 and 2026, frontier coding and reasoning models (including Claude, Codex and Gemini) were used extensively as technical collaborators under the author's direction. Their contributions fell into six concrete areas:
+The two 2024 papers were solo work by Rémi Henriot. The following dates identify the earliest examples selected for the public archive. Earlier use of a particular tool cannot be dated from this sample. OpenAI and Anthropic are model providers. Cursor and Antigravity identify work environments; a transcript from either identifies a particular model only when the record names it.
+
+\begin{description}[leftmargin=1.3em,itemsep=2pt]
+\item[18 March 2025.] \href{https://github.com/indexus/papers/blob/main/ai-transparency/episodes/01-ask-for-sources.md}{In ChatGPT (OpenAI)}, Henriot asked for sources before accepting a description of Indexus.
+\item[16--21 September 2026.] \href{https://github.com/indexus/papers/blob/main/ai-transparency/episodes/02-author-scale-objectives.md}{In Cursor}, Henriot set the scale objective, asked for a worked example of XOR placement and challenged whether the tests could expose a faulty implementation.
+\item[16 November 2026.] \href{https://github.com/indexus/papers/blob/main/ai-transparency/episodes/07-claude-code-audit.md}{Claude (Anthropic)}, used through Claude Code, performed a read-only audit and rechecked the main benchmark table against its source.
+\item[20--21 November 2026.] \href{https://github.com/indexus/papers/blob/main/ai-transparency/episodes/08-checker-missing-results.md}{In Codex (OpenAI)}, the work included finding a checker that accepted missing reproduction outputs and revising a freeze estimate after tracing the transfer code.
+\item[21--22 November 2026.] \href{https://github.com/indexus/papers/blob/main/ai-transparency/episodes/12-cross-tool-integration.md}{The Antigravity records} document cross-tool integration, planning staged AWS tests, comparing vector-search methods at a fixed budget and reviewing the paper figures.
+\end{description}
+
+Across the project, the author groups AI-assisted work into six areas:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
   \item \textbf{Formalization of invariants and proofs}: articulating exact safety conditions (\texttt{AUTH-1..4}, \texttt{MAP-1..2}, \texttt{HOT-1}, \texttt{ACT-1}, \texttt{GOS-1}), checking CRDT join laws, and deriving the exact IEEE~754 dyadic quantization bound $D_a$.
   \item \textbf{Simplification and refactoring}: removing unused paths, checking layer boundaries, merging duplicate logic and preserving the single-tree model.
@@ -127,7 +138,12 @@ A further proposal is to index the project's commits, experiments, revisions and
 \section{Licenses, Open Standard, and Public Release}
 All papers in the Indexus series are prepared for publication on \texttt{indexus.io} under the \textbf{Creative Commons Attribution 4.0 International (CC BY 4.0)} license, continuing the open licensing of the 2024 papers. The accompanying repositories (\texttt{core}, \texttt{sdk-js}, \texttt{experiences}, \texttt{papers} and the public transcript archive) are being prepared for public release under clear open licenses, with reproducible benchmark scripts and archived dataset references.
 
-Our long-term goal is to publish Indexus as an \textbf{open protocol standard}---specifying the address space, canonical collection descriptors (\texttt{IXC1}), wire blocks (\texttt{IXB2}, \texttt{IXRB}), authority certificates and conformance test vectors---so that independent implementations can be built in different languages and interoperate cleanly without relying on a single reference codebase. Questions, reviews and collaboration proposals are welcome at \texttt{research@indexus.io}.
+Indexus is the brand and project that originated the \textbf{Distributed Prefix Index Protocol (DPIP)}. The proposed open standard would specify the address space, canonical collection descriptors (\texttt{IXC1}), wire blocks (\texttt{IXB2}, \texttt{IXRB}), authority certificates and conformance test vectors so that independent implementations can be built in different languages and interoperate cleanly without relying on a single reference codebase. Questions, reviews and collaboration proposals are welcome at \texttt{research@indexus.io}.
+
+\paragraph{Protocol name.} In French, the proposed name is \emph{protocole d'indexation distribuée par préfixes}. The English title spells out DPIP because the initials also occur in an earlier protocol for cooperative caching, \emph{Data Pull/Index Push}, described by \href{https://dl.ifip.org/db/conf/euc/euc2005/YoungCW05.pdf}{Young, Chiu and Wu (2005)}.
+
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} Rémi Henriot supplied the project history and retains responsibility for the account. AI-assisted editing connected the dated exchanges to the decisions and experiments they document. The \hyperlink{ix:ai}{dated account above} identifies the tools and the scope of the surviving records.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]

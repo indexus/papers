@@ -5,8 +5,8 @@
 \begin{document}
 
 \title{The Indexus Manifesto: Data as a Commons}
-\author{Remi Henriot \\
-        research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\author{\ixbyline}
+\hypersetup{pdftitle={The Indexus Manifesto: Data as a Commons}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 
 \maketitle
@@ -46,7 +46,7 @@ An application decides what to show, how and to whom. It should not need to own 
 Decentralisation addresses that mechanism directly: the index is not held by any single operator. Businesses in competition can publish their offers into the same collections and host part of the same index. They obtain the same network effect as a third-party index, one place where every offer can be found, compared and summed, while the order of results and the meaning of a total are fixed by a public specification, the same for every participant. Ranking, presentation and the customer relationship remain with the applications and businesses that choose them.
 
 \subsection*{4. A protocol, not a platform}
-The network is defined by a written specification, not by one program. Several independent implementations must be able to join the same network and pass the same conformance tests, as the implementations of an Internet standard do. No implementation, including the one we write, owns the network. Changes go through public proposals.
+Indexus is the project behind the proposed Distributed Prefix Index Protocol (DPIP). DPIP gives independent implementations a common set of rules for addressing, reading and writing zones. Several independent implementations must be able to join the same network and pass the same conformance tests, as the implementations of an Internet standard do. No implementation, including the one we write, owns the network. Changes go through public proposals.
 
 \subsection*{5. Exact at every scale}
 A map shows a city and a street with the same tool. Their totals should account for every record, including deletions. A parent replaces a child's previous contribution when it receives a newer one. A reader needs to know both what a total counts and how fresh it is.
@@ -61,7 +61,7 @@ Opening data does not mean publishing everything. A person's history can live on
 Infrastructure costs money to run, and producers incur costs to keep their records current. Base public data should stay free to read. For premium collections we propose dividing the price of a read between the host that served it and the producer. The \ixpapertext{economics}{economics paper} explores settlement through Bitcoin's Lightning Network.
 
 \subsection*{9. Open and not appropriable}
-The reference implementation uses a copyleft licence. We propose that a neutral foundation hold the specification and the name. Client libraries stay permissive so that applications built on the index can be anything their authors want.
+The reference implementation uses a copyleft licence. We propose a neutral foundation to steward the DPIP specification and its name. Indexus would remain the project's brand. Client libraries stay permissive so that applications built on the index can be anything their authors want.
 
 \subsection*{10. Sovereign and resilient}
 Nodes run on ordinary machines, on commercial providers or at home. A host can resume from its disk. Surviving the permanent loss of that disk also requires a copy elsewhere. Public services and organisations can choose where they host their part of the index. We intend to document the uses we support in a public charter.
@@ -84,5 +84,8 @@ The current series keeps this outline as its historical starting point. It separ
 
 \section*{An invitation}
 We are looking for producers who want their data read without giving it away, for hosts who want to run part of a common infrastructure, for developers who want to build applications on data they do not have to collect, and for people who want to write a second implementation and prove that the specification stands on its own. The goal is not one more database. It is to make the next application cheaper to build than the last one, because the data it needs is already there, shared, exact and paid for fairly.
+
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} The aims in this manifesto are Rémi Henriot's. AI-assisted editing helped distinguish the principles from the features already implemented. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
 
 \end{document}

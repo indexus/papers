@@ -5,12 +5,13 @@
 \begin{document}
 
 \title{Indexus: Properties, Benchmarks, and Directions}
-\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\author{\ixbyline}
+\hypersetup{pdftitle={Indexus: Properties, Benchmarks, and Directions}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Indexus projects any multidimensional space into a single binary tree of 96-bit addresses shared by nodes, collections, zones and records~[\ixref{1},~\ixref{2}]. This paper collects the mathematical guarantees of that primitive, its measured system performance on dedicated hardware, and two measured applications built on the same algebra: continual learning with exact unlearning, and dynamic vector search without rebuilds. We distinguish throughout between what is measured on a cluster, what is measured in simulation or on one node, and what remains a hypothesis for future work.
+\noindent \textbf{Abstract. }The Distributed Prefix Index Protocol (DPIP) maps a multidimensional space into a single binary tree of 96-bit addresses shared by nodes, collections, zones and records~[\ixref{1},~\ixref{2}]. This paper collects the mathematical guarantees of that primitive, its measured system performance on dedicated hardware, and two measured applications built on the same algebra: continual learning with exact unlearning, and dynamic vector search without rebuilds. We distinguish throughout between what is measured on a cluster, what is measured in simulation or on one node, and what remains a hypothesis for future work.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
@@ -245,7 +246,7 @@ The workloads are HuffPost (209\,527 articles, 42 classes, 2012--2022) and AG Ne
 \noindent\emph{Measured prototype.}
 A vector search asks for the records closest to a query vector. Scanning every vector gives a direct answer but costs more as the collection grows. A posting groups nearby vectors so that a query can inspect promising groups first. SPFresh~[\ixref{5}] maintains a fresh vector index via postings (clusters around centroids) updated by LIRE (local split, neighbor reassignment, and merge). Indexus zones with opaque addresses ($k=0$) already hold what a posting needs: count $n$, vector sum $\Sigma x$ (centroid $\mu_Z = \Sigma x / n$), and one scalar sum $\Sigma \|x\|^2$ giving exact zone variance $\sigma_Z^2 = \Sigma \|x\|^2 / n - \|\mu_Z\|^2$. Every inner zone automatically carries the centroid and variance of its entire subtree, so no separate centroid index is needed.
 
-To obey Indexus's addressing rule, the tree grows \textbf{downward only} (\texttt{growDown}): when a leaf's parent is full, the leaf becomes an inner zone with two leaf children; nothing above a split ever changes address.
+To preserve DPIP addresses, the tree grows \textbf{downward only} (\texttt{growDown}): when a leaf's parent is full, the leaf becomes an inner zone with two leaf children; nothing above a split ever changes address.
 
 \begin{figure}[H]
     \centering
@@ -335,7 +336,10 @@ Walkad~[\ixref{8}] uses XOR placement for spatial cells. P-Grid~[\ixref{9}] and 
 \section{Conclusion}
 A prefix tree with versioned child summaries connects three results: a fold over a complete cut, unlearning with a fixed encoder, and dynamic search that beat static IVF on the 1\,M-vector test. On dedicated NVMe machines, the late-November campaigns sustained the named write plateaus while revealing how often splitting a vnode left its host busy. Parallel geo-semantic descents, hierarchical SIGReg diagnostics and verifiable analytical registries remain research directions.
 
-An open protocol standard would specify canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}) and exact dyadic addressing, with conformance vectors for independent implementations. Correspondence and reviews are welcome at \texttt{research@indexus.io}.
+The proposed DPIP standard would specify canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}) and exact dyadic addressing, with conformance vectors for independent implementations. Correspondence and reviews are welcome at \texttt{research@indexus.io}.
+
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} Rémi Henriot directed the experiments and selected the comparisons. AI-assisted work included auditing a benchmark table, checking reproduction scripts and plotting placement requests against first writes. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
 
 \Needspace{6\baselineskip}
 \section*{References}

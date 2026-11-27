@@ -5,18 +5,19 @@
 \begin{document}
 
 \title{Indexus: The Network}
-\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\author{\ixbyline}
+\hypersetup{pdftitle={Indexus: The Network}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }When a new machine joins Indexus, it can begin serving writes while its neighbour still holds most of the data being moved. This paper follows one zone from the first copy to the first write at its new holder. The two participants use their durable stores to determine who can write. Other nodes can learn the new route later. We explain how a reader finds a zone in transit and why a collection summary can still lag behind an acknowledged write.
+\noindent \textbf{Abstract. }A machine joining a Distributed Prefix Index Protocol (DPIP) network can begin serving writes while its neighbour still holds most of the data being moved. This paper follows one zone from the first copy to the first write at its new holder. The two participants use their durable stores to determine who can write. Other nodes can learn the new route later. We explain how a reader finds a zone in transit and why a collection summary can still lag behind an acknowledged write.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
 Suppose an entry node sends a write to the address it used a moment ago. In the meantime, a new node has received the zone. How does the entry find the new holder? What prevents the old one from writing again? How can a reader find a record just acknowledged at the new address?
 
-The protocol answers these questions with three different kinds of information. A route suggests a destination. A right installed on a particular disk lets that disk commit a write. A durable inventory records the data at a holder and the destinations a reader must still visit. A route may already point to a new node when its copy is incomplete, or it may still point to an old node after the transfer has finished.
+The Indexus implementation of DPIP answers these questions with three different kinds of information. A route suggests a destination. A right installed on a particular disk lets that disk commit a write. A durable inventory records the data at a holder and the destinations a reader must still visit. A route may already point to a new node when its copy is incomplete, or it may still point to an old node after the transfer has finished.
 
 \paragraph{Companion papers.}
 \ixpaper{whitepaper} introduces the common tree and \ixpaper{client} follows a request from the reader's side. \ixsection{properties}{benchmarks}{The properties paper} reports the measurements. \ixsection{history}{verification}{The history paper} records the design changes and the scope of their verification.
@@ -181,7 +182,7 @@ Last lot to regional closure & Work still needed for residual zones, region and 
 \end{tabularx}
 \end{center}
 
-Measure the client separately, from intended arrival to acknowledgement. This includes waiting before a fence, queueing, retries and disk service. Report the offered and acknowledged rates alongside the latency distribution, because measuring only completed writes can hide an increasing backlog. The \ixsection{properties}{benchmarks}{benchmark tables} distinguish the fixed-size NVMe network, historical load ramps and later live-placement runs, with their audit scope and workload. A throughput result on an already populated network answers a different question from the time it takes a new receiving disk to accept useful traffic.
+Time client writes from intended arrival to acknowledgement, including queueing, fence waits, retries and disk service. Report offered and acknowledged rates to expose a growing backlog. The \ixsection{properties}{benchmarks}{benchmark tables} give the workloads and audit coverage for fixed clusters, ramps and live placement. Time to first service measures how quickly a new disk helps.
 
 \section{Calculations}
 \textit{Group commit.} Let $f$ be the time a disk takes to make one group durable. A full group of $B$ writes consumes $f/B$ of disk service per write on average. For $B=256$, one such operation serves 256 acknowledgements. Each client still waits for the group to become durable.
@@ -195,12 +196,16 @@ Measure the client separately, from intended arrival to acknowledgement. This in
 \textit{Durability.} Suppose a disk is permanently lost before replacement with probability $p$. A write on one disk has loss probability $p$ in this example. If it actually reached two disks and the failures are independent, the corresponding probability is $p^2$. At $p=0.01$, the example gives one in a hundred on one disk and one in ten thousand on two. Shared machines or providers can correlate failures.
 
 \section{Conclusion}
-A new vnode starts helping with the first lot for which its data and permission are durably installed. Entries can learn that address from a successful write. Readers need one further piece of information, the current referrals that cover the region still in motion. Together these mechanisms allow the move to progress lot by lot while preserving one normal writer. Recovery time, placement and propagation still matter to what a client experiences.
+After the first lot is durably installed, its vnode can serve writes. The acknowledgement teaches the entry a route. Referrals let a reader find records on both sides while other lots move. Each lot keeps one normal writer; placement, recovery and propagation determine how long clients wait.
 
 The implementation discussed here is \href{https://github.com/indexus/core/tree/e4b9072}{core \texttt{e4b9072}}, reviewed on 27 November 2026. Its \href{https://github.com/indexus/core/blob/e4b9072/docs/protocol/local-permissions.md}{local-permissions contract} and \href{https://github.com/indexus/core/blob/e4b9072/docs/protocol/local-permissions-verification.md}{verification matrix} identify the protocol rules and the cases exercised.
 
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} Rémi Henriot set the requirement that a new node serve writes during transfer. AI-assisted work traced the write path, revised an early freeze estimate and illustrated how an entry learns the new route. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
+
 \Needspace{9\baselineskip}
 \section*{References}
+\small
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
   \item \hypertarget{reference:1}{}R. Henriot. \ixbib{network2024} (first version). 2024.
   \item \hypertarget{reference:2}{}R. Henriot. \ixbib{whitepaper}. 2026.

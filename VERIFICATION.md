@@ -1,3 +1,19 @@
+# DPIP title and authorship edition — 27 November 2026
+
+The lead paper carries the full protocol name and subtitle. All seven current
+PDFs credit Rémi Henriot and disclose AI co-authorship in the byline, PDF
+metadata and a paper-specific end note. Paper 6 ties dates to selected archive
+episodes. The original 2024 PDFs retain their original titles and authorship.
+
+The current edition has 63 pages. Title pages, contribution notes and the
+authorship chronology were checked on 150 dpi renders. Both historical papers
+and all seven current papers compile. Figure regeneration is stable. The logs
+report zero overfull horizontal boxes or unresolved references. Link checks
+resolved 33 internal PDF actions, 82 companion actions and 176 local Markdown
+targets. The excerpt integrity check passed for all 35 excerpts and 18 episodes.
+
+---
+
 # Series verification — 27 November 2026
 
 This edition uses the 24 November working sources and compares the protocol

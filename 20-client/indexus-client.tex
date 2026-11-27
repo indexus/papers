@@ -5,12 +5,13 @@
 \begin{document}
 
 \title{Indexus: The Client}
-\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\author{\ixbyline}
+\hypersetup{pdftitle={Indexus: The Client}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Our whitepaper describes an index in which every zone keeps the exact sum of the records below it~[\ixref{2}]. This paper describes how a reader uses it. A client turns coordinates into locations, reads the sums of a zone's children in a compact reply, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of our first paper~[\ixref{1}], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
+\noindent \textbf{Abstract. }The Distributed Prefix Index Protocol (DPIP) lets a reader refine a view one prefix at a time~[\ixref{2}]. This paper follows the Indexus reference client. A client turns coordinates into locations, reads the sums of a zone's children in a compact reply, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of Henriot's 2024 paper~[\ixref{1}], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
@@ -99,7 +100,7 @@ A map shows a region at a zoom. The zoom sets the size of the cells to draw. The
 A parent remains drawn until all the records of its child have arrived, so the map never shows a hole while it refines. The view is read with a margin of a quarter of its size on each side, so that a small move does not trigger a read. Three neighbouring levels are prepared together, which lets the map blend from one zoom to the next.
 
 \section{Searching around a point}
-A feed, or a list of the nearest places, starts at an origin and goes outwards. The client uses the incremental algorithm of our first paper~[\ixref{1}], unchanged in its principle: it reads zones in layers, from coarse to fine, sorts what it holds by distance from the origin, and uses the counts of the zones to predict how many records lie within each distance. It stops reading as soon as enough records are certain to be closer than everything not yet read, and returns them; the next call continues from there.
+A feed, or a list of the nearest places, starts at an origin and goes outwards. The client uses the incremental algorithm of Henriot's 2024 paper~[\ixref{1}], unchanged in its principle: it reads zones in layers, from coarse to fine, sorts what it holds by distance from the origin, and uses the counts of the zones to predict how many records lie within each distance. It stops reading as soon as enough records are certain to be closer than everything not yet read, and returns them; the next call continues from there.
 
 \begin{figure}[H]
     \centering
@@ -142,6 +143,9 @@ For a check after the ACK, send a fresh request to the server with \texttt{refre
 
 \section{Conclusion}
 For a map the client draws summaries and refines the visible cells; for a feed it ultimately reads individual records. A map can also combine collections at a common cell even when different producers use different offsets. A reader checking a newly acknowledged write can request a fresh result and handle an unavailable holder explicitly.
+
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} The search algorithm and the original drawings are Rémi Henriot's. AI-assisted review traced the SDK cache and helped develop the example of a fresh read after an acknowledged write. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]

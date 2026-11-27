@@ -4,21 +4,22 @@
 
 \begin{document}
 
-\title{Indexus: A Peer-to-Peer Data Indexing System}
-\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\title{Distributed Prefix Index Protocol (DPIP)\\[3pt]{\large\mdseries Multiscale Aggregation over a Peer-to-Peer Index}}
+\author{\ixbyline}
+\hypersetup{pdftitle={Distributed Prefix Index Protocol (DPIP). Multiscale Aggregation over a Peer-to-Peer Index}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }We propose an index that independent parties can operate together. A house, for example, has one location in a tree. A reader can ask for the street listing or for the number of houses in its district. We follow one listing from its coordinates to a durable acknowledgement, through a change of host, and back to a map. A tree address gives the reader a destination to try. A right recorded on disk determines which node may accept the write. Each parent combines versioned contributions from its children, so a repeated message cannot add the house twice.
+\noindent \textbf{Abstract. }In DPIP, peers share responsibility for an index. Each location prefix names a zone within a collection. Extending that prefix lets a reader move from a regional total to a smaller area. A house, for example, has one location in a tree. A reader can ask for the street listing or for the number of houses in its district. We follow one listing from its coordinates to a durable acknowledgement, through a change of host, and back to a map. A tree address gives the reader a destination to try. A right recorded on disk determines which node may accept the write. Each parent combines versioned contributions from its children, so a repeated message cannot add the house twice.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
 Data becomes useful when it can be found: the houses for sale near an address, the weather at a given hour, the news of the day scrolled back in time. Finding data requires an index. Building one is costly, so in practice one party builds it and the others query it. That party then decides what is found, in which order and on which terms.
 
-We propose an index that is a protocol rather than a service. Any party can run part of it, any reader can compute the address of a zone, and readers following the same complete data versions compute the same answer. For maps, feeds and dashboards, the index also answers totals, how many and how much in a region, and those totals compose from versioned contributions. A summary may still lag an acknowledged write: correctness of its calculation and freshness of its inputs are separate.
+Indexus is the project that originated the DPIP specification and developed its reference implementation. Any party can run part of it, any reader can compute the address of a zone, and readers following the same complete data versions compute the same answer. For maps, feeds and dashboards, the index also answers totals, how many and how much in a region, and those totals compose from versioned contributions. A summary may still lag an acknowledged write: correctness of its calculation and freshness of its inputs are separate.
 
-Our 2024 papers introduced the tree, the encoding of locations and the incremental search~[\ixref{1},~\ixref{2}]. This paper describes the protocol as it is built today.
+Henriot's 2024 papers introduced the tree, the encoding of locations and the incremental search~[\ixref{1},~\ixref{2}]. This paper describes the protocol as it is built today.
 
 \paragraph{One example throughout.}
 A producer adds one house to collection BB. Each listing has a position and a price. A city view asks for counts and price totals in large cells; a street view asks for smaller cells. The records stay in one tree. The reader changes the depth at which it reads, rather than building another index for each zoom.
@@ -31,7 +32,7 @@ Definitions and workloads behind the figures are in
 \ixpaper{economics} describes proposals, and \ixpaper{history} records provenance.
 
 \section{Tree}\hypertarget{ix:tree}{}
-Everything in Indexus is a position in one binary tree: the nodes of the network, the collections, the zones and the records.
+DPIP places the network's nodes, collections, zones and records in one binary tree.
 
 \begin{figure}[H]
     \centering
@@ -71,7 +72,7 @@ Each zone keeps its \textbf{summary}: how many records lie below it and one aggr
     \caption{Collection, set and items}
 \end{figure}
 
-Our 2024 papers called zones \emph{sets} and records \emph{items}. Before our house is added, collection BB holds 60 records. Zones A, B, C and D account for 15, 3, 33 and 9 respectively. A map can draw these four counts without reading the records.
+The 2024 papers called zones \emph{sets} and records \emph{items}. Before our house is added, collection BB holds 60 records. Zones A, B, C and D account for 15, 3, 33 and 9 respectively. A map can draw these four counts without reading the records.
 
 \section{Network}
 A host can run several virtual nodes, or \textbf{vnodes}. Each vnode has its own address, a leaf of the tree. Each node in the drawings represents one such participant.
@@ -177,7 +178,7 @@ Our new listing raises the count of C from 33 to 34. The vnode that holds C send
 A node can batch several changes in one summary. A map may therefore still show 60 after our house was acknowledged. A refreshed normal read must cover the relevant holders and receivers, or report that it cannot. The \ixsection{client}{freshness}{client paper} explains when a map refresh actually reaches the network.
 
 \section{Search}\hypertarget{ix:search}{}
-A map reads the zones of the area it shows, at the size given by its zoom. A feed, or any search around a point, reads zones in order of distance from its origin, layer by layer. The sums of the zones tell the search how many records lie within each distance, so it stops as soon as it has enough records closer than everything not yet read. This is the algorithm of our first paper, now used by the reference client.
+A map reads the zones of the area it shows, at the size given by its zoom. A feed, or any search around a point, reads zones in order of distance from its origin, layer by layer. The sums of the zones tell the search how many records lie within each distance, so it stops as soon as it has enough records closer than everything not yet read. This is the algorithm of Henriot's 2024 search paper, now used by the reference client.
 
 \begin{figure}[H]
     \centering
@@ -192,6 +193,9 @@ In two AWS runs with direct routing, each 70-second plateau at 16\,000 requested
 
 \section{Conclusion}
 The producer writes one listing. Its address tells an entry where to try, its holder records the listing and a receipt, and a later transfer carries both. The city's count increases when its parent receives the new version for C. These steps allow the next map to reuse the index built by the first. A durable local acknowledgement covers restart with the same disk. Protection against permanent disk loss needs a separately qualified replica. Verification of a total from an untrusted host remains a proposal.
+
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} Rémi Henriot introduced the tree, encoding and search in his 2024 papers. AI-assisted drafting of this edition follows one house through those mechanisms and relates the example to the measured hand-off. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]

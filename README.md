@@ -1,8 +1,15 @@
 # Indexus papers
 
-Indexus uses one binary tree for nodes, collections, zones and records. The
-papers explain the original idea, its current implementation, measured results
-and proposals. They are written in English by Remi Henriot and licensed under
+**Distributed Prefix Index Protocol (DPIP)** is the proposed standard. Indexus
+is the brand and the project that originated its specification. In French:
+*protocole d’indexation distribuée par préfixes*. Peers share responsibility for
+the index. Within a collection, extending a location prefix takes a reader from
+one zone to a more detailed view.
+
+The seven 2026 papers carry the credit **Rémi Henriot · AI Co-authored**. Each
+closes with a contribution note. The [development history](60-history-and-authorship/indexus-history-and-authorship.pdf#nameddest=ix:ai)
+dates the documented work with OpenAI, Anthropic’s Claude, Cursor and Antigravity.
+Rémi Henriot wrote the two 2024 papers. The papers are licensed under
 **Creative Commons Attribution 4.0 International (CC BY 4.0)**.
 
 Contact: **research@indexus.io**.
@@ -23,7 +30,7 @@ producers. Its worked prices are illustrative.
 | Paper | Read | Source |
 | --- | --- | --- |
 | 0. Data as a Commons | [Manifesto](00-manifesto/indexus-manifesto.pdf) | [LaTeX](00-manifesto/indexus-manifesto.tex) |
-| 1. A Peer-to-Peer Data Indexing System | [Whitepaper](10-whitepaper/indexus-whitepaper.pdf) | [LaTeX](10-whitepaper/indexus-whitepaper.tex) |
+| 1. Distributed Prefix Index Protocol (DPIP) — Multiscale Aggregation over a Peer-to-Peer Index | [Whitepaper](10-whitepaper/indexus-whitepaper.pdf) | [LaTeX](10-whitepaper/indexus-whitepaper.tex) |
 | 2. The Client | [PDF](20-client/indexus-client.pdf) | [LaTeX](20-client/indexus-client.tex) |
 | 3. The Network | [PDF](30-network/indexus-network.pdf) | [LaTeX](30-network/indexus-network.tex) |
 | 4. Paying for Open Data | [Economics proposal](40-economics/indexus-4-economics.pdf) | [LaTeX](40-economics/indexus-4-economics.tex) |

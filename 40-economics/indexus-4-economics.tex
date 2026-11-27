@@ -6,7 +6,8 @@
 \begin{document}
 
 \title{Indexus: Paying for Open Data}
-\author{Remi Henriot \\ research@indexus.io \\ \footnotesize Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)}
+\author{\ixbyline}
+\hypersetup{pdftitle={Indexus: Paying for Open Data}, pdfauthor={Rémi Henriot (AI Co-authored)}}
 \date{November 2026}
 \maketitle
 
@@ -162,7 +163,7 @@ A token must be issued, and someone receives the first units. This gives its hol
 
 A reader should not have to buy a new asset to look at a map. An application that can pay over Lightning can read every paid collection.
 
-The payment network also stays replaceable. Indexus defines a price, its two parts and the way to announce them. If another way to pay per read becomes preferable, the announcement can name it.
+The payment network also stays replaceable. This proposal defines a price, its two parts and the way to announce them. If another way to pay per read becomes preferable, the announcement can name it.
 
 This choice has a cost. Without a token there is nothing to give the first hosts before applications pay. The first hosts will be the producers themselves and those who want the data to be served.
 
@@ -202,11 +203,11 @@ Two more tools complete the picture. Neither is ours.
 
 All of the above only holds if no single party can change the rules: what a total means, in which order records are returned, how a price is announced.
 
-So Indexus is meant to be a standard, not a product. The rules are written in a public specification. Tests are derived from the specification. Any program that passes the tests can join the network, and several independent programs should exist, as is the case for Lightning or for the protocols of the Internet.
+Indexus proposes the Distributed Prefix Index Protocol (DPIP) as an open standard. Payment is a separate proposal for applications using DPIP. The rules are written in a public specification. Tests are derived from the specification. Any program that passes the tests can join the network, and several independent programs should exist, as is the case for Lightning or for the protocols of the Internet.
 
 \fig{standard}{Every implementation is checked against the tests, not against our program.}{standard}
 
-We write a reference node and release it as free software under a licence that keeps it open. Client libraries are under a permissive licence, so that any application can include them. The specification and the name are meant to be held by a neutral foundation, and changes to go through public proposals.
+We write a reference node and release it as free software under a licence that keeps it open. Client libraries are under a permissive licence, so that any application can include them. We propose that a neutral foundation steward the DPIP specification and its name, with changes submitted through public proposals.
 
 \section{Status}\hypertarget{ix:status}{}
 
@@ -219,6 +220,9 @@ We intend to proceed in order: first publish prices and count what would have be
 The elasticity experiments in \ixsection{properties}{elasticity}{the properties paper} measure the resources used to serve writes as machines join. A price per read would need a separate study of read workloads and host costs.
 
 The design aims at never holding money on behalf of someone else. This and every other legal aspect remain to be validated by counsel in each country.
+
+\Needspace{5\baselineskip}
+\paragraph{Contributions.} Rémi Henriot proposed a shared index for independent producers and hosts. AI-assisted editing clarified the map example, the illustrative prices and the distinction between payment and verification. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
