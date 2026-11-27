@@ -51,7 +51,7 @@ for u,v in [(.10,.58),(.20,.65),(.32,.60),(.12,.74),(.38,.73),(.28,.80)]:
     f.node(u*7+v*3,v*4,"","item")
 arrow(f,(10.8,2),(14,2),"read AB")
 table(f,14.5,3.5,[("ABA","9412"),("ABB","2"),("ABC","1"),("ABD","14")],title="total: 9429",w1=2.2,w2=1.8,rh=.8)
-f.node(9,-1,"four child rows, whether the zone is empty or holds millions of records", "tiny")
+f.node(9,-1,"four populated children in this example", "tiny")
 save("zoneprice",f)
 
 f=Fig()

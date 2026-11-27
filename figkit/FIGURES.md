@@ -3,16 +3,16 @@
 The author drew his 2024 figures in TikZiT. Every figure of the series must look
 like them, be vector (zoomable), and be consistent with the others.
 
-Look first: render /home/claude/papers2/original/*/*.pdf pages at 150 dpi and
-crop the figures (pdftoppm -r 150 -x -y -W -H), and read the sources in
-/home/claude/papers2/figkit/orig/*.tikz.
+For a visual reference, render pages from the archived PDFs in
+`client-algorithm/` and `p2p-protocol/` at 150 dpi. Their original TikZiT
+drawings are also available as sources in `figkit/orig/`.
 
 ## Use
 - `\usepackage{../figkit/ixfig}` (after `../common/indexus`).
 - The author's figures: include his TikZ source, never the PNG:
   `\ixfig[12cm]{../figkit/orig/encoded.tikz}` (also tree, masks, collection,
   layers, p2p-network, p2p-routing, p2p-delegation-1/2/3). Do not edit them.
-- New figures: generate them with /home/claude/papers2/figkit/ixfig.py
+- New figures: generate them with `figkit/ixfig.py`
   (tree16, plane, table, box, arrow) or write TikZiT-style code by hand
   with the same styles, save as figures/NAME.tikz, include with
   `\ixnew{figures/NAME.tikz}` (fixed scale 0.62 cm per unit, constant tiny

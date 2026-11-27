@@ -46,7 +46,7 @@
 		\node [style=none] (44) at (18.5, 1.1) {};
 		\node [style=tiny] (45) at (15.6, 0.7) {ABD};
 		\node [style=tiny] (46) at (17.6, 0.7) {14};
-		\node [style=tiny] (47) at (9, -1) {four child rows, whether the zone is empty or holds millions of records};
+		\node [style=tiny] (47) at (9, -1) {four populated children in this example};
 	\end{pgfonlayer}
 	\begin{pgfonlayer}{edgelayer}
 		\draw [style=surface] (1.center) to (2.center) to (3.center) to (4.center) to cycle;

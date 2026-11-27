@@ -1,3 +1,39 @@
+# Series verification — 27 November 2026
+
+This edition uses the 24 November working sources and compares the protocol
+with core `e4b9072`. The earlier verification entries below describe the
+snapshots available to their respective reviewers. For example, the former
+uncommitted read and route changes later became `b2d3dea` and `bfb8432`.
+
+| Current paper | Pages | Main subject of this revision |
+| --- | ---: | --- |
+| Manifesto | 4 | Motivation, principles and the status of proposals |
+| Whitepaper | 10 | One listing from encoding through transfer to a map |
+| Client | 7 | Cache, summary propagation and a fresh read after an ACK |
+| Network | 10 | Local tickets, per-lot installation, routes and failure recovery |
+| Economics | 9 | Worked pricing example, cost of service and the scope of the proposal |
+| Properties and applications | 16 | Dated authority models, paired AWS trials, host relief and audit coverage |
+| History and authorship | 6 | From the original XOR drawings to a documented placement decision |
+
+All 62 pages were inspected from renders at 150 dpi. The seven current
+papers and both 2024 source archives compile with Tectonic and reproducibly
+generated current TikZiT sources. The logs report zero overfull horizontal
+boxes and zero unresolved references. The dedicated PDF check found 32 local
+actions, 73 companion actions and 175 local Markdown targets. The seven
+distinct pinned paths into the core repository also resolve in that checkout.
+
+The 2024 source trees and original drawings match the saved edition byte for
+byte. The discussion archive passes its internal integrity check for 35
+excerpts in 18 episodes. This checks the published text and identifiers.
+
+The service curve in paper 5 was regenerated directly from the anonymized
+AWS trace; its final point counts 316 donor–target pairs requested and 152
+with an observed receiver write. Paper 5 gives the deadline denominators,
+traffic-share definition, one trial per policy and limits of the key audits.
+The experiment predates this editorial pass.
+
+---
+
 # Series verification — 22 November 2026
 
 This revision covers all seven current papers. The two 2024 articles remain

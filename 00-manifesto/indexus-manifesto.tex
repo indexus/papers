@@ -12,7 +12,7 @@
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Data is found through indexes, and indexing tends to concentrate: the more offers and readers an index gathers, the more useful it becomes relative to any other, and the party that operates it decides what is found, in which order and on which terms. We describe a different arrangement: producers publish signed records once into an open, peer-to-peer index that no single party operates; independent hosts store and serve it; applications compose what they need without holding the data; and the people who host and produce are paid for what is read. This manifesto states the principles behind the Indexus protocol and the papers that specify it.
+\noindent \textbf{Abstract. }Data is found through indexes. Each new producer makes an index more useful to readers, and each new reader makes it more valuable to producers. Whoever runs that index can decide which records are found and on what terms. We propose that competing producers publish into a shared index. Independent hosts serve it, and applications choose how to present the same data. We seek a way for readers to check a producer's record and for hosts and producers to be paid for what is read.
 \vspace{1em}\end{abstract}
 
 \section*{The problem}
@@ -49,28 +49,28 @@ Decentralisation addresses that mechanism directly: the index is not held by any
 The network is defined by a written specification, not by one program. Several independent implementations must be able to join the same network and pass the same conformance tests, as the implementations of an Internet standard do. No implementation, including the one we write, owns the network. Changes go through public proposals.
 
 \subsection*{5. Exact at every scale}
-A map shows a city and a street with the same tool, so the totals behind it must be true at every zoom, not sampled or estimated. Every zone of the index carries the exact sum of what lies below it, a deleted record is subtracted, and a parent total converges to its children within a bounded, measured delay. Numbers are a public good only if they are right.
+A map shows a city and a street with the same tool. Their totals should account for every record, including deletions. A parent replaces a child's previous contribution when it receives a newer one. A reader needs to know both what a total counts and how fresh it is.
 
 \subsection*{6. Trust is verified, not granted}
-In an open network the node that answers is not necessarily one you trust. Records are signed by their producers, and the sums a node returns must be checkable against those signatures. A reader should be able to verify a total without asking anyone to vouch for it.
+In an open network the node that answers may be unfamiliar to the reader. Our aim is for producers to sign their records and for readers to check a total against those signatures.
 
 \subsection*{7. Private stays private}
 Opening data does not mean publishing everything. A person's history can live on that person's own node and be composed with public collections on that person's device, without leaving it. Access is decided by whoever produced the data, in the protocol, not by an application's terms of service.
 
 \subsection*{8. Hosting and producing are paid}
-Infrastructure that nobody is paid to run disappears, and data that nobody is paid to produce goes stale. Base public data should stay free to read. Beyond it, freshness, volume and premium collections can be paid per request, in small amounts, and the payment split between the host that served the request and the producer of the data. We use Bitcoin's Lightning network for this and issue no token of our own: the network should not need a currency to exist.
+Infrastructure costs money to run, and producers incur costs to keep their records current. Base public data should stay free to read. For premium collections we propose dividing the price of a read between the host that served it and the producer. The \ixpapertext{economics}{economics paper} explores settlement through Bitcoin's Lightning Network.
 
 \subsection*{9. Open and not appropriable}
-The reference implementation is free software under a copyleft licence, so that no one, including a future owner of any company we build, can close it. The specification and the name belong to a neutral foundation. Client libraries stay permissive so that applications built on the index can be anything their authors want.
+The reference implementation uses a copyleft licence. We propose that a neutral foundation hold the specification and the name. Client libraries stay permissive so that applications built on the index can be anything their authors want.
 
 \subsection*{10. Sovereign and resilient}
-There is no central server to switch off. Nodes run on ordinary machines, on any provider or at home, and the index survives the loss of any of them. This makes Indexus useful to public services and to organisations that need their data to stay under their control. We will say in advance what uses we support and what uses we do not, in a public charter, because a licence cannot do that for us.
+Nodes run on ordinary machines, on commercial providers or at home. A host can resume from its disk. Surviving the permanent loss of that disk also requires a copy elsewhere. Public services and organisations can choose where they host their part of the index. We intend to document the uses we support in a public charter.
 
 \subsection*{11. Measured, not promised}
 Every claim about scale, latency or exactness is published with the scripts that reproduce it. What is implemented, what is measured and what is only proposed are labelled as such in every paper.
 
 \section*{Where we are}
-The index exists and runs. Writes are acknowledged only once durable, zone totals combine versioned contributions without counting repeated messages twice, and on sixteen machines the network has sustained more than fifty thousand acknowledged writes per second with exact totals and no loss, scaling linearly with the number of machines in the range we have measured. Replication across three copies was first modelled separately. By 22 November 2026, optional shadow storage, fallback writes and repair were integrated and passed local node fault tests; the cluster results above do not measure that mode. These totals may lag new writes while summaries propagate; a refreshed normal read must cover the needed holders or fail explicitly. Verifiable sums, payments and the formal specification are proposals.
+The reference index runs today. A holder records a write and its receipt on disk before replying. A parent can receive the same child summary twice and still count the child once. The papers grew out of two questions from 2024. How can a reader find records incrementally? How can independent hosts share the index that makes those reads possible? The \ixpapertext{history}{history} traces those questions through the original drawings and implementations. The \ixpapertext{properties}{properties paper} reports the tests of the running index. Verifiable sums, payments and formal standardisation remain goals.
 
 The original four-part outline described the system from the bottom up:
 \begin{enumerate}[leftmargin=1.5em]

@@ -14,7 +14,7 @@
 		\node [style=none] (12) at (17.7, -3.3) {};
 		\node [style=none] (13) at (17.7, -0.7) {};
 		\node [style=none] (14) at (7.9, -0.7) {};
-		\node [style=tiny] (15) at (12.8, -2) {\shortstack[c]{2026: protocol phase (outline H1)\\CRDT authority; FLIP-UNIT\\AWS cluster campaigns}};
+		\node [style=tiny] (15) at (12.8, -2) {\shortstack[c]{2026: protocol phase (outline H1)\\Early certificate graph and granular hand-off\\AWS cluster campaigns}};
 		\node [style=none] (16) at (-4.9, -3.3) {};
 		\node [style=none] (17) at (4.9, -3.3) {};
 		\node [style=none] (18) at (4.9, -0.7) {};

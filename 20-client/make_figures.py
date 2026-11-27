@@ -32,4 +32,12 @@ f.node(5, 8.0, "houses, offset B: D", "tiny")
 f.node(5, -0.6, "weather, offset D: B", "tiny")
 f.node(18, 6.0, "same cell after removing offsets", "tiny")
 save("compose", f)
-print("ok")
+# Three reads following one acknowledged insertion into a collection of sixty.
+f = Fig()
+for x, name in [(0, "client cache"), (7.0, "stored summary"), (14.0, "fresh server read")]:
+    box(f, x, 1.2, name, w=5.6, h=1.15)
+for x, label in [(0, "60"), (7.0, "60 or 61"), (14.0, "61 or unavailable")]:
+    arrow(f, (x, .6), (x, -.6))
+    f.node(x, -1.0, label, "tiny")
+save("refresh", f)
+print("client figures regenerated")

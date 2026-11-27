@@ -16,12 +16,12 @@
 \section{Introduction}
 Earlier papers in this series introduced the binary tree, the client search algorithm, and the peer-to-peer node protocol~[\ixref{1}--\ixref{4}]. Once the core engine was built and measured under load, a more general picture emerged. Indexus is not only a geographic store of counts; it is a single distributed primitive:
 \begin{quote}
-\emph{A monoid of summaries folded over a prefix tree, where each zone has one writer at a time and strictly increasing versions.}
+\emph{A monoid of summaries folded over a prefix tree, where each zone has at most one normal writer at a time and strictly increasing versions.}
 \end{quote}
 
-An application fits this primitive whenever its answer over a region composes from its answers over sub-regions, with bounded state per zone. When that criterion holds, the index serves exact answers at any resolution, updates continuously, and scales without a central coordinator.
+An application fits this primitive whenever its answer over a region composes from its answers over sub-regions, with bounded state per zone. When that criterion holds, a complete cut of the tree can answer at any resolution. Versions let a parent replace one child contribution as new records arrive.
 
-To prevent ideas from being mistaken for results, every claim in this paper carries its epistemic status: \textbf{measured} (backed by numbers on a named workload), \textbf{prototyped} (running code without a decisive benchmark), or \textbf{hypothesis} (reasoning only).
+To prevent ideas from being mistaken for results, we distinguish three kinds of evidence for the applications and systems described here: \textbf{measured} (backed by numbers on a named workload), \textbf{prototyped} (running code without a decisive benchmark), or \textbf{hypothesis} (reasoning only).
 
 \paragraph{Continuity with the original papers.}
 The 2024 search paper introduced incremental nearby queries, shared coordinate spaces and progressive loading. Its aggregation section used abelian-group properties. The companion network draft introduced XOR delegation and explicitly left replication open. The 2026 series retains that tree, its masks, its collection offsets and its visual vocabulary. Versioned replacement of child contributions now makes the same structure useful for ordered monoids and sufficient statistics; these are extensions of the original primitive, not a replacement for its search model.
@@ -38,53 +38,48 @@ Start with a city divided into cells. Each cell stores a short answer, such as a
 of the author and AI tools, with links to selected source discussions.
 
 \section{One Address Space and Three Planes}
-Every zone and every virtual node (vnode) lives in $\{0,1\}^{96}$, written as 16 characters of 6 bits. A zone is canonically identified by the pair $(\text{collection}, \text{location})$, and its routing address is $\mathrm{ID}(z) = \mathrm{bits}(\text{location}) \parallel \mathrm{bits}(\text{collection})$ padded to 96 bits. Given the local set of active vnodes $V_{\mathrm{active}}$, the owner of a zone is a pure geometric function:
+Vnodes and zone routing addresses use 96 bits, written as 16 characters of 6 bits. A zone is identified by its collection and location. Let $c$ be the collection's 96-bit address and $\ell$ the location's first $k$ routing bits, with $k=0$ at the root. Replacing the first $k$ bits of $c$ gives $\mathrm{ID}(z)=\ell\parallel c[k:96]$, where $c[k:96]$ is the remaining suffix. For a two-character example, location C in collection AB routes to CB. At the root the address is AB. Given the local set of active vnodes $V_{\mathrm{active}}$, the predicted placement of a zone follows from its address:
 \[
-\mathrm{Owner}(z, V_{\mathrm{active}}) = \arg\min_{v \in V_{\mathrm{active}}} \bigl(\mathrm{ID}(z) \oplus \mathrm{ID}(v)\bigr).
+\mathrm{Placement}(z, V_{\mathrm{active}}) = \arg\min_{v \in V_{\mathrm{active}}} \bigl(\mathrm{ID}(z) \oplus \mathrm{ID}(v)\bigr).
 \]
-This single function decides three things that other systems separate: who holds a zone, where a split places a new vnode, and who holds the parent zone to which summaries are pushed.
+The same geometry suggests a destination for a record, a position for a new vnode, and a route toward a summary parent. During a hand-over, the predicted destination can differ from the disk that currently accepts writes.
 
 Correctness depends on keeping three planes strictly separate:
 \begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
   \item \textbf{Logical view}: the tree walked by a reader (\texttt{frontier}, \texttt{visited}, \texttt{bounds}). Child markers indicate existence, never ownership.
-  \item \textbf{Routing topology}: the local membership set $V_{\mathrm{active}}$ used to predict the XOR owner. A stale topology causes a forward or a retry, never a second writer.
-  \item \textbf{Write authority}: durable grants and certificate chains on disk. A write commits only if the storage transaction verifies an unconsumed grant for that zone on that disk, with no hand-over barrier closed.
+  \item \textbf{Routing topology}: the local membership set $V_{\mathrm{active}}$ used to predict the closest vnode. A stale topology causes a forward or a retry, never a second writer.
+  \item \textbf{Write authority}: installed permissions on disk. A normal write commits only while its local storage transaction permits it. A stale route or a newly advertised address cannot grant that permission.
 \end{enumerate}
 
 \section{Convergence and Authority Guarantees}\hypertarget{ix:authority}{}
-Indexus separates its \emph{control plane} from its \emph{replicated data plane}. The initial 2026 account described the latter as a transport-free core verified in deterministic simulation. The dated runtime update below records the subsequent storage and mesh integration; the earlier benchmark campaigns retain their original scope.
-
 \paragraph{Intuition before the guarantees.}
 Routing is an address book; authority is the installed permission to commit. Two address books can disagree while only one disk has that permission. A summary is a third object: a versioned answer about records, which may arrive later than the records themselves. The formulas below formalize these separate responsibilities.
 
-\subsection{Authority Frontier CRDT}
-A CRDT is a replicated data type whose states merge to the same result despite different delivery orders. Here it describes the durable authority history, rather than allowing arbitrary nodes to invent write rights. All write rights descend from one genesis grant covering $\{0,1\}^{96}$. Each grant has at most one successor certificate, persisted before emission and retained across restarts. For any address, two replicas therefore hold two prefixes of one causal chain. Defining the frontier $F(H)$ of a history $H$ as the highest grant per address, merging two histories satisfies:
+\subsection{From a history of grants to local permissions}
+\paragraph{The historical frontier.}
+The earlier implementation disseminated a bundle called \emph{Knowledge}. All rights descended from one genesis grant over $\{0,1\}^{96}$. A grant could have at most one successor certificate, persisted before emission and retained across restarts. At a given address, two compatible histories therefore describe prefixes of the same chain. If $F(H)$ selects the highest grant at each address, then
 \[
-F(H_1 \cup H_2) = F(H_1) \sqcup F(H_2),
+F(H_1 \cup H_2) = F(H_1) \sqcup F(H_2).
 \]
-where $\sqcup$ keeps, per address, the grant of greater height. This join is associative, commutative and idempotent (a join-semilattice). Two distinct successors of the same grant have equal height and distinct tokens on a shared address, so $\sqcup$ rejects forks symmetrically. The derived authority frontier is bounded by $O(\text{leaves})$. This is not a bound on all retained proof history or on the full Knowledge bundle.
+The join keeps the higher grant. On compatible histories it is associative, commutative and idempotent. These properties make the frontier a convergent replicated data type (CRDT). Two different successors at equal height constitute a fork and are rejected in either order. The frontier occupies $O(\text{leaves})$ space. The retained history and its dissemination had additional costs.
 
-Two local properties allow the cluster to grow without global coordination:
-\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
-  \item \textbf{Context-free activation}: adding vnodes only shrinks XOR cells, so $\mathrm{Cell}(V, v) \subseteq \mathrm{Cell}(\{r, v\}, v)$ for any view $V$ containing the root $r$ and $v$.
-  \item \textbf{Local hot-split guard}: if a donor $D$ holds a terminal grant $R$ whose deepest constrained bit is $g-1$, placing a newcomer at $J = D \oplus e_b$ with $b \ge g$ cedes $R \wedge (\text{bit } b = J[b])$ without altering any third vnode's XOR cell. Disjoint hot-splits commute.
-\end{itemize}
+Two geometric properties survive the change in representation. Adding peers only shrinks the XOR cell of $v$: $\mathrm{Cell}(V,v)\subseteq\mathrm{Cell}(\{r,v\},v)$ whenever $V$ contains $r$ and $v$. Suppose donor $D$ holds a terminal region $R$ whose deepest constrained bit is $g-1$. A newcomer at $J=D\oplus e_b$, $b\geq g$, can receive $R\wedge(\text{bit }b=J[b])$ without changing any third vnode's cell. Disjoint splits commute.
 
-\subsection{Gossip and Granular Hand-Over}
-Active holders are grouped into at most 97 Kademlia-style buckets by common prefix length with the local node. Each round contacts one peer per non-empty bucket, so updates propagate in $O(\log N)$ messages per round and at most $\mathrm{depth}$ rounds (measured: 3 to 4 rounds on 1\,024 random vnodes, 3 rounds on a skewed trie).
+\paragraph{The current invariant.}
+For a zone $z$, let $W(z)$ be the set of disks whose local state permits a normal write. The safety condition is $|W(z)|\leq 1$. During a cutover $W(z)$ can be empty. The donor durably fences the lot before the receiver installs its permission. A receiver checks the participants' durable state and the transfer ticket. It does not replay a certificate chain back to genesis. This relies on honest participants and durable disks across restarts. A permanent loss of the only disk is outside that fault model. In a bounded local qualification, 11 TLC configurations passed their checks and 20 negative controls produced their expected counterexamples. \href{https://github.com/indexus/core/blob/e4b9072/docs/protocol/local-permissions-verification.md}{Scope and results of the model checks}.
 
-When a region moves to a new vnode, the transfer splits into lots of an initial target of 64 zones and 1\,MiB, ordered deepest and busiest first. Each lot is copied by batched snapshots, caught up via zone sequence numbers, certified and installed durably. The receiver begins accepting writes for installed lots while the donor continues serving the rest of the region.
+\subsection{Delivery, activation and reads}
+An early dissemination experiment grouped active holders into at most 97 Kademlia-style prefix buckets and contacted one peer per non-empty bucket in each round. It measured three to four rounds on 1\,024 random vnodes and three rounds on a skewed trie. Those results concern dissemination on the tested graphs. A local write commits against installed state independently of membership convergence.
 
-\paragraph{Runtime update, 24 November 2026.}
-The lot target is adaptive: initially 64 zones, between 16 and 2\,048 by default, toward 150\,ms of freeze, with byte limits enforced separately. Neither this target nor one bounded 500\,ms cutover wait is a bound on the complete write latency. Full Knowledge is prepared before new fences; compact write and lot replies avoid a synchronous global metadata exchange. The final join exchange can still wait after installed lots are writable. Early writes can still be relayed by a stale entry node. The local WRITE-HINT-1 update now learns the exact zone holder from an ACK in a bounded entry cache; it changes routing, not authority, and was still uncommitted at review time.
+The 24 November implementation copied deep and busy zones first, using warm snapshots and zone sequence numbers. Its adaptive lot started at 64 zones, within a range of 16--2\,048, with an initial byte target of 1\,MiB and a 150\,ms freeze target. One bounded cutover wait lasted at most 500\,ms. None of these numbers bounds the time from a client request to its ACK. That version still prepared full Knowledge before fencing. The subsequent local-permission protocol lets an installed lot take writes while its neighbours are still moving. Entry nodes learn the exact holder from a relayed ACK (\texttt{WRITE-HINT-1}). \ixsection{network}{handoff}{The network paper} traces a lot from warm copy to the first receiver write.
 
 Two local consistency requirements are separate. SUM-4 reads a local sum and the local subtractions used to correct it from one committed version. READ-1 captures a durable inventory page and the receivers needed to complete it in one snapshot (\texttt{6a3015e}). A refreshed normal read covers earlier acknowledgements or fails explicitly; it is not a global instantaneous snapshot. An ordinary derived summary may lag remote writes. \ixsection{network}{read-consistency}{The network paper} works through the two-record example. Local regression and race-detector checks establish the tested schedules, not a new AWS latency result or a proof against every possible execution.
 
-\subsection{Convergent Data Replication}
-Without replication, a zone has at most one writer; losing its only disk loses that copy and makes the zone unavailable. Initially verified in simulation, the convergent replication core (\texttt{internal/replication/convergent}) places each zone on the 3 closest active vnodes on distinct machines, $R(z)[0..2]$. Each write carries a unique dot $(\text{incarnation}, \text{counter})$ and a zone-local Lamport clock \texttt{ver}. Two versions of the same record ID are ordered totally without physical clocks by: (1) larger \texttt{ver}, (2) tombstone over live value at equal \texttt{ver}, and (3) smaller payload digest at tie. This makes record-set merge an associative, commutative, idempotent LWW-element-set. Under normal operation, $R(z)[0]$ is the sole writer and replicates asynchronously; under partition, reachable replicas accept writes in a fallback log marked \texttt{degraded} and reconcile when the owner returns.
+\subsection{Replication as a separate fault model}
+Without replication, a zone has at most one writer; losing its only disk loses that copy and makes the zone unavailable. In the earlier simulation, the convergent replication core (\texttt{internal/replication/convergent}) places each zone on the 3 closest active vnodes on distinct machines, $R(z)[0..2]$. In that model each write carries a unique dot $(\text{incarnation}, \text{counter})$ and a zone-local Lamport clock \texttt{ver}. Two versions of the same record ID are ordered totally without physical clocks by: (1) larger \texttt{ver}, (2) tombstone over live value at equal \texttt{ver}, and (3) smaller payload digest at tie. This makes record-set merge an associative, commutative, idempotent LWW-element-set. Under normal operation, $R(z)[0]$ is the sole writer and replicates asynchronously; under partition, reachable replicas accept writes in a fallback log marked \texttt{degraded} and reconcile when the owner returns.
 
-\paragraph{Runtime update, 22 November 2026.}
-At repository snapshot \texttt{d689156}, shadow sessions, fallback logs, degraded reads, owner-suspicion heartbeats and peer-to-peer repair are wired into storage and the mesh. Commits \texttt{03deabe} and \texttt{93e7624} add node-level lifecycle and fault-under-load tests covering partition, fallback, repair and crash/restart. These are local runtime tests with durable stores and an in-process transport, not a new AWS fault campaign. Replication is optional: its normal owner path and its explicitly degraded fallback path must not be confused with the single-writer guarantee of the unreplicated mode. The 2024 open replication question and the earlier simulation-only milestone remain part of the development history.
+\paragraph{Runtime milestones.}
+At repository snapshot \texttt{d689156}, shadow sessions, fallback logs, degraded reads, owner-suspicion heartbeats and peer-to-peer repair are wired into storage and the mesh. Commits \texttt{03deabe} and \texttt{93e7624} add node-level lifecycle and fault-under-load tests covering partition, fallback, repair and crash/restart. These are local runtime tests with durable stores and an in-process transport, not a new AWS fault campaign. Replication is optional: its normal owner path and its explicitly degraded fallback path must not be confused with the single-writer guarantee of the unreplicated mode. The current runtime can receive and repair fallback state and serve degraded reads. Its ordinary write path does not originate fallback writes. The simulated partition policy therefore has a wider scope than the deployed write handler. \href{https://github.com/indexus/core/blob/e4b9072/docs/architecture/chemin-ecriture.md}{Runtime write path}.
 
 \section{Monoid Column Algebra and Self-Certifying Collections}\hypertarget{ix:algebra}{}
 A monoid is a summary value, an operation for combining two such values, and an empty value. The operation must be associative: grouping three inputs differently gives the same algebraic answer. It need not be commutative: changing their order may change the answer. Counts use addition and zero; a minimum uses the smaller value and an empty sentinel. Ordered operations, such as applying affine transforms, keep a fixed cell order.
@@ -144,8 +139,9 @@ where $\Delta_a = \max_a - \min_a$, $n$ is the number of halvings along axis $a$
     \caption{Self-certifying collection descriptor \texttt{IXC1}: the name commits to geometry, space and algebra.}
 \end{figure}
 
-\section{System Benchmarks (Measured on AWS)}\hypertarget{ix:benchmarks}{}
-All cluster campaigns ran on dedicated \texttt{i4i.xlarge} instances in \texttt{eu-west-3} (1 vnode per machine, local NVMe, \texttt{fsync} enabled, HTTP/3 over QUIC and TLS, \texttt{c6i.4xlarge} load generators).
+\section{System Benchmarks}\hypertarget{ix:benchmarks}{}
+\subsection{Scaling and hand-over, 17--22 November}
+The following fixed-size and open-loop campaigns ran on dedicated \texttt{i4i.xlarge} instances in \texttt{eu-west-3} (1 vnode per machine, local NVMe, \texttt{fsync} enabled, HTTP/3 over QUIC and TLS, \texttt{c6i.4xlarge} load generators).
 
 \begin{table}[H]
 \centering
@@ -164,11 +160,11 @@ Open-loop ramp / 8 & 28\,902--33\,024 & 3\,613--4\,128 & 262--524\,ms & PASS; 3.
 Open-loop ramp / 16 & \textbf{57\,679} & 3\,605 & 262\,ms & PASS; 5.99\,M keys; 99.5\% linearity \\
 \bottomrule
 \end{tabularx}
-\caption{Horizontal scaling on dedicated NVMe nodes with \texttt{fsync} and HTTP/3.}
+\caption{Earlier fixed and open-loop campaigns, with one vnode per machine. The 64-node rate describes passes 1 and 3. The skewed second pass reached 74\,295/s at the highest offered load. \href{https://github.com/indexus/core/blob/e4b9072/docs/benchmarks/scaling.md}{Fixed-pass results}.}
 \end{table}
 
 \paragraph{Live elasticity.}
-In local hand-over benchmarks (512\,MiB across 65\,536 zones, HTTP + \texttt{fsync}), granular lot transfer reduced time to first receiver acknowledgement from 51.89\,s to \textbf{2.38\,s} (63.5\,ms mean lot pause, 272.7\,ms maximum client ACK, 67\,100 ACKs audited). On AWS, live elastic ramps absorbed four $2\times$ load doublings every 60\,s (4 $\to$ 8 vnodes at 22\,386/s, splits completing in 26.1--40.6\,s) and instant $2\times$ step jumps (4 $\to$ 11 vnodes at 16\,004/s, 65.5\,ms intended p99, 8 live splits in 7.5--13.0\,s) with zero lost or double-owned writes.
+In local hand-over benchmarks (512\,MiB across 65\,536 zones, HTTP + \texttt{fsync}), granular lot transfer reduced time to first receiver acknowledgement from 51.89\,s to \textbf{2.38\,s} (63.5\,ms mean lot pause, 272.7\,ms maximum client ACK, 67\,100 ACKs audited). On AWS, live elastic ramps absorbed four $2\times$ load doublings every 60\,s (4 $\to$ 8 vnodes at 22\,386/s, splits completing in 26.1--40.6\,s) and instant $2\times$ step jumps (4 $\to$ 11 vnodes at 16\,004/s, 65.5\,ms intended p99, 8 live splits in 7.5--13.0\,s) with passing sampled read-back, total and ownership audits.
 
 \paragraph{Reading these measurements.}
 The fixed passes and the open-loop ramps are separate campaigns. The ramp p99 is measured from the intended arrival time, including client queueing; its \texttt{best\_green} is the highest ten-second window with at least 99\% acknowledged, no shed arrivals and intended p99 at most one second. The 99.5\% figure compares the named 4- and 16-vnode runs; it is not a latency bound for every window. The AWS audits combine sampled key read-back (20\,000 keys per cited ramp), collection totals and zone-ownership checks. Counts such as 5.99\,M name the acknowledged population, not an exhaustive reread of every payload.
@@ -178,9 +174,57 @@ The ramp tool's zero-second absorption value means that its first five-second wi
 \paragraph{Concurrent-read extension, 22 November 2026.}
 Later AWS runs add key reads and collection-total reads to the ramp. At eight fixed vnodes, run \texttt{074513} records 22\,401 writes/s at \texttt{best\_green}, 71\,485 key reads (32.8\,ms p99, no misses or errors) and 71\,645 total reads (65.5\,ms p99); its audit passes on a 1.80\,M-ACK population. Elastic run \texttt{075254}, from four to eight vnodes, records 3\,837 writes/s, 33\,977 key reads and 34\,021 total reads, both at 524.3\,ms p99, with a passing 286\,k-ACK audit. Reported total deficits are about 2\,135 and 386 items respectively: summary freshness is a separate property from durable key read-back. These runs extend the earlier campaigns rather than replacing their figures, and do not establish replicated fault-under-load performance on AWS.
 
+\subsection{When does an extra vnode actually help?}\hypertarget{ix:elasticity}{}
+On 27 November, two independent AWS clusters received the same 2\,956\,272 distinct workload writes. Each started with 16 vnodes on four \texttt{i4i.xlarge} hosts, could grow to 32 hosts, and used one \texttt{c6i.4xlarge} loader over direct HTTP/3. The split trigger was 50 writes/s per vnode and the target CPU utilization was 50\%. Load rose through 2\,000, 4\,000, 8\,000 and 16\,000 writes/s over 400 seconds (70-second plateaus, 40-second ramps). The data seed was 1226634160. Vnode identities, machine start times and concurrent request order varied.
+
+Rule A (\texttt{d869cf4}) let donors retry as soon as the provisioning API reopened. Rule B (\texttt{6912139}) admitted the first retry at the same time and staggered the remaining retries. Each rule ran once. Both clusters acknowledged the full workload with zero shed arrivals. At 16\,000/s the client p50, p95 and p99 histogram values were 4.096, 8.192 and 16.384\,ms in both runs. Including client queueing from the intended arrival time gave a p99 of 32.768\,ms in both.
+
+\begin{figure}[H]
+\centering
+\ixnew{figures/placement-service.tikz}
+\caption{Rule A during the 400 seconds of load. Each donor and requested target enters the solid curve once, on its first request. The dashed curve counts pairs with a confirmed start whose receiver has recorded its first write. Cumulative counts are sampled every 10 seconds. Near 220\,s the requests jump as the number of writing receivers climbs more slowly. The gap includes requests that may be superseded. \href{https://github.com/indexus/core/blob/e4b90728ee3054f2d2944485f413c9ae3e5ef2be/docs/benchmarks/aws-placement-100-20261127/granular50/aws-pair-a.json.gz}{Anonymized placement trace}.}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}Lrr@{}}
+\toprule
+Observed during load & A: reopen & B: stagger \\
+\midrule
+Calls by donors & 3\,940 & 3\,568 \\
+Distinct (donor, requested target) pairs & 316 & 309 \\
+Starts followed by a receiver write & 152 & 150 \\
+First write within 30\,s / eligible pairs & 85/316 & 67/308 \\
+First write within 120\,s / eligible pairs & 148/230 & 138/196 \\
+Demand to first write, median / p95 (s) & 27.9 / 94.6 & 34.4 / 120.3 \\
+Start confirmation to first write, p95 (s) & 1.78 & 2.90 \\
+\bottomrule
+\end{tabularx}
+\caption{How long a requested vnode took to contribute. A deadline fraction includes only requests observable for the full interval. The timing quantiles include served requests only. Start confirmations have one-second timestamp resolution. This interval includes receiver start-up and routing and cannot measure the freeze of an individual lot.}
+\end{table}
+
+Staggering saved 372 calls. At 30 seconds A served a larger fraction. At 120 seconds B served a larger fraction of a smaller eligible population: 113 pairs arrived too late to observe for 120 seconds in B, against 86 in A. A single run per rule and different censoring leave the ranking uncertain. The first-write counter could also count an acknowledged replay; both workload ledgers contained unique IDs.
+
+\begin{figure}[H]
+\centering
+\ixnew{figures/placement-relief.tikz}
+\caption{Remote placements followed by a drop of at least 20\% in the donor's share of traffic. The same placements are compared at vnode and host level within each run. Each share divides applied writes/s by the simultaneous client ACK rate.}
+\end{figure}
+
+We required two samples in each window, 25--5 seconds before and 20--40 seconds after placement, and excluded overlapping placements by the same donor. Other vnodes on its host kept serving traffic. Median host CPU changed by $+2.68$ and $+2.93$ percentage points on the donors. It changed by $+6.04$ and $+5.17$ points on the observable receivers (80 and 97 pairs). A falling share during a ramp can coexist with rising load.
+
+\paragraph{Why a machine with free CPU could refuse a receiver.}
+Reserving 1.75 cores on a four-core host consumes $1.75/4=43.75\%$ of its capacity. With a 60\% admission ceiling, a new receiver fits only below or at 16.25\% current use. At the last injection sample all 32 hosts exceeded 16.25\% in each run. Only two hosts in A and one in B exceeded 60\%, yet no host offered admission. Replaying the calculation with a 1.5-core reservation would have admitted 187/554 eligible host observations in A and 183/461 in B, against 70/554 and 66/461. Hosts occur repeatedly in these denominators; the replay does not measure the CPU cost of a new copy.
+
+\paragraph{What the simulation can predict.}
+A scheduling model reserves the donor and receiver together during a copy. For 64 requests, eight donors and eight ready receivers, with a 250\,ms start hook and copies of 4--7\,s, this reduced the simulated admission p95 from 63 to 56\,s against a shared admissions delay. Median calls fell from 605 to 271 over 100 seeds. With traffic concentrated on one donor, the p95 only fell from 205.5 to 199\,s. These are synthetic copies with reliable reservation release. In the AWS trace at 558\,s, after load stopped, 31 cross-host transfers were open in each run. A schedule with at most one copy per host could cover those pairs in four rounds in A or five in B. A round counts disjoint pairs in that snapshot and carries no measured duration.
+
+\paragraph{What the audits covered.}
+In each cluster a stratified check reread 512 workload ACKs. A separate native audit sampled 512 ledger entries, matched totals for all 257 collections including the probes, and observed zero zones with two owners across 170 vnodes in A and 173 in B. Time reserved for export and cleanup expired before the exhaustive per-key reread finished. The \href{https://github.com/indexus/core/blob/e4b9072/docs/benchmarks/aws-placement-100-20261127/granular50/aws-pair.md}{dated campaign report} links the anonymized request episodes, analysis scripts and source charts.
+
 \section{Case Study 1: Continual Learning and Exact Unlearning}\hypertarget{ix:unlearning}{}
 \noindent\emph{Measured application.}
-An encoder turns a text into a vector of numbers. ``Frozen means that this transformation is held fixed while records are added or removed. A sufficient statistic is a small collection of totals from which the chosen model can be solved, without reading the original training records again. With a frozen encoder, linear models (ridge regression, shared-covariance LDA, nearest class mean, naive Bayes) depend only on additive sufficient statistics: $n$, $\Sigma y$, $\Sigma x y^\top$, and $\Sigma x x^\top$. In Indexus, learning is a write, forgetting is a deletion, and the model for any region or time window is solved on demand from zone sums.
+An encoder turns text into a vector of numbers. A frozen encoder keeps that transformation fixed while records are added or removed. A sufficient statistic is a small collection of totals from which the chosen model can be solved, without reading the original training records again. With a frozen encoder, linear models (ridge regression, shared-covariance LDA, nearest class mean, naive Bayes) depend only on additive sufficient statistics: $n$, $\Sigma y$, $\Sigma x y^\top$, and $\Sigma x x^\top$. In Indexus, learning is a write, forgetting is a deletion, and the model for any region or time window is solved on demand from zone sums.
 
 \begin{figure}[H]
     \centering
@@ -243,6 +287,7 @@ The same pattern holds against a stronger 12-iteration static IVF on SIFT 200k: 
 
 Write amplification stays at 1.08--1.20 vectors moved per insert. Bringing this into production nodes still requires one owner-local operation: idempotent record moves during a split.
 
+\Needspace{9\baselineskip}
 \section{Research Directions and Explicit Limits}\hypertarget{ix:limits}{}\label{sec:directions}
 We list only directions grounded directly in the monoid primitive, with their current status.
 
@@ -282,20 +327,20 @@ The empirical characteristic-function statistics are \emph{exact as a \texttt{su
 \end{itemize}
 
 \paragraph{Explicit non-guarantees.}
-Indexus does not bound convergence delay under network partitions, does not provide cross-zone atomic snapshots across concurrent hand-overs, and, with replication disabled, trades availability of a crashed disk's zones for coordinator-free single-writer safety. The newer optional replicated runtime is locally tested; its AWS fault, throughput and recovery costs require separate qualification. In convergent fallback mode, non-commutative monoids (\texttt{first}, \texttt{last}, \texttt{affine}) must be recomputed from the merged LWW record set rather than merged directly.
+Indexus does not bound convergence delay under network partitions, does not provide cross-zone atomic snapshots across concurrent hand-overs, and, with replication disabled, trades availability of a crashed disk's zones for coordinator-free single-writer safety. Local tests cover optional replica receipt and repair. AWS fault, throughput and recovery costs remain open. In the convergent fallback model, non-commutative monoids (\texttt{first}, \texttt{last}, \texttt{affine}) must be recomputed from the merged LWW record set rather than merged directly.
 
 \section{Related Work}
-No single mechanism in Indexus is without precedent: XOR ownership of spatial cells appears in Walkad~[\ixref{8}], trie-as-peer-set splitting in P-Grid~[\ixref{9}] and CAN~[\ixref{10}], routing-implied aggregation in DAT~[\ixref{11}] and SDIMS~[\ixref{12}], storage-enforced fencing in distributed consensus stores such as Scatter~[\ixref{13}], summation-form unlearning in Cao and Yang~[\ixref{14}], hierarchical regression in Regression Cubes~[\ixref{15}], and in-place posting maintenance in SPFresh~[\ixref{5}]. What distinguishes Indexus is their unification under \textbf{one pure XOR function} governing placement, splitting and aggregation parents, with coordinator-free commit-time write exclusivity, self-certifying monoid schemas (\texttt{IXC1}), and end-to-end columnar delivery to the client GPU.
+Walkad~[\ixref{8}] uses XOR placement for spatial cells. P-Grid~[\ixref{9}] and CAN~[\ixref{10}] split peer space; DAT~[\ixref{11}] and SDIMS~[\ixref{12}] aggregate along routing paths. Scatter~[\ixref{13}] enforces writes through storage fencing. The applications draw on summation-form unlearning~[\ixref{14}], hierarchical Regression Cubes~[\ixref{15}] and SPFresh posting maintenance~[\ixref{5}]. Indexus combines a shared XOR placement rule with local write exclusivity, a self-certifying monoid schema (\texttt{IXC1}) and columnar delivery to the client GPU.
 
 \section{Conclusion}
-We have described the monoid-over-a-tree primitive, its mathematical properties, measured scaling and live elasticity on dedicated NVMe hardware, and two measured applications: continual learning with exact unlearning, and dynamic vector search beating static IVF at 1\,M scale. Parallel geo-semantic descents, hierarchical SIGReg diagnostics for world models and verifiable analytical registries remain testable research directions.
+A prefix tree with versioned child summaries connects three results: a fold over a complete cut, unlearning with a fixed encoder, and dynamic search that beat static IVF on the 1\,M-vector test. On dedicated NVMe machines, the late-November campaigns sustained the named write plateaus while revealing how often splitting a vnode left its host busy. Parallel geo-semantic descents, hierarchical SIGReg diagnostics and verifiable analytical registries remain research directions.
 
-The next step is an open protocol standard specifying canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}) and exact dyadic addressing, with shared conformance vectors for independent implementations in different languages to interoperate on one network. Correspondence, reviews and collaboration: \texttt{research@indexus.io}.
+An open protocol standard would specify canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}) and exact dyadic addressing, with conformance vectors for independent implementations. Correspondence and reviews are welcome at \texttt{research@indexus.io}.
 
-\clearpage
+\Needspace{6\baselineskip}
 \section*{References}
 \small
-\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=0pt]
   \item \hypertarget{reference:1}{}R. Henriot. \ixbib{search2024}. 2024.
   \item \hypertarget{reference:2}{}R. Henriot. \ixbib{network2024} (2024) / \ixbib{whitepaper} (2026).
   \item \hypertarget{reference:3}{}R. Henriot. \ixbib{client}. 2026.

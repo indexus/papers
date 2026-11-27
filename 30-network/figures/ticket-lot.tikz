@@ -1,0 +1,45 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (1.35, -0.45) {};
+		\node [style=none] (2) at (5.05, -0.45) {};
+		\node [style=none] (3) at (5.05, 0.45) {};
+		\node [style=none] (4) at (1.35, 0.45) {};
+		\node [style=tiny] (5) at (3.2, 0) {source S};
+		\node [style=none] (6) at (3.2, -0.5) {};
+		\node [style=none] (7) at (3.2, -8.05) {};
+		\node [style=none] (8) at (11.65, -0.45) {};
+		\node [style=none] (9) at (15.35, -0.45) {};
+		\node [style=none] (10) at (15.35, 0.45) {};
+		\node [style=none] (11) at (11.65, 0.45) {};
+		\node [style=tiny] (12) at (13.5, 0) {receiver R};
+		\node [style=none] (13) at (13.5, -0.5) {};
+		\node [style=none] (14) at (13.5, -8.05) {};
+		\node [style=none] (15) at (3.2, -1.65) {};
+		\node [style=none] (16) at (13.5, -1.65) {};
+		\node [style=tiny] (17) at (8.35, -1.21) {first copy with ticket};
+		\node [style=none] (18) at (13.5, -3.1) {};
+		\node [style=none] (19) at (3.2, -3.1) {};
+		\node [style=tiny] (20) at (8.35, -2.66) {ticket and staging confirmed};
+		\node [style=none] (21) at (3.2, -5.15) {};
+		\node [style=none] (22) at (13.5, -5.15) {};
+		\node [style=tiny] (23) at (8.35, -4.71) {last changes, seal and permission};
+		\node [style=none] (24) at (13.5, -6.75) {};
+		\node [style=none] (25) at (3.2, -6.75) {};
+		\node [style=tiny] (26) at (8.35, -6.31) {installation acknowledged};
+		\node [style=tiny] (27) at (0.75, -1.65) {serves Q};
+		\node [style=tiny] (28) at (0.75, -4.75) {fences Q};
+		\node [style=tiny] (29) at (16.35, -3.1) {stages Q};
+		\node [style=tiny] (30) at (16.35, -5.9) {mounts Q};
+		\node [style=tiny] (31) at (16.35, -7.05) {serves Q};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=dashed edge] (6.center) to (7.center);
+		\draw [style=thin] (8.center) to (9.center) to (10.center) to (11.center) to cycle;
+		\draw [style=dashed edge] (13.center) to (14.center);
+		\draw [style=arrow] (15.center) to (16.center);
+		\draw [style=arrow] (18.center) to (19.center);
+		\draw [style=arrow] (21.center) to (22.center);
+		\draw [style=arrow] (24.center) to (25.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

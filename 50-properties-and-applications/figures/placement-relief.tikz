@@ -1,0 +1,61 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (0, -0.3) {};
+		\node [style=none] (2) at (0, 0) {};
+		\node [style=tiny] (3) at (0, -0.85) {0\%};
+		\node [style=none] (4) at (3.25, -0.3) {};
+		\node [style=none] (5) at (3.25, 0) {};
+		\node [style=tiny] (6) at (3.25, -0.85) {25\%};
+		\node [style=none] (7) at (6.5, -0.3) {};
+		\node [style=none] (8) at (6.5, 0) {};
+		\node [style=tiny] (9) at (6.5, -0.85) {50\%};
+		\node [style=none] (10) at (9.75, -0.3) {};
+		\node [style=none] (11) at (9.75, 0) {};
+		\node [style=tiny] (12) at (9.75, -0.85) {75\%};
+		\node [style=none] (13) at (13, -0.3) {};
+		\node [style=none] (14) at (13, 0) {};
+		\node [style=tiny] (15) at (13, -0.85) {100\%};
+		\node [style=none] (16) at (0, 0) {};
+		\node [style=none] (17) at (13, 0) {};
+		\node [style=tiny] (18) at (-2.4, 4.8) {A  donor vnode};
+		\node [style=none] (19) at (0, 4.54) {};
+		\node [style=none] (20) at (13, 4.54) {};
+		\node [style=none] (21) at (13, 5.06) {};
+		\node [style=none] (22) at (0, 5.06) {};
+		\node [style=none] (23) at (0, 4.54) {};
+		\node [style=tiny] (24) at (14.45, 4.8) {99/99};
+		\node [style=tiny] (25) at (-2.4, 3.75) {A  donor host};
+		\node [style=none] (26) at (0, 3.49) {};
+		\node [style=none] (27) at (6.30303, 3.49) {};
+		\node [style=none] (28) at (6.30303, 4.01) {};
+		\node [style=none] (29) at (0, 4.01) {};
+		\node [style=none] (30) at (0, 3.49) {};
+		\node [style=tiny] (31) at (14.45, 3.75) {48/99};
+		\node [style=tiny] (32) at (-2.4, 2.35) {B  donor vnode};
+		\node [style=none] (33) at (0, 2.09) {};
+		\node [style=none] (34) at (12.6518, 2.09) {};
+		\node [style=none] (35) at (12.6518, 2.61) {};
+		\node [style=none] (36) at (0, 2.61) {};
+		\node [style=none] (37) at (0, 2.09) {};
+		\node [style=tiny] (38) at (14.45, 2.35) {109/112};
+		\node [style=tiny] (39) at (-2.4, 1.3) {B  donor host};
+		\node [style=none] (40) at (0, 1.04) {};
+		\node [style=none] (41) at (7.08036, 1.04) {};
+		\node [style=none] (42) at (7.08036, 1.56) {};
+		\node [style=none] (43) at (0, 1.56) {};
+		\node [style=none] (44) at (0, 1.04) {};
+		\node [style=tiny] (45) at (14.45, 1.3) {61/112};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center);
+		\draw [style=thin] (4.center) to (5.center);
+		\draw [style=thin] (7.center) to (8.center);
+		\draw [style=thin] (10.center) to (11.center);
+		\draw [style=thin] (13.center) to (14.center);
+		\draw [style=thin] (16.center) to (17.center);
+		\draw [style=dark surface] (19.center) to (20.center) to (21.center) to (22.center) to (23.center);
+		\draw [style=surface] (26.center) to (27.center) to (28.center) to (29.center) to (30.center);
+		\draw [style=dark surface] (33.center) to (34.center) to (35.center) to (36.center) to (37.center);
+		\draw [style=surface] (40.center) to (41.center) to (42.center) to (43.center) to (44.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

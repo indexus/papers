@@ -19,7 +19,7 @@ f = Fig()
 for x, y, text in [
     (0, 2, lines("2024", "Solo papers", "Tree, encoding, nearby search, delegation")),
     (12.8, 2, lines("2025", "Go core and JavaScript SDK", "WebGPU client and Explore")),
-    (12.8, -2, lines("2026: protocol phase (outline H1)", "CRDT authority; FLIP-UNIT", "AWS cluster campaigns")),
+    (12.8, -2, lines("2026: protocol phase (outline H1)", "Early certificate graph and granular hand-off", "AWS cluster campaigns")),
     (0, -2, lines("2026: algebra phase (outline H2)", "IXC1 and monoids", "Continual learning; SPFresh 1M"))]:
     box(f, x, y, text, w=9.8, h=2.6)
 arrow(f, (4.9, 2), (7.9, 2))
@@ -31,7 +31,7 @@ out["timeline"] = f
 f = Fig()
 box(f, 0, 3, lines("Author", "vision, primitives, questions"), w=7.5, h=1.5)
 box(f, 13, 3, lines("Models", "formalize, simplify, implement"), w=8, h=1.5)
-box(f, 13, -1, lines("Tests and benchmarks", "independent reproduction"), w=8, h=1.5)
+box(f, 13, -1, lines("Tests and benchmarks", "measure, reproduce, compare"), w=8, h=1.5)
 box(f, 0, -1, lines("Author", "audit, decide, redirect"), w=7.5, h=1.5)
 arrow(f, (3.75, 3), (9, 3))
 f.node(6.4, 3.65, "direction", "tiny")
@@ -41,7 +41,7 @@ arrow(f, (9, -1), (3.75, -1))
 f.node(6.4, -0.25, "measured facts", "tiny")
 arrow(f, (0, -0.25), (0, 2.25))
 f.node(-2.1, 1, lines("next", "iteration"), "tiny")
-box(f, 6.5, -4.2, lines("Planned public archive", "papers, transcripts, Indexus collection"), w=12, h=1.5)
+box(f, 6.5, -4.2, lines("Papers and selected exchanges available", "Fuller development collection proposed"), w=12, h=1.5)
 arrow(f, (6.5, -1), (6.5, -3.45))
 f.node(9.4, -2.4, lines("record each", "iteration"), "tiny")
 out["loop"] = f

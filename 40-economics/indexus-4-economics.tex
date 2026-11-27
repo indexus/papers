@@ -22,11 +22,11 @@ In Indexus these are three \emph{collections}. A collection is a set of \emph{re
 
 \fig{layers}{The map reads three collections over the same squares of the city.}{layers}
 
-The earlier papers explain how this works. Space is cut into squares called \emph{zones}, each zone is cut again into smaller zones, and every zone keeps the exact total of the records it contains. Machines called \emph{nodes} store the zones and answer the readers. So when the map shows sixteen squares, it asks for sixteen zones and receives sixteen totals, at any zoom.
+In the map example, each square identifies a \emph{zone}. A host keeps a summary for the zone, such as a parcel count. Sixteen squares can therefore be priced as sixteen zone reads. What those reads cost to serve depends on the request. A cached summary may lag a recent write. A reader asking for a refreshed result can require the host to contact other machines.
 
 This paper asks a different question. The nodes need disks and bandwidth. The weather service spends money to produce its measurements. Who pays for this, and how, without giving the index back to a single owner?
 
-Our answer is small. A read is paid when it is asked, a few satoshis at a time, and the money goes directly to those who did the work. A satoshi, written \emph{sat}, is the smallest unit of bitcoin: one hundred-millionth of a bitcoin, well under a cent. All amounts in this paper are examples. Indexus sets no price.
+Our answer is small. A read is paid when it is asked, a few satoshis at a time, and the money goes directly to those who did the work. A satoshi, written \emph{sat}, is the smallest unit of bitcoin: one hundred-millionth of a bitcoin. All amounts in this paper are examples. Indexus sets no price.
 
 \paragraph{Reading the examples.}
 The figures distinguish the path of data from the path of money. A record goes from its producer to a host; a summary goes from the host to a reader; a payment, when required, goes back toward those who served and produced it. None of the example amounts is a measured price or a rule already enforced by the node.
@@ -72,7 +72,7 @@ A shared index that charges for every read would keep out the student, the journ
 For a collection declared public by its producer, a host serves the totals of its zones without payment, up to a published number of reads per reader.
 \end{guarantee}
 
-Serving a total is cheap: the host already keeps it. What is paid is what costs more than that:
+A host can answer a cached summary read from the version it holds. A producer and host might charge for the following services beyond that allowance.
 
 \begin{itemize}[leftmargin=1.5em,itemsep=0pt,topsep=0pt]
 \item \emph{freshness}: the weather of the last hour, the sales of the last week;
@@ -93,7 +93,7 @@ The map now wants the weather of the last hour for one zone, say zone \texttt{AB
 
 We use two existing tools.
 
-\textbf{Lightning} is a payment network built on Bitcoin. It lets two parties who have never met exchange very small payments in about a second, and the payer receives a proof that the payment was made.
+\textbf{Lightning} is a payment network built on Bitcoin. It lets two parties who have never met exchange small payments. A payer who settles an invoice receives a proof of payment.
 
 \textbf{L402} is a convention for paying a web request with Lightning. The server answers ``payment required'' with a bill, called an invoice; the client pays it and repeats the request with the proof of payment.
 
@@ -113,7 +113,7 @@ One payment per read would be slow for a map that reads sixteen zones each time 
 
 \section{Sharing the payment}
 
-The 3 sat of the read reward two parties. The host spent a disk read and some bandwidth. The weather service produced the measurements that were summed.
+The 3 sat of the read reward two parties. The host served the answer and used bandwidth. The weather service produced the measurements that were summed.
 
 The price therefore has two parts. The producer publishes its part with the collection: here 2 sat per read. The host adds its own: here 1 sat.
 
@@ -136,23 +136,21 @@ The screen costs 48 sat: 16 to the host of the weather, 32 to the weather servic
 
 \section{A zone has one price}
 
-In an ordinary database, the cost of a question depends on the data it touches. The total of a city requires reading the city. The seller cannot tell the price before doing the work, and the buyer cannot know it in advance.
+Suppose most of the parcels on a map lie in one corner of zone \texttt{AB}. Should the reader pay more to see that corner in an overview? Under the proposed tariff, the quoted price covers one zone at the requested freshness. This makes a price predictable even when the work needed to refresh the answer varies.
 
-In Indexus a zone read does not go through the records. Every zone already keeps its total, updated when a record is written or deleted. In the pricing example, reading zone \texttt{AB} returns the totals of its four children, \texttt{ABA} to \texttt{ABD}: four lines, whether the zone holds ten records or ten million.
-
-\fig{zoneprice}{Zone \texttt{AB} holds 9\,429 records, almost all in \texttt{ABA}. Reading it returns four lines. Empty children are drawn explicitly in this pricing example.}{zoneprice}
+\fig{zoneprice}{Four children of zone \texttt{AB}. The counts add to 9\,429. A reader can see where the parcels are concentrated before requesting any individual records.}{zoneprice}
 
 \begin{guarantee}{A zone has one price whatever lies below it}
 The price of reading the totals of a zone depends on the collection and on what is asked, such as the freshness. It does not depend on the number of records in the zone, nor on its size on the map.
 \end{guarantee}
 
-With the real alphabet of 64 characters a zone has 64 children instead of four, and the pricing rule is the same. The reference client read omits empty children and may add one row for records placed directly at the requested zone: at most 65 rows. The four-line diagram is a padded illustration, not a different wire-format guarantee.
+With the real alphabet of 64 characters a zone has 64 children instead of four, and the pricing rule is the same. The reference client read omits empty children and may add one row for records placed directly at the requested zone: at most 65 rows. The diagram uses four populated children so that the reader can check the addition by eye.
 
 So a price list is a few lines that a producer and a host can publish, and the map can compute the cost of a screen before reading it: the number of zones times the price of one. This is how we found 48 sat above.
 
 Reading the records themselves is different. Their number grows with the data, so they are sold by the page: so many sat for the next fifty records.
 
-Paying also raises the question of trust: a paid answer that is wrong is worse than a free one. The original outline called its proposed verifiable-aggregate paper ``Paper III. That proposal would let every total be checked against the signatures of the producers; it remains future work. If that verification mechanism is built, the reader could pay for a checkable answer. A payment receipt alone only shows what was paid; it is not a proof that a total is correct.
+Paying also raises the question of trust: a paid answer that is wrong is worse than a free one. The original outline assigned verifiable aggregates to Paper~III. That proposal would let every total be checked against the signatures of the producers; it remains future work. If that verification mechanism is built, the reader could pay for a checkable answer. A payment receipt alone only shows what was paid; it is not a proof that a total is correct.
 
 \section{Why no new token}
 
@@ -217,6 +215,8 @@ Everything in this paper is a proposal. None of it is implemented: today reads a
 What exists is described in the whitepaper, client and network papers: the tree, the nodes, versioned zone totals, measured on several machines. Their composition rule is separate from propagation delay: a received summary can lag new writes, as explained in \ixsection{network}{read-consistency}{the network paper}. The verification of totals, on which paid answers would rely, remains the proposal of the original Paper III outline, rather than an implemented guarantee.
 
 We intend to proceed in order: first publish prices and count what would have been paid, without money; then pay hosts; then share with producers.
+
+The elasticity experiments in \ixsection{properties}{elasticity}{the properties paper} measure the resources used to serve writes as machines join. A price per read would need a separate study of read workloads and host costs.
 
 The design aims at never holding money on behalf of someone else. This and every other legal aspect remain to be validated by counsel in each country.
 

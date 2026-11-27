@@ -10,7 +10,7 @@
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Our whitepaper describes an index in which every zone keeps the exact sum of the records below it~[\ixref{2}]. This paper describes how a reader uses it. A client turns coordinates into locations, reads the sums of a zone's children in one request, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of our first paper~[\ixref{1}], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
+\noindent \textbf{Abstract. }Our whitepaper describes an index in which every zone keeps the exact sum of the records below it~[\ixref{2}]. This paper describes how a reader uses it. A client turns coordinates into locations, reads the sums of a zone's children in a compact reply, draws a map at any zoom by reading only the zones it lacks, searches around a point with the incremental algorithm of our first paper~[\ixref{1}], and joins collections of different producers cell by cell. Everything here is implemented in the reference client.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
@@ -58,7 +58,7 @@ The client computes a location as follows. The mask gives the dimension cut by e
 Decoding replays the same halvings after removing the offset, and gives back the \emph{cell}: the box of coordinates that the location covers. With base 4 the rule is the same with 2 bits per character: the point at latitude $-60$ and longitude $-45$, with an offset BC, has the location BD and the cell latitude $[-90,-45]$ by longitude $[-90,0]$. With the real alphabet, Paris has a four-character location whose cell is about 4.9 by 6.5 kilometres.
 
 \section{Zones}
-A location is a path in the tree, and each of its prefixes is a zone. The parent of a zone is its location without the last character. The client computes the address of a zone with the same rule as the nodes, its location's bits followed by the collection's name, and both are checked against the same examples.
+A location is a path in the tree. Each prefix names a zone, and removing the last character gives its parent. To address a zone, the client starts with the collection name and replaces its leading characters with the location. Shared examples test that clients and nodes compute identical addresses.
 
 \begin{figure}[H]
     \centering
@@ -66,7 +66,7 @@ A location is a path in the tree, and each of its prefixes is a zone. The parent
     \caption{Encoded tree (BASE4)}
 \end{figure}
 
-The address is a delivery label, not a physical coordinate. The same geographic cell has different labels in collections with different offsets. Removing an offset recovers the common cell used later for composition.
+The address labels a delivery destination. Removing the collection offset recovers the underlying cell used later for composition.
 
 \section{Reading a zone}\hypertarget{ix:zone-read}{}
 A read of a zone answers the sums of its children: one row for the records placed exactly at the zone, and one row per non-empty child, with its count and the total of each number. It has at most 65 rows. When every record of a child lies in a single place, the row is given under that place, down to four characters below the zone; the client can then refine a map without reading further.
@@ -79,13 +79,13 @@ A read of a zone answers the sums of its children: one row for the records place
 
 Rows travel as columns of numbers: the keys, the counts, then each metric. A browser reads them where they arrive and hands them to its graphics processor without building one object per row. A client may ask for some metrics only; the sums are still those of whole records.
 
-For example, the answer ``C: 33'' means that 33 records lie below C; it is not a list of 33 records. If the user zooms into C, the next answer may contain ``at C: 4'', ``CB: 9'', ``CC: 10'' and ``CD: 10''. Those four counts add back to 33. The row at C matters: records need not all lie in leaf zones.
+In this simplified example, the answer for C counts 33 records. A closer view can separate four placed exactly at C from 9 in CB, 10 in CC and 10 in CD. The four rows add back to 33. Omitting the row at C would drop four houses from the map.
 
-\paragraph{A summary and a refreshed read are different promises.}
-An ordinary summary combines the latest child versions this node has received; it may lag a remote acknowledgement. A refreshed normal read instead asks the durable holders and the receivers of zones already handed over. It must include writes acknowledged before the read began, or fail if a required holder is unavailable. This coverage rule does not promise one instantaneous snapshot across machines during concurrent writes. \ixsection{network}{read-consistency}{The network paper} gives a two-record example and the tests behind this distinction.
+\paragraph{Choosing a read.}
+The map can still display its four cells during a refresh. Checking a new house after acknowledgement requires a fresh server answer. Section~\ref{sec:freshness} follows that house through both reads.
 
 \section{Finding nodes}
-A client starts from a few known nodes and has two ways to reach a zone. In the first, it chooses one node for its session, the known node closest to a random key, and lets that node forward each read to the holder of the zone. In the second, it computes the holder itself from the nodes it knows, sends each read there, and follows the answer when a node replies that the zone lives elsewhere. Reads for many zones are grouped, up to 128 per request.
+A client can let one entry node route its reads or ask the nearest known node directly. A redirect adds a hop if a zone has moved. The client can group up to 128 zones per request.
 
 \section{Drawing a map}\hypertarget{ix:map}{}
 A map shows a region at a zoom. The zoom sets the size of the cells to draw. The client keeps the zones it has already read and descends them: a cell outside the view is skipped, a cell fine enough is drawn, a cell too coarse is replaced by its children if they are known. The children it lacks are exactly the zones it reads next.
@@ -93,7 +93,7 @@ A map shows a region at a zoom. The zoom sets the size of the cells to draw. The
 \begin{figure}[H]
     \centering
     \ixnew{figures/zoom.tikz}
-    \caption{The view, darker, at three zooms. The client reads @, then C, then the four children of C. Zones outside the view are never read.}
+    \caption{Map refinement. The client reads @, then C, then the four children of C.}
 \end{figure}
 
 A parent remains drawn until all the records of its child have arrived, so the map never shows a hole while it refines. The view is read with a margin of a quarter of its size on each side, so that a small move does not trigger a read. Three neighbouring levels are prepared together, which lets the map blend from one zoom to the next.
@@ -107,7 +107,7 @@ A feed, or a list of the nearest places, starts at an origin and goes outwards. 
     \caption{Layers and concentric circles}
 \end{figure}
 
-Two things changed since 2024. The zones selected in one step are read in a single request. And a zone of a thousand records or fewer is read as records rather than as sums, so that the last layer holds real records, each with its exact distance.
+The reference client batches the zones selected at one step, splitting a large batch into requests. It can fetch the records of a small zone directly. Reading the records gives the final layer the individual entries needed to order its results.
 
 \section{Combining collections}\hypertarget{ix:composition}{}
 Two collections of the same space cut the world into the same cells, but write them with different characters, because their offsets differ. Removing the offset gives back the cell's integer coordinates and its resolution. The client joins two collections on these coordinates. This is a spatial join: it aligns cells, rather than assuming that the same record identifiers occur in both collections. A join on object identifiers, such as the proposed geo-semantic descent in the properties paper, is a separate operation.
@@ -123,21 +123,25 @@ For each cell of the first collection, the client finds the same cell, or the ne
 \section{Keeping data}
 The client keeps the answers it has read in memory, within a budget of 256~MB by default. When the budget is exceeded, the least recently used answers leave, except those the current view needs. The same answers are copied once to the graphics processor, which adds the rows of each cell to draw and writes one instance per cell. If the graphics device is lost, it is rebuilt from memory without reading the network again.
 
-\section{Freshness}\hypertarget{ix:freshness}{}
-A node answers a zone from its summaries, which include its own writes at once and the writes held by other nodes about a second later. A client may ask for an exact recount, which the node computes from the records of every holder of the zone. The map refreshes the zones in view at most every five seconds, and descends only into the zones whose counts changed.
+\section{Freshness}\label{sec:freshness}\hypertarget{ix:freshness}{}
+Suppose a map has cached 60 houses and a producer then receives an acknowledgement for a new house. There are two places where the older count may remain visible. The map may reuse its answer. If it asks the server for an ordinary summary, the parent there may still have only the older child version. Neither delay has a fixed upper bound during disconnection.
 
-\Needspace{8\baselineskip}
-Exact totals and fresh totals answer different questions. A stored summary can be an exact aggregate of the child versions already received while still missing a more recent remote write. Likewise, a correct answer cached by a map may age until its next refresh. The delay of propagation and the delay of refreshing should be measured separately from numerical correctness.
+\begin{figure}[H]
+    \centering
+    \ixnew{figures/refresh.tikz}
+    \caption{One new house after a cached count of 60. A fresh server read must cover the current holders.}
+\end{figure}
+For a check after the ACK, send a fresh request to the server with \texttt{refresh=true}. When using the \href{https://github.com/indexus/sdk/blob/83f2db1ad52ac695ab01cb2ca188f23300271bd7/src/network/index.js#L107-L114}{reference SDK}, set \texttt{refreshTtlMs} to zero if this check must bypass the default five-second reuse of a recent result. In normal mode the server must cover the required holders and any receivers of transferred zones, or report failure. With no other changes, a successful read returns 61. Concurrent updates can yield a later result. The \ixsection{network}{read-consistency}{network paper} explains coverage during a move and the limits of this guarantee.
 
 \section{Calculations}
-\textit{Size of an answer.} A row costs 8 bytes plus 4 bytes per metric. A zone whose 64 children all exist, with 4 metrics, is answered in 1\,620 bytes; a request of 128 such zones in about 205 kilobytes.
+\textit{Size of an answer.} With one 32-bit suffix word per key, the count and key take 8 bytes per child. Four default 32-bit metrics add 16 bytes, giving $64\times24=1\,536$ bytes of column data for 64 children. One such root block with its headers is 1\,572 bytes before compression. A row at the parent, a second key depth, redirects or 64-bit metrics change this size.
 
 \textit{Zones read for a view.} With latitude and longitude, each character divides each axis by 8. A view covering a fraction $w$ by $h$ of the world, read at a depth $D$, needs about $\lceil w \cdot 8^{D} \rceil \times \lceil h \cdot 8^{D} \rceil$ zones, fewer where the map is empty.
 
-\textit{Search.} Each step of the search reads one layer, in one request per collection. The number of steps grows with the depth of the tree, not with the number of records.
+\textit{Search.} A step reads the zones whose remaining distance bounds still intersect the desired results. A denser frontier can require several batches at the same depth. Both the number of relevant zones and how they are distributed across nodes affect the request count.
 
 \section{Conclusion}
-The client reads sums, never counts. With the sums of a zone's children it draws a map at any zoom, searches around a point with a bounded number of requests, and joins collections of different producers cell by cell. The reader owns none of the data it shows; it only computes where to read it.
+For a map the client draws summaries and refines the visible cells; for a feed it ultimately reads individual records. A map can also combine collections at a common cell even when different producers use different offsets. A reader checking a newly acknowledged write can request a fresh result and handle an unavailable holder explicitly.
 
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]

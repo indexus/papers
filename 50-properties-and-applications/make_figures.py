@@ -1,4 +1,5 @@
 """Paper 50 figures, using the unchanged 2024 TikZiT vocabulary."""
+import csv
 import os
 import sys
 
@@ -116,6 +117,55 @@ f.node(4.3,-3.0,lines("subtract", "contribution"), "tiny")
 arrow(f,(12,0),(15.5,0),"read totals")
 f.node(9,-4.4,"the encoder stays fixed; only the additive statistics change", "tiny")
 out["learn-forget"] = f
+
+# Each ordinate counts distinct donor/target episodes observed by the sample time.
+with open(os.path.join(HERE, "data", "service-a.csv"), newline="") as stream:
+    series = list(csv.DictReader(stream))
+f = Fig()
+width, height = 17, 5.6
+for tick in (0, 80, 160, 240, 320):
+    y = height * tick / 320
+    f.path([(-0.2, y), (0, y)], "thin")
+    f.node(-0.86, y, str(tick), "tiny")
+for tick in range(0, 401, 100):
+    x = width * tick / 400
+    f.path([(x, -0.15), (x, 0)], "thin")
+    f.node(x, -0.62, str(tick), "tiny")
+f.path([(0, height), (0, 0), (width, 0)], "thin")
+f.node(width / 2, -1.35, "seconds since load began", "tiny")
+f.node(2.0, height + 0.75, "donor--target pairs", "tiny")
+for field, style, title, x in [
+    ("requested_pairs", "thick", "first request", 7.1),
+    ("pairs_with_receiver_write", "dashed edge", "first receiver write", 13.1),
+]:
+    points = [(width * int(row["seconds"]) / 400, height * int(row[field]) / 320)
+              for row in series]
+    f.path(points, style)
+    key_y = height + 0.75
+    f.path([(x - 1.45, key_y), (x - 0.3, key_y)], style)
+    f.node(x + 1.3, key_y, title, "tiny")
+    f.node(width + 0.85, points[-1][1], series[-1][field], "tiny")
+out["placement-service"] = f
+
+# Lengths use a common zero and show measured proportions, not throughput.
+f = Fig()
+for percent in (0, 25, 50, 75, 100):
+    x = percent * 0.13
+    f.path([(x, -0.3), (x, 0)], "thin")
+    f.node(x, -0.85, rf"{percent}\%", "tiny")
+f.path([(0, 0), (13, 0)], "thin")
+for y, name, numerator, denominator, style in [
+    (4.8, "A  donor vnode", 99, 99, "dark surface"),
+    (3.75, "A  donor host", 48, 99, "surface"),
+    (2.35, "B  donor vnode", 109, 112, "dark surface"),
+    (1.3, "B  donor host", 61, 112, "surface"),
+]:
+    end = 13 * numerator / denominator
+    f.node(-2.4, y, name, "tiny")
+    f.path([(0, y - 0.26), (end, y - 0.26), (end, y + 0.26),
+            (0, y + 0.26), (0, y - 0.26)], style)
+    f.node(14.45, y, f"{numerator}/{denominator}", "tiny")
+out["placement-relief"] = f
 
 for name, fig in out.items():
     with open(os.path.join(HERE, "figures", f"{name}.tikz"), "w") as stream:

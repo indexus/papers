@@ -10,64 +10,50 @@
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Our whitepaper describes an index in which nodes and data share one binary tree~[\ixref{2}]. This paper describes how a node builds it. A node holds the zones closest to its address, accepts writes for them only when it holds the right to, stores them so that the sum of any zone is read without reading its records, hands zones over without ever letting two nodes write the same one, and sends the sums of its zones to the nodes that hold their parents. We state what is implemented, what was measured, and what is not built yet.
+\noindent \textbf{Abstract. }When a new machine joins Indexus, it can begin serving writes while its neighbour still holds most of the data being moved. This paper follows one zone from the first copy to the first write at its new holder. The two participants use their durable stores to determine who can write. Other nodes can learn the new route later. We explain how a reader finds a zone in transit and why a collection summary can still lag behind an acknowledged write.
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
-A node is a program running on one machine with one disk. It has five tasks: hold zones, accept writes, answer sums, move zones when the network changes, and share what it knows with the other nodes. Each task is simple on its own. The difficulty is that nodes learn of each other's changes with some delay, and the protocol must stay correct while they disagree.
+Suppose an entry node sends a write to the address it used a moment ago. In the meantime, a new node has received the zone. How does the entry find the new holder? What prevents the old one from writing again? How can a reader find a record just acknowledged at the new address?
 
-We separate what a node \emph{believes} from what it is \emph{allowed} to do. Beliefs, which nodes are active and where data lives, may be late; they only decide where to send a request. Rights, which node may accept writes for a zone, are never inferred from beliefs; they are handed over explicitly and checked on disk.
-
-\paragraph{Three questions to keep separate.}
-For a given zone, ask: where should a request go, which disk may commit it, and how recent is the summary a reader sees? The active-node tree answers the first question, installed authority answers the second, and versioned child summaries answer the third. Learning a new node address does not silently change the other two answers.
+The protocol answers these questions with three different kinds of information. A route suggests a destination. A right installed on a particular disk lets that disk commit a write. A durable inventory records the data at a holder and the destinations a reader must still visit. A route may already point to a new node when its copy is incomplete, or it may still point to an old node after the transfer has finished.
 
 \paragraph{Companion papers.}
-\ixpaper{whitepaper} gives the end-to-end picture; \ixpaper{client} explains
-what the reader observes. \ixsection{properties}{benchmarks}{The properties paper}
-defines the benchmark scopes and compares experimental results.
-\ixsection{history}{verification}{The history paper} separates model proposals,
-executable checks and independent reproduction.
+\ixpaper{whitepaper} introduces the common tree and \ixpaper{client} follows a request from the reader's side. \ixsection{properties}{benchmarks}{The properties paper} reports the measurements. \ixsection{history}{verification}{The history paper} records the design changes and the scope of their verification.
 
 \section{Nodes}
-A node's address is a leaf of the tree: 96 bits, written as a name of 16 characters. A node receives its name when it joins: chosen at random, close to a busy node it is meant to relieve, or so that it takes half of one of the largest parts of the tree.
+The first network paper placed nodes and data in the same tree~[\ixref{1}]. A node here means a virtual node, or vnode. Several vnodes can share a machine, CPU and physical disk. Each runs with its own durable store. Its address is a leaf of the binary tree, a 96-bit name written in 16 characters. At join time, the address can be random, chosen near a busy vnode, or chosen to split a large part of the tree.
+
+The address determines where this vnode fits in the tree. A separate decision chooses its physical host. The placement policy first looks for an existing remote machine with headroom and a recent load observation showing it can relieve the donor. It also budgets CPU for the incoming copy and checks free memory, disk and transfers already in progress. Running a second vnode on the donor machine can divide the address space, but both vnodes still share the same CPU.
 
 \begin{figure}[H]
     \centering
     \ixfig[10cm]{../figkit/orig/p2p-network.tikz}
-    \caption{Network of nodes}
+    \caption{The active addresses in the small network used throughout the first network paper.}
 \end{figure}
 
 \section{Holding a zone}
-A zone's address is its location's bits followed by its collection's name. A zone is held by the active node whose address is closest to it, closeness being the exclusive or of the two addresses read as a number~[\ixref{3}]. The first bit where two addresses differ decides, so the closest node is the one whose path in the tree leaves the zone's path last.
+A zone address combines location bits with bits from the collection name. Its preferred holder is the closest active node. Distance is the exclusive or of the two addresses read as a number~[\ixref{3}]. The first bit where two addresses differ decides, so the closest node is the one whose path in the tree leaves the zone's path last.
 
 \begin{figure}[H]
     \centering
     \ixnew{figures/owner.tikz}
-    \caption{Zone C of collection BB has the address CB. Node CA is the closest: it holds the zone.}
+    \caption{Zone C of collection BB has the address CB. Among the active nodes shown, CA is the closest and is the first place to try.}
 \end{figure}
 
-To find the holder quickly, a node arranges the active addresses in a compressed tree, where each branching tests one bit. Finding the holder of an address follows one branch per test, about $\log_2 N$ tests for $N$ nodes. Two nodes that know the same active nodes always find the same holder.
+To find the holder quickly, a node arranges the active addresses in a compressed tree, where each branching tests one bit. Looking up an address follows one branch per test, about $\log_2 N$ tests for $N$ well-distributed addresses. Two nodes using the same membership predict the same destination. A delegated zone can have a different current holder even after this prediction agrees everywhere.
 
 \section{The right to write}\hypertarget{ix:authority}{}
-The holder computed above is a prediction: a node may not know yet that another one has joined. If writes followed that prediction, two nodes could write the same zone while they disagree. The right to accept writes is therefore a separate record.
+A new cluster starts with one right covering the whole tree. A normal write succeeds only at a vnode with an installed right covering that exact zone, on the same storage incarnation, and with no outgoing fence blocking it. A fence is a durable record that stops the source from accepting further writes under its old right. The transaction that writes the record also checks the right and fence. Empty addresses are covered too, so two nodes cannot both accept the first insert there.
 
-\Needspace{8\baselineskip}
-All rights descend from a first one, covering the whole tree, held by the first node. When a node gives part of its region to another, it writes a certificate that consumes its own right and divides the region into new rights that cover it exactly. A right can be consumed once. For every address there is therefore exactly one current right, and it names one node on one disk.
-
-A node accepts a write only if, inside the transaction that commits it, it finds that the current right for the zone names this node and this disk, that this right is installed on its disk, and that no outgoing fence blocks this disk. Other lots of the same region can still be moving. A node that only heard of a certificate has not installed it. A late belief can make a write take a longer path, or be refused and retried; it cannot make two nodes accept it.
-
-For example, an entry node may still route zone C to the old holder. Once C has been emitted, that holder cannot commit another write under its old right. It forwards or refuses the request. After installation, the new holder can commit it. A stale route costs a retry or a hop; it is not permission for two disks to write the same zone.
+Each participant keeps its current rights, unfinished transfers, a durable counter and the referrals still needed by readers. A receiver checks the grant from the source for this particular operation, together with the data it actually received. The earlier certificate design traced descent back to the first right. In the local protocol an honest donor is trusted to obey its own durable fence. Digests check the bytes against their seals. This model assumes participants follow the protocol and restart from their latest durable state. Restoring an old backup requires a new storage incarnation and reacquisition of rights.
 
 \section{Writing}\hypertarget{ix:writes}{}
-The steps to write a record are:
-\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
-  \item The client sends the record and an identifier of its request to any node.
-  \item The node tries to commit it. If it does not hold the right, it forwards the record to the node named by the current right, as far as it knows it.
-  \item The holder collects the writes that arrive within two milliseconds, up to 256, and commits them together: for each one, the record, the zone's sequence number, a history entry for later hand-overs, and a receipt of the request.
-  \item The group is written to disk in one operation. Only then are the records visible to readers, and the holder answers each client.
-\end{enumerate}
+Suppose the client sends a record and a unique request identifier to an entry node E. E tries the holder it knows. A node that receives the request checks its own disk, even if another node described it as the holder. It can commit the write, forward it, or report that the zone is temporarily unavailable. The forwarding path keeps track of visited nodes.
 
-If a client receives no answer, it sends the same request again. The holder finds the receipt and returns the first answer without writing anything. Receipts are kept for as long as the zone exists and move with it, so a request sent again after a hand-over is still recognised. A write refused in a group does not fail the other writes of the group.
+The holder can collect writes for up to two milliseconds, in groups of up to 256 with the reference store settings. Each successful mutation publishes the record, its zone sequence number and a receipt in one durable group. When history is enabled, this group also records the change used for catch-up. A rejected write can leave other writes in that group successful. After a lost answer the client repeats the same request identifier. The receipt moves with the zone, allowing its current holder to recognise the retry.
+
+An acknowledgement names the applying vnode and the scope for which it can advertise a route. An installed point can advertise that point. After regional installation, a route may also cover nearby empty addresses. An entry can remember the applying vnode for the same zone. The direct benchmark client can also learn a regional route. Either can have an old hint by the time the next record arrives.
 
 \section{Storage}
 A node keeps all its records in one store. A record's key is its collection, its location's bits, the depth of its location and its identifier, in that order. All the records of a zone therefore form one contiguous range of keys, and the ranges of its 64 children follow each other inside it.
@@ -80,68 +66,67 @@ A node keeps all its records in one store. A record's key is its collection, its
 
 The store follows the design of log-structured merge trees~[\ixref{4}]. Writes go to a log on disk and to memory. When memory is full it is written out as a sorted, immutable file, cut in pages of up to 256 records. Each page stores the sums of its records, and each group of 64 pages stores the sums of its pages. Files are merged in the background.
 
-The sum of a zone is read, not maintained. The store adds the sums of the groups and pages that lie entirely inside the zone's range, and reads only the records of the pages at its two edges. The cost depends on the number of pages, not on the number of records. When a record is replaced or deleted, the store writes a second row that carries the previous values negated, so that the sum of all rows always equals the sum of the current records; a merge removes such a row only together with the one it cancels. Sums are kept with a compensation term~[\ixref{5}], to reduce rounding error when records are replaced or cancelled. This is compensated binary64 arithmetic, not an exact real-number accumulator.
+The sum of a zone is read, not maintained. The store adds the sums of the groups and pages that lie entirely inside the zone's range, and reads only the records of the pages at its two edges. This saves individual record reads on interior pages. The number of pages and files can itself grow with the data. When a record is replaced or deleted, the store writes a second row that carries the previous values negated, so that the sum of all rows always equals the sum of the current records; a merge removes such a row only together with the one it cancels. Sums are kept with a compensation term~[\ixref{5}], to reduce rounding error when records are replaced or cancelled. This is compensated binary64 arithmetic, not an exact real-number accumulator.
 
 Rights, receipts and sequence numbers are rows of the same store and are committed in the same operations as the records. A crash never separates a record from its receipt or from the right under which it was written.
 
 \section{Moving a zone}\hypertarget{ix:handoff}{}
-A node that receives too many writes is relieved by a new node whose address differs from its own in a single bit, deeper than any bit it shares with another node. The new node then holds exactly half of the busy node's part of the tree, and no other node loses anything.
+In the geometric example below, a new address CB differs from CA at the next branching bit. The two addresses now divide the old cell. This describes the desired placement. Splitting its address space in half can give two very different write rates if the writes concentrate on one side.
 
 \begin{figure}[H]
     \centering
     \ixnew{figures/split.tikz}
-    \caption{Node CA is busy. Node CB, one bit away, takes the half of CA's part on its side.}
+    \caption{A new vnode CB divides CA's old cell. The tree determines which addresses can move. The installed rights determine when they can accept writes at CB.}
 \end{figure}
 
-\Needspace{15\baselineskip}
-The zones of that half move from the old node to the new one. The old node first copies them while it still accepts writes, and sends the writes that arrive meanwhile. Then each zone is handed over in four steps, each written to disk before the next one starts:
-\begin{enumerate}[leftmargin=1.5em,itemsep=1pt]
-  \item \emph{Freeze.} The old node stops accepting writes for the zone and records its final state.
-  \item \emph{Stage.} The new node stores that state and checks its digest.
-  \item \emph{Emit.} The old node records that the zone now belongs to the new node. From then on it forwards writes for the zone.
-  \item \emph{Install.} The new node installs the zone and the record of the transfer, and accepts writes.
-\end{enumerate}
+Call the donor S, the receiver R, and one zone of their transfer Q. There are two different units to choose. A \emph{region} is the part of the address space granted, including room for future inserts. A \emph{lot} is the set of existing zones that pause and change writer together. Several lots can bring one region across.
+
+\paragraph{Reserve and copy.}
+S reserves this region and requests admission from R. R allocates a tentative ticket from its durable local counter. The first preload confirms that ticket in the same transaction as its staged bytes. An empty preload can confirm an empty region. S records the confirmation while it can still accept writes. Later copies and catch-up bring R near the latest sequence number of each zone. Staging a copy gives R no write permission.
+
+\paragraph{Change the writer for one lot.}
+S briefly closes admission to the selected zones and drains work already admitted. It durably fences the lot and records the proof of its final state. R receives the remaining changes, seals and permission. It verifies them and installs the data and rights together. From this commit R may accept writes for Q. S records the acknowledgement and can collect its old data. The normal lot path needs one source fence commit and one receiver mount commit. An installation retry reuses the same operation and ticket.
 
 \begin{figure}[H]
     \centering
-    \ixnew{figures/handoff.tikz}
-    \caption{A zone moves. Between freeze and install nobody accepts writes for it; never two nodes.}
+    \ixnew{figures/ticket-lot.tikz}
+    \caption{One lot, after R has issued its tentative ticket. Time runs down. S serves Q during the warm copy. Q has no writer from S's durable fence until R's mount. Other lots can still accept writes.}
 \end{figure}
 
-Zones move children first, then parents, in small lots of an initial target of 64 zones and 1\,MiB, ordered deepest and busiest first. Each lot is copied in one read transaction and caught up by sequence number while the old node stays writable; once a lot installs, the new node accepts writes for it once activation permits it, while the remaining lots keep serving on the old node. The default zone target adapts from an initial 64 between 16 and 2\,048 toward 150\,ms of freeze; this is a target, not an upper bound. A final paged closure drains late-born zones and seals the region. A step interrupted by a restart is resumed, never undone. When a node has been idle for a while, it hands its whole part to a neighbour whose part contains it, by the same steps, and leaves.
+\paragraph{Choose the next lot.}
+Within the transfer, descendants move before their parent. At a given depth, hotter lots go first and an interrupted frozen lot takes priority on retry. The November reference implementation starts at 16 zones per lot and adjusts between 4 and 2\,048, aiming for a 40\,ms hold. The byte target is 1\,MiB. A single larger zone can consume the lot, up to the supported 8\,MiB zone limit. Network delay, disk work and receiver availability determine the actual pause. Closing admission before the durable fence can make an arriving write wait earlier still.
 
 \begin{figure}[H]
     \centering
     \ixnew{figures/progressive.tikz}
-    \caption{Installed and activated lots become writable. The old vnode continues serving the lots it still owns; the join need not finish before the new vnode helps.}
+    \caption{Four lots crossing one region. The first lot can receive writes at R while the remaining three still receive writes at S.}
 \end{figure}
 
-There are three useful times to measure: the first installed lot, the write pause of each lot, and the completion of the whole join. After installation and activation, the receiver can help. First applied write, first client acknowledgement and learning a direct route are further distinct events. An entry node may relay through the donor until it learns the route. A local 24 November update adds exact-zone hints to the entry service, shared with the Go client: it remembers the applying holder from an ACK, keeps at most 4\,096 entries, and falls back to the resolved holder if a hint fails. Hints grant no authority. This update was still uncommitted at review time. The first installed-lot measurement alone therefore does not measure complete relief. The second determines what a client of that lot experiences. The third includes all remaining copies and closure. A good first-lot time does not prove that the longest pause is short.
+\paragraph{Close the region.}
+New zones can appear during the warm copy. After bounded attempts to drain them, the source can fence the residual region to finish. Closure exchanges the region header and receipts for installed points. R checks their digests, installs the regional right, including empty addresses, and retains writes it has already acknowledged on the installed points. This last exchange carries no second copy of their payloads. Referrals for regions delegated elsewhere move with the current exceptions needed by readers.
 
-Under sustained creation of zones, the bounded warm-drain may fence the residual region to make closure progress. Paged scans reduce lock holding during that closure, but neither MVCC paging nor a small lot is a proof of a size-independent end-to-end freeze. Such a bound needs measurements of the slowest disk, transfer and residual catch-up path. Lots also differ in bytes and traffic: half of an address range need not carry half of the load.
+\paragraph{A delayed packet.}
+Imagine Q has moved from S to R and then to T. An old install packet from S now arrives at R. Its ticket number has already been allocated and its exact slot is closed. R can acknowledge closure without remounting data or permission. An old admission request could allocate a fresh tentative slot, but the old install packet still names its original ticket. In both cases T keeps the right. Once S has fenced the first lot, a timeout triggers recovery of that operation. Returning S's old permission on a timeout could leave both S and R able to write.
 
-\section{Knowledge}
-Each node keeps what it knows of the network: the active nodes, their disks, the rights given and the transfers made. These facts only accumulate, and two nodes that hold the same facts draw the same conclusions, whatever the order in which they learned them.
-
-Control calls exchange a digest and, when needed, a full validated bundle. Updated inter-node writes use a separate compact path: an optional cached digest is enough to request a background refresh; a cache miss does not build the bundle, and optional reply metadata is not merged before returning the write result. Background synchronization is deduplicated by peer and limited to eight workers per vnode. This removes the global Knowledge carrier from the write path; it does not remove durable authority checks or the storage commit.
-
-Before a new granular freeze, the donor prepares the causal dependencies. Frozen-lot mirror, stage and install calls then use compact replies. A final control exchange still helps the join converge, while installed and activated lots can already write. Older peers or legacy callers can retain their former metadata behavior. Full control bundles still grow with history; differential payloads are not implemented.
+\section{Membership and routes}
+Each vnode keeps a current directory of peers, storage incarnations and departures. Versioned background exchanges repair disagreement. A routing table groups peers by the bit at which their path separates from the local address. The original small tree below illustrates how a contact across each such cut lets news spread. These messages help find peers. Neither a membership update nor reaching the closest vnode is a prerequisite for the receiver's first commit under an installed grant.
 
 \begin{figure}[H]
     \centering
-    \ixnew{figures/knowledge-paths.tikz}
-    \caption{The write result and the background Knowledge exchange follow separate paths.}
+    \ixfig[11cm]{../figkit/orig/p2p-routing.tikz}
+    \caption{Routing-table illustration from the first network paper. Each row corresponds to a different cut and can name a peer across it ($N=4$, $k=1$).}
 \end{figure}
 
-A control call may wait up to two seconds for another carrier of the same bundle. After that wait it may send another full copy, so deduplication is not an absolute single-copy guarantee. This waiting policy does not apply to the updated compact write path. Every ten seconds, a node also contacts one partner in each group of its routing table: the nodes on the other side of the root, those that separate from it one level lower, and so on, rotating among the members of each group.
+Suppose E still thinks Q belongs to S after R has installed it. E sends to S, which can forward to R. R commits and identifies itself in the acknowledgement. The next write to Q can travel directly from E to R. This is why the first write accepted by R and the first direct write from E need separate timestamps.
 
 \begin{figure}[H]
     \centering
-    \ixfig[13cm]{../figkit/orig/p2p-routing.tikz}
-    \caption{Routing table (N=4, k=1)}
+    \ixnew{figures/learned-route.tikz}
+    \caption{Two writes to Q after installation. The first follows the upper two arrows. Once E learns R from the answer, the next can use the lower route. R checks its disk in both cases.}
 \end{figure}
 
-Knowledge decides where to send. It never gives a right: learning that a zone was handed over tells a node where to forward writes, not that it may accept them.
+\paragraph{Earlier Knowledge exchange.}
+In the 24 November design, \emph{Knowledge} bundled membership, transfer facts and authority history. A control call could wait up to two seconds for another carrier of the bundle. The intermediate design removed this wait from writes and used a background refresh. The local-permissions implementation replaced the historical bundle. An ordinary write constructs no membership payload, and a receiver can validate its own ticket and the source's grant without replaying a cluster-wide certificate chain. Background membership still has a cost as the number of peers grows.
 
 \section{Sums across nodes}\hypertarget{ix:summaries}{}
 A node answers the sums of its zones from its store. When a zone is held by this node and its parent by another, the node is responsible for a \emph{boundary}: it sends the sum of the zone to the holder of the parent.
@@ -152,14 +137,14 @@ A node answers the sums of its zones from its store. When a zone is held by this
     \caption{Zone C, held by CA, sends its sum to zone @, held by BC.}
 \end{figure}
 
-The node sends the summary itself, with a version and the digest of the collection's description, and never a difference. The parent keeps the latest version received from each child and replaces it, combining children in cell order; a message received twice or late changes nothing, and a missing message is not counted as zero. Because replacement is versioned and children are ordered deterministically, any associative monoid (\texttt{sum}, \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or \texttt{affine} pairs) converges. For all-sum collections, the parent's sum is its local records minus its local copies of remote children plus their received sums; for other schemas, the parent folds its uncovered local records with the remote children's values.
+A child sends its whole summary, a version and the digest of its collection description. The parent replaces the previous value in that child's position. A repeated message changes nothing, an older version is ignored and a missing contribution leaves the summary incomplete. The parent combines the children in cell order. This matters for associative operations whose order affects the result, such as \texttt{first}, \texttt{last} and \texttt{affine}. A schema can have up to 4\,096 metric columns. The same scheme also handles \texttt{sum}, \texttt{min} and \texttt{max}.
 
-After a write, the boundary waits one second and sends the sum as it is then, which covers every write of that second. Sums for the same node are grouped, up to 512 per message. A failed message is retried after 3 seconds, then after longer delays up to 30 seconds. Every five seconds while it is active, and up to every two minutes when it is idle, a node also asks a few other nodes, in rotation, for the sums of its remote children, which repairs any lost message.
+For a sum, the parent's answer equals its local total, minus local copies of children held elsewhere, plus the summaries received from those children. For other schemas the parent folds uncovered local records with the remote children's values. A change near a leaf can take several messages to reach the root. Updates for the same parent share a one-second window and up to 512 contributions per message. A failed push retries after three seconds, increasing to at most 30 seconds. Polling also repairs missed updates. Its five-second active interval can grow to two minutes when idle. A child can skip sending an unchanged value already acknowledged by that parent.
 
 \subsection{What a read guarantees}\hypertarget{ix:read-consistency}{}
-An ordinary summary is an answer about received child versions. It may be arithmetically consistent and still older than a remote write. A refreshed normal read uses durable inventories: it follows holders and the receivers of zones already flipped, keeping the newer copy of a zone. A required receiver that cannot be reached causes an explicit failure, not a successful partial count. Different disks are not read at one common instant; this is not a general distributed snapshot or a claim of global linearizability.
+An ordinary summary read can see an older version of a remote child. A refreshed normal read asks for durable inventories. It follows referrals to the receivers of zones already moved and keeps the newer state for each zone. If it cannot establish complete coverage, it reports failure. Each disk contributes a local snapshot taken when queried. The procedure does not give all disks a common snapshot time.
 
-Suppose the donor froze one record and the receiver then acknowledged a second. A read begun afterwards must find both. If the region completes while the donor is being scanned, reading its receiver list later could erase the destination and silently return one record. Since core \texttt{6a3015e}, rows and receiver lists come from the same local MVCC snapshot. The deterministic test also partitions the receiver: success then becomes an error, rather than an incomplete answer.
+Suppose S froze Q with one record and R then added a second. A fresh read started after R acknowledged that insert must find both records in this example. S supplies its rows and referrals from \emph{the same local snapshot}. Otherwise, finishing the join between these two lookups could hide R and yield a plausible but incomplete answer of one. The regression test in \href{https://github.com/indexus/core/commit/6a3015e}{core \texttt{6a3015e}} partitions R as well. That read must report incomplete coverage.
 
 \begin{figure}[H]
     \centering
@@ -167,41 +152,54 @@ Suppose the donor froze one record and the receiver then acknowledged a second. 
     \caption{One old donor record is insufficient after the receiver has acknowledged a second.}
 \end{figure}
 
-A separate local race affected derived totals: the parent could read its local sum before transferred rows were collected, then subtract remote-child copies after collection. The same rows were then counted twice. The SUM-4 correction reads these local terms from one pinned version. It does not force remote child summaries to become fresh. These are separate coverage and arithmetic-consistency fixes, not changes to write authority. The local SUM-4 changes were tested with \texttt{6a3015e} on 24 November, but had no separate commit at the time of this review.
+A second failure mode concerned the arithmetic at one parent. It read its local total before old rows were collected and subtracted the local copies of remote children after collection. With those copies gone, transferred records counted twice. Reading both terms from one pinned local version fixes that error (\href{https://github.com/indexus/core/commit/b2d3dea}{core \texttt{b2d3dea}}). Propagation delay from remote children can still affect freshness. The reader therefore chooses between an ordinary summary and a refreshed read according to the question being asked.
 
 \section{Replication}\hypertarget{ix:replication}{}
-Outside hand-overs, the default non-replicated mode keeps each zone on its holder's disk. Acknowledged writes survive process restart while that durable disk remains intact. A disk lost for good loses the zones it held, and no other node may take them over, since that would give them a second writer.
+In the normal single-copy mode, an acknowledged mutation survives a process restart on the same intact durable store. Permanent loss of the sole holder's disk can lose the zone and its receipts. Choosing the next address by XOR cannot recover those bytes. A receiver that stops after the donor's irreversible fence may have to recover before that lot becomes writable again.
 
-Optional convergent replication addresses this limit without votes, leases, or synchronized clocks. It changes the write contract under partition: ordinary authority hand-over has one normal writer, while reachable fallback replicas may accept concurrent versions. Repair resolves those versions deterministically; it does not provide one global order or guarantee that every conflicting value survives. Each zone's replica set $R(z)$ is the three active nodes closest to $z$ by XOR on distinct machines, computed purely from the active set. In healthy mode, only the owner accepts writes and streams batches to the other two replicas' shadow stores, acknowledging after at least one replica confirms durability (or falling back to local durability after a timeout). Under a partition, reachable replicas accept fallback writes stamped with per-store dots $(\text{incarnation}, \text{counter})$ and a per-zone Lamport clock, serving reads marked degraded; on repair, versions merge deterministically by higher Lamport clock, then tombstone priority, then payload digest, which is associative, commutative, and idempotent. The initial account stopped at the transport-free core and deterministic fault simulator. As of 22 November 2026 (core \texttt{d689156}), optional shadow sessions, fallback logging, repair and degraded reads are wired into the node. Local lifecycle and fault-under-load tests exercise partition, crash and restart with durable stores and an in-process transport. The AWS measurements below retain their original non-replicated scope; they do not establish the performance or durability of replicated operation on remote machines.
+The optional replication work has a different scope. Its model selects up to three nearby replicas on distinct machines, and the owner can send batches to shadow stores. The configured acknowledgement policy determines whether a write actually reached a second disk. Under the partition model, a fallback record carries a storage-incarnation counter and a zone Lamport clock. Repair orders conflicting versions by clock, tombstone priority and payload digest. The merge is associative, commutative and idempotent. A deterministic winner does not preserve every competing value.
+
+The 22 November implementation (\texttt{d689156}) and local fault tests explored these shadow and repair paths. In the 27 November code, receipt and repair of fallback entries and explicit degraded reads exist. No client-facing producer originates fallback writes in this tree. A received fallback entry is distinct from an acknowledgement by the current holder until repair. The ordinary handoff and benchmark claims in this paper concern normal writes.
 
 \section{Admission}
 When a network requires it, a node presents a certificate signed by the network's issuer, and a client presents a token with the scopes it may use, read or write. These credentials decide who may take part. They give no right over any zone. Two limits remain: a node presents its certificate as is, without signing its messages, so its secrecy relies on the encrypted connection; and the issuer does not yet check who asks it for a certificate or a token.
 
 \section{Measurements}\hypertarget{ix:measurements}{}\label{sec:measurements}
-We ran the reference node on dedicated NVMe machines (\texttt{i4i.xlarge}, one node per machine, \texttt{fsync} enabled, HTTP/3 over QUIC) and verified after each run that sampled and full audit read-backs lost zero acknowledged writes, created zero double-owned zones, and kept every collection total exact. At fixed per-node rates, the network sustained 47\,991 writes/s on 16 nodes, 95\,987/s on 32 nodes, and 190\,700/s on 64 nodes (99.3\% per-node efficiency against 16, with one pass on 64 red due to an unbalanced join layout). In open-loop ramps doubling every 60\,s, sustained throughput scaled from 14\,492/s on 4 nodes to 57\,679/s on 16 nodes (99.5\% linearity) at flat 262\,ms intended 99th-percentile latency. With on-demand node provisioning, the network absorbed 2$\times$ load doublings every 60\,s (4 to 8 nodes at 22\,386/s) and instant 2$\times$ steps (4 to 11 nodes at 16\,004/s, 65.5\,ms intended p99) with zero shed writes and zero lost keys. Under load, the total of a collection included a new write after at most 524\,ms at the median on 16 nodes.
+A join has several observable times. The table gives the timestamps needed to distinguish a slow machine launch from a slow authority transfer or an entry that still uses the old route.
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{.32\linewidth}L@{}}
+\toprule
+Interval & What it tells the operator \\
+\midrule
+Spawn request to first mount & Time spent placing or starting a vnode, admitting it, copying and installing its first lot. \\
+Lot fence to mount & Duration for which neither participant can commit a normal write to that lot. \\
+First mount to first write at R & Delay until an arriving write actually uses the new authority. A relay through S still counts. \\
+First direct write from E & When this particular entry demonstrably bypassed S for a zone installed at R. \\
+Last lot to regional closure & Work still needed for residual zones, region and referrals. Other installed lots may already serve traffic. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Measure the client separately, from intended arrival to acknowledgement. This includes waiting before a fence, queueing, retries and disk service. Report the offered and acknowledged rates alongside the latency distribution, because measuring only completed writes can hide an increasing backlog. The \ixsection{properties}{benchmarks}{benchmark tables} distinguish the fixed-size NVMe network, historical load ramps and later live-placement runs, with their audit scope and workload. A throughput result on an already populated network answers a different question from the time it takes a new receiving disk to accept useful traffic.
 
 \section{Calculations}
-\textit{Group commit.} With groups of $B$ writes and a disk that takes $f$ to make a group durable, each acknowledged write pays $f / B$ of a disk operation. With $B = 256$, one disk operation serves 256 acknowledgements.
+\textit{Group commit.} Let $f$ be the time a disk takes to make one group durable. A full group of $B$ writes consumes $f/B$ of disk service per write on average. For $B=256$, one such operation serves 256 acknowledgements. Each client still waits for the group to become durable.
 
-\textit{Hops.} With current routes outside hand-over, if a client picks its entry node at random among $N$ nodes holding equal parts, a write needs no forward with probability $1/N$ and one forward otherwise.
+\textit{Hops.} Suppose the routes are current, there is no handoff, all $N$ holders receive equal traffic and the entry node is uniform at random. A write needs no forward with probability $1/N$ and one forward otherwise. An exact route learned by a direct client changes this distribution.
 
-\textit{Gossip.} Under the model in which each round delivers the required contacts, a fact reaches every node in at most $d$ rounds, where $d$ is one more than the longest prefix shared by two node addresses, about $2 \log_2 N$ for random addresses. Each node contacts about $\log_2 N + 1$ partners per round. In tests with 1\,024 nodes the bound was 21 rounds and at most 4 were needed.
+\textit{Gossip.} In the original bucket model, each round reaches the specified contacts. The bound is $d$ rounds, with $d$ one more than the longest prefix shared by two addresses, roughly $2\log_2 N$ for random names. Each node contacts about $\log_2 N+1$ partners per round. In the historical 1\,024-node test, $d=21$ and at most four rounds were needed. This calculation describes a contact schedule. It gives no deadline for a saturated machine to process its messages.
 
-\textit{Freshness.} A path from a written zone to the root of its collection crosses $k$ boundaries between nodes. With no lost message, the root includes a write after at most $k \times (1\,\mathrm{s} + \text{round trip})$. With balanced addresses, $k$ is 1 up to 64 nodes and 2 up to 4\,096. This is an idealized scheduling calculation: it assumes ready tasks and the stated round trips, without queueing or processing stalls. It is not a wall-clock freshness guarantee under load or partition.
+\textit{Freshness.} For $k$ boundaries between leaf and root, the historical one-second batching model gives $k(1\,\mathrm{s}+\text{round trip})$ with ready tasks, timely processing and no lost message. In the balanced example, $k$ is one up to 64 nodes and two up to 4\,096 nodes. Actual freshness depends on queues, retries and reachability.
 
-\textit{Durability.} If a disk is lost with probability $p$ before it is replaced, a write held on one disk is lost with probability $p$; held on two of three disks, with probability $p^2$. For $p = 0.01$: one in a hundred, against one in ten thousand.
+\textit{Durability.} Suppose a disk is permanently lost before replacement with probability $p$. A write on one disk has loss probability $p$ in this example. If it actually reached two disks and the failures are independent, the corresponding probability is $p^2$. At $p=0.01$, the example gives one in a hundred on one disk and one in ten thousand on two. Shared machines or providers can correlate failures.
 
-These probability figures are an independence illustration, not a measured durability guarantee. They assume independent disk failures and that the write really reached two durable copies. Acknowledgements allowed to fall back to one local disk do not receive the same protection, and shared-machine or shared-provider failures can correlate losses.
+\section{Conclusion}
+A new vnode starts helping with the first lot for which its data and permission are durably installed. Entries can learn that address from a successful write. Readers need one further piece of information, the current referrals that cover the region still in motion. Together these mechanisms allow the move to progress lot by lot while preserving one normal writer. Recovery time, placement and propagation still matter to what a client experiences.
 
-\Needspace{11\baselineskip}
-\section{Status}
-Implemented and tested: the tree of addresses, holding zones, the rights and their check on disk, writing with receipts, the store with compensated sums and typed monoid columns up to 4\,096 metrics, self-certifying collection descriptions, granular lot hand-offs with paged closure, the relief of busy nodes and the departure of idle ones, linear-cost knowledge with bucketed gossip, and summaries across nodes. Measured: the figures of Section~\ref{sec:measurements}. Optional convergent replication has local node test coverage as dated above; replicated AWS fault campaigns and differential knowledge payloads remain open.
+The implementation discussed here is \href{https://github.com/indexus/core/tree/e4b9072}{core \texttt{e4b9072}}, reviewed on 27 November 2026. Its \href{https://github.com/indexus/core/blob/e4b9072/docs/protocol/local-permissions.md}{local-permissions contract} and \href{https://github.com/indexus/core/blob/e4b9072/docs/protocol/local-permissions-verification.md}{verification matrix} identify the protocol rules and the cases exercised.
 
 \Needspace{9\baselineskip}
-\section{Conclusion}
-A node holds what is closest to it, writes only what it holds the right to, reads sums from its own storage, and passes zones and sums to other nodes by explicit, durable steps. Beliefs may lag behind the network; rights never do. This is what lets nodes run by different parties share one index without a coordinator, while normal writes are kept once through restart and transfer, and child contributions are replaced without double-counting. Permanent disk loss, degraded fallback and summary freshness have the separate limits stated above.
-
-\Needspace{14\baselineskip}
 \section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=1pt]
   \item \hypertarget{reference:1}{}R. Henriot. \ixbib{network2024} (first version). 2024.

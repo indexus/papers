@@ -14,7 +14,7 @@
 		\node [style=none] (12) at (17, -1.75) {};
 		\node [style=none] (13) at (17, -0.25) {};
 		\node [style=none] (14) at (9, -0.25) {};
-		\node [style=tiny] (15) at (13, -1) {\shortstack[c]{Tests and benchmarks\\independent reproduction}};
+		\node [style=tiny] (15) at (13, -1) {\shortstack[c]{Tests and benchmarks\\measure, reproduce, compare}};
 		\node [style=none] (16) at (-3.75, -1.75) {};
 		\node [style=none] (17) at (3.75, -1.75) {};
 		\node [style=none] (18) at (3.75, -0.25) {};
@@ -36,7 +36,7 @@
 		\node [style=none] (34) at (12.5, -4.95) {};
 		\node [style=none] (35) at (12.5, -3.45) {};
 		\node [style=none] (36) at (0.5, -3.45) {};
-		\node [style=tiny] (37) at (6.5, -4.2) {\shortstack[c]{Planned public archive\\papers, transcripts, Indexus collection}};
+		\node [style=tiny] (37) at (6.5, -4.2) {\shortstack[c]{Papers and selected exchanges available\\Fuller development collection proposed}};
 		\node [style=none] (38) at (6.5, -1) {};
 		\node [style=none] (39) at (6.5, -3.45) {};
 		\node [style=tiny] (40) at (9.4, -2.4) {\shortstack[c]{record each\\iteration}};

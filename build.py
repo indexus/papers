@@ -23,7 +23,7 @@ PAPERS = [
     ('50-properties-and-applications', 'indexus-properties-and-applications'),
     ('60-history-and-authorship', 'indexus-history-and-authorship'),
 ]
-GENERATORS = ['00-manifesto', '10-whitepaper', '20-client', '40-economics',
+GENERATORS = ['00-manifesto', '10-whitepaper', '20-client', '30-network', '40-economics',
               '50-properties-and-applications', '60-history-and-authorship']
 LEGACY = [('client-algorithm', 'indexus-search-algorithm-paper'),
           ('p2p-protocol', 'indexus-p2p-protocol-paper')]
