@@ -1,0 +1,44 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (0, -0.4) {};
+		\node [style=none] (2) at (3, -0.4) {};
+		\node [style=none] (3) at (3, 2) {};
+		\node [style=none] (4) at (0, 2) {};
+		\node [style=tiny] (5) at (1.5, 0.8) {entry};
+		\node [style=none] (6) at (8.5, -0.4) {};
+		\node [style=none] (7) at (12.5, -0.4) {};
+		\node [style=none] (8) at (12.5, 2) {};
+		\node [style=none] (9) at (8.5, 2) {};
+		\node [style=tiny] (10) at (10.5, 0.8) {current holder};
+		\node [style=none] (11) at (3, 1.4) {};
+		\node [style=none] (12) at (8.5, 1.4) {};
+		\node [style=tiny] (13) at (5.75, 1.65) {compact write};
+		\node [style=none] (14) at (8.5, 0.1) {};
+		\node [style=none] (15) at (3, 0.1) {};
+		\node [style=tiny] (16) at (5.75, 0.35) {durable result};
+		\node [style=tiny] (17) at (10.5, 2.6) {authority + commit};
+		\node [style=none] (18) at (0, -2.6) {};
+		\node [style=none] (19) at (3, -2.6) {};
+		\node [style=none] (20) at (3, -2) {};
+		\node [style=none] (21) at (0, -2) {};
+		\node [style=tiny] (22) at (1.5, -2.3) {sync worker};
+		\node [style=none] (23) at (8.5, -2.6) {};
+		\node [style=none] (24) at (12.5, -2.6) {};
+		\node [style=none] (25) at (12.5, -2) {};
+		\node [style=none] (26) at (8.5, -2) {};
+		\node [style=tiny] (27) at (10.5, -2.3) {peer};
+		\node [style=none] (28) at (3, -2.3) {};
+		\node [style=none] (29) at (8.5, -2.3) {};
+		\node [style=tiny] (30) at (5.75, -2.05) {Knowledge exchange};
+		\node [style=tiny] (31) at (6, -3.5) {background; bounded concurrency};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=arrow] (11.center) to (12.center);
+		\draw [style=arrow] (14.center) to (15.center);
+		\draw [style=thin] (18.center) to (19.center) to (20.center) to (21.center) to cycle;
+		\draw [style=thin] (23.center) to (24.center) to (25.center) to (26.center) to cycle;
+		\draw [style=arrow] (28.center) to (29.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

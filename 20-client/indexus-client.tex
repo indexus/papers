@@ -81,6 +81,9 @@ Rows travel as columns of numbers: the keys, the counts, then each metric. A bro
 
 For example, the answer ``C: 33'' means that 33 records lie below C; it is not a list of 33 records. If the user zooms into C, the next answer may contain ``at C: 4'', ``CB: 9'', ``CC: 10'' and ``CD: 10''. Those four counts add back to 33. The row at C matters: records need not all lie in leaf zones.
 
+\paragraph{A summary and a refreshed read are different promises.}
+An ordinary summary combines the latest child versions this node has received; it may lag a remote acknowledgement. A refreshed normal read instead asks the durable holders and the receivers of zones already handed over. It must include writes acknowledged before the read began, or fail if a required holder is unavailable. This coverage rule does not promise one instantaneous snapshot across machines during concurrent writes. \ixsection{network}{read-consistency}{The network paper} gives a two-record example and the tests behind this distinction.
+
 \section{Finding nodes}
 A client starts from a few known nodes and has two ways to reach a zone. In the first, it chooses one node for its session, the known node closest to a random key, and lets that node forward each read to the holder of the zone. In the second, it computes the holder itself from the nodes it knows, sends each read there, and follows the answer when a node replies that the zone lives elsewhere. Reads for many zones are grouped, up to 128 per request.
 

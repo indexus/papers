@@ -73,6 +73,12 @@ research hypotheses have separate scopes. In particular:
   The residual-region fence is described; a universal freeze bound is not claimed.
 - Single-writer authority applies to the normal write path. Optional degraded
   fallback accepts concurrent record versions with deterministic reconciliation.
+- Since the 24 November review, compact writes and prepared lot steps are
+  distinguished from full control Knowledge exchanges. The adaptive lot starts
+  at 64 zones; 150 ms is a target, not a guaranteed freeze limit.
+- Refreshed normal reads capture page data and required receivers together
+  (`core` commit `6a3015e`), returning an explicit error if coverage is unavailable.
+  This is not a global snapshot of concurrent writes.
 - An exact aggregate of received child versions can still lag a remote write.
   Arithmetic precision, propagation delay and cache freshness are separate.
 - AWS results are kept with their original workload and audit scope. Optional
@@ -128,6 +134,13 @@ section hierarchy, table spacing and typography.
 notes. They explain the development history; the reading table above identifies
 the current papers and titles. The former H1/H2 labels are kept as outline
 provenance, while the measured campaigns retain their November dates.
+
+The 24 November review distinguishes the two local snapshot fixes, Knowledge
+decoupling and early relayed service from direct routing. A concurrent, still-uncommitted WRITE-HINT-1 update now adds
+the entry-side exact-zone cache; its reported local routing gain does not
+establish a better AWS p99. This review preserves the dated
+benchmarks and the 2024 articles. SUM-4 was tested as an uncommitted local change;
+its provenance is not silently represented as a published commit.
 
 The 22 November 2026 revision adds worked examples before formal definitions,
 progressive hand-over diagrams, an insert/delete learning diagram and a common

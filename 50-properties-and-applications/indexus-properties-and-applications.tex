@@ -62,7 +62,7 @@ A CRDT is a replicated data type whose states merge to the same result despite d
 \[
 F(H_1 \cup H_2) = F(H_1) \sqcup F(H_2),
 \]
-where $\sqcup$ keeps, per address, the grant of greater height. This join is associative, commutative and idempotent (a join-semilattice). Two distinct successors of the same grant have equal height and distinct tokens on a shared address, so $\sqcup$ rejects forks symmetrically. Memory is bounded by $O(\text{leaves})$ rather than by the total number of certificates ever issued.
+where $\sqcup$ keeps, per address, the grant of greater height. This join is associative, commutative and idempotent (a join-semilattice). Two distinct successors of the same grant have equal height and distinct tokens on a shared address, so $\sqcup$ rejects forks symmetrically. The derived authority frontier is bounded by $O(\text{leaves})$. This is not a bound on all retained proof history or on the full Knowledge bundle.
 
 Two local properties allow the cluster to grow without global coordination:
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
@@ -73,7 +73,12 @@ Two local properties allow the cluster to grow without global coordination:
 \subsection{Gossip and Granular Hand-Over}
 Active holders are grouped into at most 97 Kademlia-style buckets by common prefix length with the local node. Each round contacts one peer per non-empty bucket, so updates propagate in $O(\log N)$ messages per round and at most $\mathrm{depth}$ rounds (measured: 3 to 4 rounds on 1\,024 random vnodes, 3 rounds on a skewed trie).
 
-When a region moves to a new vnode, the transfer splits into lots of at most 64 zones targeting 1\,MiB, ordered deepest and busiest first. Each lot is copied by batched snapshots, caught up via zone sequence numbers, certified and installed durably. The receiver begins accepting writes for installed lots while the donor continues serving the rest of the region.
+When a region moves to a new vnode, the transfer splits into lots of an initial target of 64 zones and 1\,MiB, ordered deepest and busiest first. Each lot is copied by batched snapshots, caught up via zone sequence numbers, certified and installed durably. The receiver begins accepting writes for installed lots while the donor continues serving the rest of the region.
+
+\paragraph{Runtime update, 24 November 2026.}
+The lot target is adaptive: initially 64 zones, between 16 and 2\,048 by default, toward 150\,ms of freeze, with byte limits enforced separately. Neither this target nor one bounded 500\,ms cutover wait is a bound on the complete write latency. Full Knowledge is prepared before new fences; compact write and lot replies avoid a synchronous global metadata exchange. The final join exchange can still wait after installed lots are writable. Early writes can still be relayed by a stale entry node. The local WRITE-HINT-1 update now learns the exact zone holder from an ACK in a bounded entry cache; it changes routing, not authority, and was still uncommitted at review time.
+
+Two local consistency requirements are separate. SUM-4 reads a local sum and the local subtractions used to correct it from one committed version. READ-1 captures a durable inventory page and the receivers needed to complete it in one snapshot (\texttt{6a3015e}). A refreshed normal read covers earlier acknowledgements or fails explicitly; it is not a global instantaneous snapshot. An ordinary derived summary may lag remote writes. \ixsection{network}{read-consistency}{The network paper} works through the two-record example. Local regression and race-detector checks establish the tested schedules, not a new AWS latency result or a proof against every possible execution.
 
 \subsection{Convergent Data Replication}
 Without replication, a zone has at most one writer; losing its only disk loses that copy and makes the zone unavailable. Initially verified in simulation, the convergent replication core (\texttt{internal/replication/convergent}) places each zone on the 3 closest active vnodes on distinct machines, $R(z)[0..2]$. Each write carries a unique dot $(\text{incarnation}, \text{counter})$ and a zone-local Lamport clock \texttt{ver}. Two versions of the same record ID are ordered totally without physical clocks by: (1) larger \texttt{ver}, (2) tombstone over live value at equal \texttt{ver}, and (3) smaller payload digest at tie. This makes record-set merge an associative, commutative, idempotent LWW-element-set. Under normal operation, $R(z)[0]$ is the sole writer and replicates asynchronously; under partition, reachable replicas accept writes in a fallback log marked \texttt{degraded} and reconcile when the owner returns.
@@ -121,6 +126,7 @@ folded in canonical cell order. Any complete cut of the tree read in address ord
     \caption{Cut independence: two different cuts of the tree produce the same monoid fold.}
 \end{figure}
 
+\Needspace{7\baselineskip}
 \paragraph{Arithmetic scope.}
 Cut independence is the algebraic property. Floating-point addition and affine composition can differ in their last bits across fold orders; Neumaier compensation does not turn binary64 into exact real arithmetic. Integer sums remain exact while the sum of absolute values stays within $2^{53}$. This distinction is why the unlearning study below separates observed numerical agreement from the reproducible-sum direction in Section~\ref{sec:directions}.
 

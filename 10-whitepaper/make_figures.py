@@ -95,9 +95,34 @@ for base,moved,title in [(0,0,"before join"),(7.7,1,"first lot installed"),(15.4
         arrow(f,(base+.55,y),(base+1.8,y))
     f.node(base+2.7,-4.1,f"{4-moved} lots on old; {moved} on new","tiny")
 out["progressive"] = f
+# Separate write acknowledgements from optional metadata repair.
+f = Fig()
+box(f, 1.5, .8, "entry", w=3, h=2.4)
+box(f, 10.5, .8, "current holder", w=4, h=2.4)
+arrow(f, (3, 1.4), (8.5, 1.4), "compact write")
+arrow(f, (8.5, .1), (3, .1), "durable result")
+f.node(10.5, 2.6, "authority + commit", "tiny")
+box(f, 1.5, -2.3, "sync worker", w=3)
+box(f, 10.5, -2.3, "peer", w=4)
+arrow(f, (3, -2.3), (8.5, -2.3), "Knowledge exchange")
+f.node(6, -3.5, "background; bounded concurrency", "tiny")
+out["knowledge-paths"] = f
+
+# The receiver is part of the coverage even if the region finishes mid-read.
+f = Fig()
+for x, text in [(2, "reader"), (10, "donor: 1 old row"), (19, "receiver: 2 rows")]:
+    box(f, x, 1.8, text, w=5.0, h=.9)
+arrow(f, (4.5, 1.8), (7.5, 1.8), "page")
+box(f, 10, -.3, lines("same snapshot", "rows + receiver"), w=5, h=1.2)
+arrow(f, (10, 1.35), (10, .3))
+arrow(f, (12.5, -.3), (19, -.3), "also read")
+arrow(f, (19, -.3), (19, 1.35))
+f.node(10, -2.1, "2 rows, or explicit failure if the receiver is unavailable", "tiny")
+out["read-coverage"] = f
+
 for name, fig in out.items():
     save(name, fig)
-    if name in {"owner", "keys", "split", "handoff", "summary", "progressive"}:
+    if name in {"owner", "keys", "split", "handoff", "summary", "progressive", "knowledge-paths", "read-coverage"}:
         target = HERE.parent / "30-network" / "figures" / (name + ".tikz")
         target.parent.mkdir(exist_ok=True)
         target.write_text(fig.code())

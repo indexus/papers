@@ -99,3 +99,61 @@ forwarded text, intermediate failures, timestamp bases and selection limits are
 recorded explicitly. The hashes protect quotation integrity rather than
 independently attesting authorship or date. No new distributed benchmark is
 claimed by publishing these excerpts.
+
+## Guarantee review — 24 November 2026
+
+The current series was compared with core `6a3015e`, the earlier Knowledge
+changes and the locally tested SUM-4 working-copy correction. That correction
+had no separate commit at review time. The earlier verification records above
+remain historical records, not retroactive claims about this revision.
+
+This pass distinguishes normal single-writer authority, refreshed inventory
+coverage, derived-summary consistency and freshness. Page data and required
+receivers share a snapshot (READ-1); local sum corrections share a version
+(SUM-4). Neither establishes a global instantaneous snapshot. Compact writes
+and prepared cutovers avoid synchronous global Knowledge transport. A timed-out
+control follower may still send a second full bundle. Adaptive lots start at
+64 zones; 150 ms is a target, not a freeze deadline. Early receiver service,
+direct-route learning and completion of the join remain separate events.
+
+All seven current papers and both historical archives compile with
+`python3 build.py --check --legacy`: zero errors, zero overfull hboxes and no
+unresolved references. Figure regeneration is reproducible. The new Knowledge
+and inventory-coverage figures use the existing vector TikZiT vocabulary.
+
+| Current paper | Pages |
+| --- | ---: |
+| 00-manifesto | 4 |
+| 10-whitepaper | 10 |
+| 20-client | 7 |
+| 30-network | 11 |
+| 40-economics | 9 |
+| 50-properties-and-applications | 14 |
+| 60-history-and-authorship | 6 |
+
+All 61 current pages were rendered at 150 dpi and inspected on contact sheets;
+new figures and changed arithmetic paragraphs were checked at full-page scale.
+The page-bound safety check found no text within the outer 20 pt border.
+Local core documentation/architecture checks passed. `check_links.py` reports
+31 local PDF actions, 63 companion actions and 172 Markdown targets valid.
+
+The properties paper's benchmark section and all subsequent material, including
+SPFresh/LIRE, SIGReg/Epps--Pulley, the unlearning DOI, equations and references,
+are byte-identical in source to the preceding revision. The two 2024 source
+archives, PDFs and original figures are unchanged. No new AWS experiment,
+replicated-cluster validation, universal freeze bound or formal proof is claimed.
+
+### Concurrent local update observed during the review
+
+The working copy subsequently added WRITE-HINT-1: a shared, bounded exact-zone
+cache at the entry service, plus derived-total store reads outside the summary
+lock. These remain local uncommitted changes, not part of `6a3015e`. The network,
+properties and history papers were updated accordingly. The reported three-run
+local routing comparison is not treated as statistical evidence of better p99.
+
+The entry-hint and source-inventory-cut tests passed five repetitions with
+`-race`; the root collection-cut, bulk join and continuous-read tests passed one
+additional combined `-race` run. Earlier full-suite qualification is retained
+with its earlier scope, not attributed to every concurrent edit. The final
+seven-paper build, link checks and 61-page rendering were repeated after this
+editorial update.

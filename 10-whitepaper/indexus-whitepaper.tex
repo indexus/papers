@@ -16,7 +16,7 @@
 \section{Introduction}
 Data becomes useful when it can be found: the houses for sale near an address, the weather at a given hour, the news of the day scrolled back in time. Finding data requires an index. Building one is costly, so in practice one party builds it and the others query it. That party then decides what is found, in which order and on which terms.
 
-We propose an index that is a protocol rather than a service. Any party can run part of it, any reader can compute where a piece of data lives, and the answer does not depend on which node gives it. For maps, feeds and dashboards, the index also answers totals, how many and how much in a region, and those totals are exact.
+We propose an index that is a protocol rather than a service. Any party can run part of it, any reader can compute where a piece of data lives, and readers following the same complete data versions compute the same answer. For maps, feeds and dashboards, the index also answers totals, how many and how much in a region, and those totals compose from versioned contributions. A summary may still lag an acknowledged write: correctness of its calculation and freshness of its inputs are separate.
 
 Our 2024 papers introduced the tree, the encoding of locations and the incremental search~[\ixref{1},~\ixref{2}]. This paper describes the protocol as it is built today.
 
@@ -136,7 +136,7 @@ As a collection grows, its zones spread over the network. Each new zone goes to 
     \caption{Delegation - representation at t3}
 \end{figure}
 
-When a node is too busy, a new node joins at an address that differs from it by a single bit. The new node takes half of the busy node's part of the tree, and no other node loses anything. Zones move in small lots (at most 64 zones, targeting 1\,MiB, deepest and busiest first), so the new node begins accepting writes for installed lots while the old node keeps serving the rest. When a node is idle, it hands its part to a neighbour and leaves.
+When a node is too busy, a new node joins at an address that differs from it by a single bit. The new node takes half of the busy node's part of the tree, and no other node loses anything. Zones move in small adaptive lots (initially 64 zones, targeting 1\,MiB, deepest first and busiest within each depth), so the new node begins accepting writes for installed lots while the old node keeps serving the rest. When a node is idle, it hands its part to a neighbour and leaves.
 
 \section{Moving a zone}\hypertarget{ix:handoff}{}
 When a zone changes holder, the two nodes may for a short time disagree on who holds it. If both accepted writes, the zone would exist in two versions. So the right to write is handed over explicitly:
@@ -158,7 +158,7 @@ The short pause concerns the lot being handed over, rather than every zone in th
 \begin{figure}[H]
     \centering
     \ixnew{figures/progressive.tikz}
-    \caption{Progressive relief: writes follow each installed lot. Four lots illustrate the mechanism; equal-sized cells do not imply equal traffic or equal transfer times.}
+    \caption{Progressive relief: writes follow each installed and activated lot. Four lots illustrate the mechanism; equal-sized cells do not imply equal traffic or equal transfer times.}
 \end{figure}
 
 A smaller lot limits the work in one hand-over; it does not alone bound its duration. Disk latency, the writes to catch up and the network still matter. The implementation can also fence the residual region to finish a join under continuous zone creation. Thus early service and complete join are different milestones, and a universal freeze bound is not yet established.
@@ -192,7 +192,7 @@ Collections that use the same space can be read together: a map can show propert
 
 \textit{Spreading news.} Each node contacts about $\log_2 N + 1$ others per round. In tests with 1\,024 nodes, news reached every node within 4 rounds.
 
-\textit{Writing.} A write reaches its holder directly, or after one forward.
+\textit{Writing.} With a current route, a write reaches its holder directly or after one forward. During a granular join, a stale entry can add another relay through the old holder.
 
 \textit{Measured.} On dedicated NVMe machines with durable disk writes (\texttt{fsync}) and HTTP/3, acknowledged throughput scaled linearly: 48\,000 writes/s on 16 nodes, 96\,000/s on 32 nodes, and 190\,700/s on 64 nodes (99.3\% per-node efficiency against 16). In open-loop ramps from 4 to 16 nodes, sustained throughput scaled from 14\,492/s to 57\,679/s (99.5\% linearity) at flat 262\,ms intended 99th-percentile latency. Under live elastic scaling on demand, the network absorbed 2$\times$ load doublings every 60\,s (4 to 8 nodes at 22\,386/s) and instant 2$\times$ steps (4 to 11 nodes at 16\,004/s, 65.5\,ms intended p99) with zero lost or double-owned writes.
 

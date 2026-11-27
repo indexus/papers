@@ -1,0 +1,45 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (1) at (-0.5, 1.35) {};
+		\node [style=none] (2) at (4.5, 1.35) {};
+		\node [style=none] (3) at (4.5, 2.25) {};
+		\node [style=none] (4) at (-0.5, 2.25) {};
+		\node [style=tiny] (5) at (2, 1.8) {reader};
+		\node [style=none] (6) at (7.5, 1.35) {};
+		\node [style=none] (7) at (12.5, 1.35) {};
+		\node [style=none] (8) at (12.5, 2.25) {};
+		\node [style=none] (9) at (7.5, 2.25) {};
+		\node [style=tiny] (10) at (10, 1.8) {donor: 1 old row};
+		\node [style=none] (11) at (16.5, 1.35) {};
+		\node [style=none] (12) at (21.5, 1.35) {};
+		\node [style=none] (13) at (21.5, 2.25) {};
+		\node [style=none] (14) at (16.5, 2.25) {};
+		\node [style=tiny] (15) at (19, 1.8) {receiver: 2 rows};
+		\node [style=none] (16) at (4.5, 1.8) {};
+		\node [style=none] (17) at (7.5, 1.8) {};
+		\node [style=tiny] (18) at (6, 2.05) {page};
+		\node [style=none] (19) at (7.5, -0.9) {};
+		\node [style=none] (20) at (12.5, -0.9) {};
+		\node [style=none] (21) at (12.5, 0.3) {};
+		\node [style=none] (22) at (7.5, 0.3) {};
+		\node [style=tiny] (23) at (10, -0.3) {\shortstack[c]{same snapshot\\rows + receiver}};
+		\node [style=none] (24) at (10, 1.35) {};
+		\node [style=none] (25) at (10, 0.3) {};
+		\node [style=none] (26) at (12.5, -0.3) {};
+		\node [style=none] (27) at (19, -0.3) {};
+		\node [style=tiny] (28) at (15.75, -0.05) {also read};
+		\node [style=none] (29) at (19, -0.3) {};
+		\node [style=none] (30) at (19, 1.35) {};
+		\node [style=tiny] (31) at (10, -2.1) {2 rows, or explicit failure if the receiver is unavailable};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thin] (1.center) to (2.center) to (3.center) to (4.center) to cycle;
+		\draw [style=thin] (6.center) to (7.center) to (8.center) to (9.center) to cycle;
+		\draw [style=thin] (11.center) to (12.center) to (13.center) to (14.center) to cycle;
+		\draw [style=arrow] (16.center) to (17.center);
+		\draw [style=thin] (19.center) to (20.center) to (21.center) to (22.center) to cycle;
+		\draw [style=arrow] (24.center) to (25.center);
+		\draw [style=arrow] (26.center) to (27.center);
+		\draw [style=arrow] (29.center) to (30.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
