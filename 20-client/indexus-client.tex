@@ -100,17 +100,21 @@ A map shows a region at a zoom. The zoom sets the size of the cells to draw. The
 A parent remains drawn until all the records of its child have arrived, so the map never shows a hole while it refines. The view is read with a margin of a quarter of its size on each side, so that a small move does not trigger a read. Three neighbouring levels are prepared together, which lets the map blend from one zoom to the next.
 
 \section{Searching around a point}
-A feed, or a list of the nearest places, starts at an origin and goes outwards. The client uses the incremental algorithm of Henriot's 2024 paper~[\ixref{1}], unchanged in its principle: it reads zones in layers, from coarse to fine, sorts what it holds by distance from the origin, and uses the counts of the zones to predict how many records lie within each distance. It stops reading as soon as enough records are certain to be closer than everything not yet read, and returns them; the next call continues from there.
+To find the nearest places, the reader starts at an origin and opens zones from coarse to fine, as in Henriot's 2024 search algorithm~[\ixref{1}]. For each zone $Z$ it computes a lower bound $b(Z)$ on the distance from the origin to any record in that zone. If the nearest unopened zone starts at 5\,km, a record already found at 3\,km can be shown. One at 8\,km must wait because the unopened zone may contain a closer place. Counts help decide how much to fetch. The client reads selected zones in batches and can fetch the records of a small zone directly. The distance bound determines which results can be shown in order.
 
 \begin{figure}[H]
     \centering
     \ixfig[14cm]{../figkit/orig/layers.tikz}
-    \caption{Layers and concentric circles}
+    \caption{Layers and concentric circles. The \href{https://indexus.io/papers/animations/search-algorithm.gif}{original 20-frame animation} follows the search through three depths of the tree.}
 \end{figure}
 
-The reference client batches the zones selected at one step, splitting a large batch into requests. It can fetch the records of a small zone directly. Reading the records gives the final layer the individual entries needed to order its results.
+\paragraph{What the next page remembers.}
+The client keeps the search in memory. Each layer retains the zones still to open, its distance bound, and the entries already selected or read. A page returns up to the requested number of terminal records. Any others already fetched stay available. A second call on the same search advances these layers and can return a page without another network request. Distinct records can share both a location and a distance. Each keeps its own identifier.
 
-For a search from 5 to 10\,km away, a coarse cell can contain both the origin and a place about 7\,km away. Its minimum distance is zero. Discarding it at the inner radius would lose the eligible place. The reader retains intersecting cells, descends and applies both distance bounds to the terminal records. The \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/annular-filter.test.mjs}{annular-search tests} cover a geographic example and continuation on the next page.
+Consider a search between 5 and 10\,km from the origin. A coarse cell containing the origin has a lower bound of zero, yet it may contain eligible records. The reader opens intersecting cells and tests the actual records against both limits. In the \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/annular-filter.test.mjs}{one-dimensional pagination test}, four records lie at distances 1, 6, 8 and 12 from the origin. With a page size of one, the first call returns the record at 6, the second returns the one at 8. Across both calls the reader fetches the root and the coarse cell once each.
+
+\paragraph{When to start again.}
+Changing the origin, filters or collections changes which records qualify and their order. Start a new search for those inputs. The old traversal can be \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/cancellation.test.mjs}{cancelled}. Continuation lives in that client instance. Reloading the application loses it. Ordering assumes the required cells can be read from stable data. A zone read can fail and the \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/exploration.js}{reference traversal} can continue past it. Such a page can omit a nearer record. Writes between pages can also change the ranking, since separate reads have no shared snapshot.
 
 \section{Combining collections}\hypertarget{ix:composition}{}
 In the 2024 search paper~[\ixref{1}], a mask selects which coordinate to bisect next, and a collection-specific offset changes the letters assigned to the resulting cells. The earlier paper also described searching across several collections in one traversal. Here the operation is arithmetic on cell summaries. The encoding lets two producers describe the same place with different strings. An address is useful to find the data. To compare two cell measurements, the reader instead decodes their integer grid coordinates and resolution.

@@ -44,6 +44,8 @@ compare that starting point with durable authority, granular hand-over,
 versioned monoid summaries and optional replication. The original sources are
 archives, not current implementation specifications.
 
+[Watch the archived layer search](https://indexus.io/papers/animations/search-algorithm.gif) · [Provenance and licence](animations/README.md)
+
 ## How the papers connect
 
 Companion-paper names and bibliography entries in the PDFs are clickable.
