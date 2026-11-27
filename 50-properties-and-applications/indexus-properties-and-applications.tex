@@ -87,7 +87,7 @@ A monoid is a summary value, an operation for combining two such values, and an 
 
 For a concrete example, four child counts 15, 3, 33 and 9 give 60. If the third count becomes 34, its parent replaces 33 with 34 and obtains 61. A repeated report of 34 leaves 61 unchanged. The network's delivery order is handled by versions, while the summary operation handles composition.
 
-Because a parent replaces the versioned contribution of each child rather than applying unversioned deltas, \emph{any associative monoid with identity converges} under duplicate, delayed or reordered messages. Commutativity, invertibility and idempotence are not required.
+Because a parent replaces the versioned contribution of each child rather than applying unversioned deltas, \emph{any associative monoid with identity converges} once updates cease and the latest contribution from every required child is eventually installed, even if older messages arrive again or out of order. Commutativity, invertibility and idempotence are not required.
 
 \begin{table}[H]
 \centering
@@ -126,9 +126,12 @@ folded in canonical cell order. A complete cut read in address order yields the 
 \paragraph{Arithmetic scope.}
 Cut independence is the algebraic property. Floating-point addition and affine composition can differ in their last bits across fold orders; Neumaier compensation does not turn binary64 into exact real arithmetic. Integer sums remain exact while the sum of absolute values stays within $2^{53}$. This distinction is why the unlearning study below separates observed numerical agreement from the reproducible-sum direction in Section~\ref{sec:directions}.
 
+\paragraph{What reaches the reader.}
+The server folds metrics in binary64. The default \texttt{IXB2} summary response sends binary32 metrics: a stored metric of $16{,}777{,}217$ arrives as $16{,}777{,}216$. Requesting \texttt{metrics=f64} preserves the former value. Selecting just one column reduces the bytes sent and leaves the underlying fold unchanged. Counts have their own unsigned 32-bit column in both encodings. A round trip through the \href{https://github.com/indexus/core/blob/5188b61/internal/wire/sets_block.go}{reference encoder} and decoder returned zero for a single row with count $2^{32}$ in either mode. The numerical claim for a stored summary therefore also requires a representable value in each row served to the reader.
+
 \paragraph{Exact dyadic quantization and \texttt{IXC1}.}
 Two programs must agree on which side of every cell boundary a coordinate falls. A tiny rounding disagreement would send the same record to different zones. ``Dyadic'' means repeated halving; the condition below limits the depth so that binary64 calculations reproduce the intended exact halvings. The descriptor then makes the chosen geometry and summary rules checkable from the collection name.
-A self-certifying collection uses a canonical binary descriptor \texttt{IXC1} (32 to 185 bytes): address geometry $(c, W)$ (bits per character and address width), a 16-byte nonce, permitted record depths $[lo, hi]$, bounded axes $[\min_a, \max_a]$ with bit schedule $\sigma$ (or $k=0$ opaque addresses), and column kinds. IEEE~754 \texttt{binary64} bisection matches exact dyadic quantization bit for bit up to depth $D_a$ satisfying
+A self-certifying collection uses a canonical binary descriptor \texttt{IXC1} (32 bytes for the documented opaque space with 768 sum columns; 185 for a documented three-axis example): address geometry $(c, W)$ (bits per character and address width), a 16-byte nonce, permitted record depths $[lo, hi]$, bounded axes $[\min_a, \max_a]$ with bit schedule $\sigma$ (or $k=0$ opaque addresses), and column kinds. IEEE~754 \texttt{binary64} bisection matches exact dyadic quantization bit for bit up to depth $D_a$ satisfying
 \[
 \max(|\min_a|, |\max_a|) \le 2^{53 + \min\bigl(v_2(\min_a),\; v_2(\Delta_a) - n\bigr)},
 \]

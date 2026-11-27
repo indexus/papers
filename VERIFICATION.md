@@ -1,3 +1,7 @@
+# Go node to JavaScript reader — 27 November 2026
+
+The [implementation map](notes/implementation-map.md) follows a sale through preparation, storage, handoff, regional totals, transport, search and drawing. Four papers were revised against core `5188b61` and SDK `6e1bba2`. The seven current papers total 69 pages. The 2024 sources and PDFs are preserved. The four revised PDFs compile without overfull boxes or unresolved references.
+
 # Address identity, composition and provenance review — 27 November 2026
 
 The seven papers now cover 67 pages. The two 2024 publications retain their original sources and PDFs. The comparison used the reference node at `5188b61`, the JS SDK at `6e1bba2` and Explore at `c0e9738`.

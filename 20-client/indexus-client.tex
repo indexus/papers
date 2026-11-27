@@ -86,7 +86,7 @@ In this simplified example, the answer for C counts 33 records. A closer view ca
 The map can still display its four cells during a refresh. Checking a new house after acknowledgement requires a fresh server answer. Section~\ref{sec:freshness} follows that house through both reads.
 
 \section{Finding nodes}
-A client can let one entry node route its reads or ask the nearest known node directly. A redirect adds a hop if a zone has moved. The client can group up to 128 zones per request.
+In a gateway-backed application, \texttt{GatewaySession} obtains the network settings and a client credential, then opens a \texttt{Network} connection. Once connected, the map and the nearby feed can share this connection while keeping their own traversal state. A client can let one entry node route its reads or ask the nearest known node directly. A redirect adds a hop if a zone has moved. The client can group up to 128 zones per request.
 
 \section{Drawing a map}\hypertarget{ix:map}{}
 A map shows a region at a zoom. The zoom sets the size of the cells to draw. The client keeps the zones it has already read and descends them: a cell outside the view is skipped, a cell fine enough is drawn, a cell too coarse is replaced by its children if they are known. The children it lacks are exactly the zones it reads next.
@@ -97,16 +97,13 @@ A map shows a region at a zoom. The zoom sets the size of the cells to draw. The
     \caption{Map refinement. The client reads @, then C, then the four children of C.}
 \end{figure}
 
-A parent remains drawn until all the records of its child have arrived, so the map never shows a hole while it refines. The view is read with a margin of a quarter of its size on each side, so that a small move does not trigger a read. Three neighbouring levels are prepared together, which lets the map blend from one zoom to the next.
+\paragraph{A cell on the screen and a zone on the wire.}
+On a two-dimensional grid that alternates the axes, one BASE64 character contains three latitude and three longitude cuts. One child-summary block can therefore support three successive map refinements: the reader groups its rows by the first two, four, then six geometric bits after undoing the offset. Further key digits present in the block can also place rows in finer bins. The worker selects the visible cells and the blocks still needed. WebGPU groups the selected rows for drawing. Zooming one step need not trigger a network read.
+
+Suppose a parent attributes 30 houses to a branch, but the child block currently accounts for 24. Replacing the visible branch with that breakdown would make six houses disappear. The \href{https://github.com/indexus/sdk/blob/6e1bba2/src/walk/index.js}{viewport traversal} can keep the coarser cell in the finer view. Matching counts allow refinement; they cannot establish that both observations describe the same instant. On an initial load there may be no cached parent to show. The map reads a margin around the viewport and prepares neighbouring resolutions so that a small pan or zoom can reuse the work.
 
 \section{Searching around a point}
 To find the nearest places, the reader starts at an origin and opens zones from coarse to fine, as in Henriot's 2024 search algorithm~[\ixref{1}]. For each zone $Z$ it computes a lower bound $b(Z)$ on the distance from the origin to any record in that zone. If the nearest unopened zone starts at 5\,km, a record already found at 3\,km can be shown. One at 8\,km must wait because the unopened zone may contain a closer place. Counts help decide how much to fetch. The client reads selected zones in batches and can fetch the records of a small zone directly. The distance bound determines which results can be shown in order.
-
-\begin{figure}[H]
-    \centering
-    \ixfig[14cm]{../figkit/orig/layers.tikz}
-    \caption{Layers and concentric circles. The \href{https://indexus.io/papers/animations/search-algorithm.gif}{original 20-frame animation} follows the search through three depths of the tree.}
-\end{figure}
 
 \paragraph{What the next page remembers.}
 The client keeps the search in memory. Each layer retains the zones still to open, its distance bound, and the entries already selected or read. A page returns up to the requested number of terminal records. Any others already fetched stay available. A second call on the same search advances these layers and can return a page without another network request. Distinct records can share both a location and a distance. Each keeps its own identifier.
@@ -115,6 +112,12 @@ Consider a search between 5 and 10\,km from the origin. A coarse cell containing
 
 \paragraph{When to start again.}
 Changing the origin, filters or collections changes which records qualify and their order. Start a new search for those inputs. The old traversal can be \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/cancellation.test.mjs}{cancelled}. Continuation lives in that client instance. Reloading the application loses it. Ordering assumes the required cells can be read from stable data. A zone read can fail and the \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/exploration.js}{reference traversal} can continue past it. Such a page can omit a nearer record. Writes between pages can also change the ranking, since separate reads have no shared snapshot.
+
+\begin{figure}[H]
+    \centering
+    \ixfig[14cm]{../figkit/orig/layers.tikz}
+    \caption{Layers and concentric circles. The \href{https://indexus.io/papers/animations/search-algorithm.gif}{original 20-frame animation} follows the search through three depths of the tree.}
+\end{figure}
 
 \section{Combining collections}\hypertarget{ix:composition}{}
 In the 2024 search paper~[\ixref{1}], a mask selects which coordinate to bisect next, and a collection-specific offset changes the letters assigned to the resulting cells. The earlier paper also described searching across several collections in one traversal. Here the operation is arithmetic on cell summaries. The encoding lets two producers describe the same place with different strings. An address is useful to find the data. To compare two cell measurements, the reader instead decodes their integer grid coordinates and resolution.

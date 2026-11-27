@@ -64,7 +64,7 @@ Our house lies at latitude $-20$ and longitude $45$. Starting with the full glob
 \section{Collection}\hypertarget{ix:collection}{}
 A \textbf{record} is one entry: an identifier, a location and a few numbers, such as a count or a price. A \textbf{collection} is a named set of records that use the same space. A \textbf{zone} is a part of a collection: all the records whose location starts with the same characters. The zone C holds every record whose location starts with C, and the zone CB every record starting with CB. A map zoomed out reads large zones; zoomed in, it reads small ones.
 
-Each zone keeps its \textbf{summary}: how many records lie below it and one aggregate per number. By default each number is summed; a collection may also declare \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or linear-recurrence pairs \texttt{affine} $(a, b)$ combined in cell order. With associative operations and a consistent set of child versions, folding a complete cut in cell order gives the root in exact arithmetic. Floating-point sums may round differently when regrouped. A collection's geometry, coordinate bounds, bit mask, and column operations form a short canonical description whose domain-separated SHA-256 digest starts with the 96 bits that encode the collection's 16-character name, so every node and reader checks the rules against the name without a central authority.
+Each zone keeps its \textbf{summary}: a count and one aggregate per numeric column. An ordinary listing contributes one to the count. A pre-aggregated row may carry a weight, so one stored row can represent several observations. By default each number is summed; a collection may also declare \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or linear-recurrence pairs \texttt{affine} $(a, b)$ combined in cell order. With associative operations and a consistent set of child versions, folding a complete cut in cell order gives the root in exact arithmetic. Floating-point sums may round differently when regrouped. For a self-certifying collection, a canonical \texttt{IXC1} description fixes the geometry, bounds, bit schedule and column operations. A reader verifies the description by deriving its 96-bit name. A collection named by hand, as in the Anglet sample, needs its schema from the producer.
 
 \begin{figure}[H]
     \centering
@@ -130,6 +130,8 @@ For the new house the write follows four steps.
 \end{enumerate}
 
 An acknowledged record is on disk. If the client gets no answer, it sends the same request again. The holder recognises the identifier and returns the first answer: the record is never added twice.
+
+Suppose the producer already has a town's listings before the first reader arrives. It can sort the records offline into checksummed parts (\texttt{IXP1}). In the default fresh-import mode, the target zone must be empty on the receiving disk, and the receiver must hold the right to write each addressed zone. A concurrent hand-over can cause the import to be refused. One local installation publishes the whole batch with one receipt; retrying the same batch leaves it in place. A price change tomorrow uses the ordinary write path. The \href{https://github.com/indexus/core/blob/5188b61/internal/storage/bulk_test.go}{storage tests} exercise both replay and crash recovery.
 
 \section{Delegation}
 These three drawings show how a collection spread through the network in the 2024 example. Thick lines lead to nodes, dashed lines lead to zone addresses, and darker tiles indicate zones in use.

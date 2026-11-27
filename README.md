@@ -78,6 +78,8 @@ For a simple account in French of how the author worked, read
 [Method and limits](ai-transparency/METHOD.md) distinguish original requests,
 forwarded text, assistant claims and checks against other artifacts.
 
+[Follow one record from the Go node to the JavaScript reader](notes/implementation-map.md) for the implementation paths and checks behind the current papers.
+
 ## What is established
 
 The cluster results, local fault tests, single-node application experiments and
