@@ -15,7 +15,7 @@
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
-A reader of the index wants two things. A map wants totals: how many records, and how much, in each part of what it shows, at the size given by its zoom. A feed wants records: the nearest ones first, then the next, as the user scrolls. Both read the same zones and the same sums. The client never counts records itself; every number it shows is a sum read from the index.
+A reader of the index wants two things. A map wants totals: how many records, and how much, in each part of what it shows, at the size given by its zoom. A feed wants records: the nearest ones first, then the next, as the user scrolls. Both read the same zones and the same sums. The map reads counts and totals from the index. It can also compute a displayed quantity, such as an average, from those totals.
 
 We follow the whitepaper's words: a \emph{record} is one entry, a \emph{collection} a named set of records sharing a space, a \emph{zone} the records whose location starts with the same characters, and the \emph{sum} of a zone its count and the totals of its numbers.
 
@@ -59,7 +59,7 @@ The client computes a location as follows. The mask gives the dimension cut by e
 Decoding replays the same halvings after removing the offset, and gives back the \emph{cell}: the box of coordinates that the location covers. With base 4 the rule is the same with 2 bits per character: the point at latitude $-60$ and longitude $-45$, with an offset BC, has the location BD and the cell latitude $[-90,-45]$ by longitude $[-90,0]$. With the real alphabet, Paris has a four-character location whose cell is about 4.9 by 6.5 kilometres.
 
 \section{Zones}
-A location is a path in the tree. Each prefix names a zone, and removing the last character gives its parent. To address a zone, the client starts with the collection name and replaces its leading characters with the location. Shared examples test that clients and nodes compute identical addresses.
+A location is a path in the tree. Each prefix names a zone, and removing the last character gives its parent. A zone is identified by its collection and location. The specified routing key starts with the location bits and preserves the remaining bits of the collection name. When a prefix ends inside a byte, implementations must agree on those remaining bits. The \ixpaper{network} discusses the observed discrepancy. The reader retains the full collection and location when requesting the zone.
 
 \begin{figure}[H]
     \centering
@@ -110,16 +110,24 @@ A feed, or a list of the nearest places, starts at an origin and goes outwards. 
 
 The reference client batches the zones selected at one step, splitting a large batch into requests. It can fetch the records of a small zone directly. Reading the records gives the final layer the individual entries needed to order its results.
 
+For a search from 5 to 10\,km away, a coarse cell can contain both the origin and a place about 7\,km away. Its minimum distance is zero. Discarding it at the inner radius would lose the eligible place. The reader retains intersecting cells, descends and applies both distance bounds to the terminal records. The \href{https://github.com/indexus/sdk/blob/6e1bba2/src/local/annular-filter.test.mjs}{annular-search tests} cover a geographic example and continuation on the next page.
+
 \section{Combining collections}\hypertarget{ix:composition}{}
-Two collections of the same space cut the world into the same cells, but write them with different characters, because their offsets differ. Removing the offset gives back the cell's integer coordinates and its resolution. The client joins two collections on these coordinates. This is a spatial join: it aligns cells, rather than assuming that the same record identifiers occur in both collections. A join on object identifiers, such as the proposed geo-semantic descent in the properties paper, is a separate operation.
+In the 2024 search paper~[\ixref{1}], a mask selects which coordinate to bisect next, and a collection-specific offset changes the letters assigned to the resulting cells. The earlier paper also described searching across several collections in one traversal. Here the operation is arithmetic on cell summaries. The encoding lets two producers describe the same place with different strings. An address is useful to find the data. To compare two cell measurements, the reader instead decodes their integer grid coordinates and resolution.
 
 \begin{figure}[H]
     \centering
     \ixnew{figures/compose.tikz}
-    \caption{The same cell is D in a collection of houses (offset B) and B in a weather collection (offset D). Without the offset both are the cell (0,0).}
+    \caption{One shaded cell on two BASE4 grids. Its two low bits are 00. Adding offsets B and D encodes it as B and D respectively. Both decode to cell $(0,0)$ at the same resolution.}
 \end{figure}
 
-For each cell of the first collection, the client finds the same cell, or the nearest enclosing one, in up to three others, and computes a small expression over their sums: an average price is the sum of prices divided by the count; a price per square metre divided by a temperature needs two collections. Data from different producers is thus combined on the reader's device, and none of it is copied into a common database.
+\paragraph{What has to agree.}
+The axes must have the same meaning, order, units and bounds, and the subdivision schedule must give the cells the same footprints. The \href{https://github.com/indexus/sdk/blob/6e1bba2/src/map/heat/compose.js}{map composer} compares the ordered dimension types and arguments. Its ordinary collection constructor uses the same cyclic mask for those axes. The caller still supplies the meaning of each field and its units. With a different coordinate system or subdivision schedule, an application must first express the data on a common grid. Dropping the offsets alone does not reproject it.
+
+\paragraph{One calculation, cell by cell.}
+Suppose two producers publish daytime and night-time temperatures for the same date. In one cell, two daytime readings sum to $58\,^{\circ}\mathrm{C}$ and three night-time readings sum to $69\,^{\circ}\mathrm{C}$. Their means are 29 and 23. A map of positive daytime warming displays $\max(0,29-23)=6\,^{\circ}\mathrm{C}$. The reader can evaluate the expression from four numbers, even if the producers sampled different sensors. Matching a particular sensor reading would require a shared identifier and observation time.
+
+The first field sets the cells drawn. For each of those cells the reader looks up the others, up to four fields in all. If the only night-time value is the mean of an enclosing cell, 23 describes that wider area; the displayed difference has correspondingly coarser support. If there are only finer cells, the composer currently leaves that field missing. Without a declared substitute it hides the output cell. Treating missing temperature as zero would invent a 29-degree difference. The \href{https://github.com/indexus/sdk/blob/6e1bba2/src/gpu/combine.test.mjs}{kernel tests} exercise these three cases against a reference calculation. The \ixsection{properties}{anglet}{Anglet example} follows a different use of several collections in a single view.
 
 \section{Keeping data}
 The client keeps the answers it has read in memory, within a budget of 256~MB by default. When the budget is exceeded, the least recently used answers leave, except those the current view needs. The same answers are copied once to the graphics processor, which adds the rows of each cell to draw and writes one instance per cell. If the graphics device is lost, it is rebuilt from memory without reading the network again.
@@ -132,7 +140,7 @@ Suppose a map has cached 60 houses and a producer then receives an acknowledgeme
     \ixnew{figures/refresh.tikz}
     \caption{One new house after a cached count of 60. A fresh server read must cover the current holders.}
 \end{figure}
-For a check after the ACK, send a fresh request to the server with \texttt{refresh=true}. When using the \href{https://github.com/indexus/sdk/blob/83f2db1ad52ac695ab01cb2ca188f23300271bd7/src/network/index.js#L107-L114}{reference SDK}, set \texttt{refreshTtlMs} to zero if this check must bypass the default five-second reuse of a recent result. In normal mode the server must cover the required holders and any receivers of transferred zones, or report failure. With no other changes, a successful read returns 61. Concurrent updates can yield a later result. The \ixsection{network}{read-consistency}{network paper} explains coverage during a move and the limits of this guarantee.
+For a check after the ACK, send a fresh request to the server with \texttt{refresh=true}. When using the \href{https://github.com/indexus/sdk/blob/83f2db1ad52ac695ab01cb2ca188f23300271bd7/src/network/index.js#L107-L114}{reference SDK}, set \texttt{refreshTtlMs} to zero if this check must bypass the default five-second reuse of a recent result. In normal mode the server must cover the required holders and any receivers of transferred zones, or report failure. With no other changes, a successful fresh read returns 61. If the holder cannot be reached, the client can surface the failure. A reader that explicitly permits \texttt{stale-if-error} can instead receive an older observation within its age limit. That age runs from the node's observation. A batch from \texttt{/sets} promises no common observation time across prefixes or collections. The server's \href{https://github.com/indexus/core/blob/5188b61/docs/protocol/read-modes.md}{read policies} define the distinction. The \ixsection{network}{read-consistency}{network paper} explains coverage during a move and the limits of this guarantee.
 
 \section{Calculations}
 \textit{Size of an answer.} With one 32-bit suffix word per key, the count and key take 8 bytes per child. Four default 32-bit metrics add 16 bytes, giving $64\times24=1\,536$ bytes of column data for 64 children. One such root block with its headers is 1\,572 bytes before compression. A row at the parent, a second key depth, redirects or 64-bit metrics change this size.

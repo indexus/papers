@@ -11,15 +11,15 @@
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Abstract. }Two papers written by Rémi Henriot in 2024 introduced the tree, the address encoding and the search algorithm. This account follows those ideas into a Go engine, a WebGPU client and the experiments of November 2026. It identifies decisions the author attributes to his own work, contributions made with AI assistance and the artifacts a reader can check. One example follows a placement change from a plausible hypothesis to a comparison on AWS. The accompanying archive provides selected exchanges with the tools used during development.
+\noindent \textbf{Abstract. }A 2014 mobile application raised a practical question: how can a phone show nearby activities before it has read the whole map? The surviving Ocurz code, later prototypes and two papers written by Rémi Henriot in 2024 trace the development of this idea. This account follows it into a Go engine, a WebGPU client and the experiments of November 2026. It identifies decisions the author attributes to his own work, contributions made with AI assistance and the artifacts a reader can check. One example follows a placement change from a plausible hypothesis to a comparison on AWS. The accompanying archive provides selected exchanges with the tools used during development.
 
 \vspace{1em}\end{abstract}
 
 \section{Introduction}
-The original question was geometric: can the same tree name a record and help a reader find it? Running the system raised a different question. When the tree points to a new node and the old one still has the data, which one can safely acknowledge a write? The 2024 papers document the first question. Later code, counterexamples and experiments show how the second was answered. This distinction matters when tracing who did what and when.
+For a person looking for an activity nearby, the first useful result should appear quickly and stay in the right order as more places arrive. By 2024, that problem had become a geometric question: can the same tree name a record and help a reader find it? Running the system raised a different question. When the tree points to a new node and the old one still has the data, which one can safely acknowledge a write? The 2024 papers document the first question. Later code, counterexamples and experiments show how the second was answered. This distinction matters when tracing who did what and when.
 
 \paragraph{Companion papers and source discussions.}
-The two original papers remain the starting point:
+The first two papers under the Indexus name are
 \ixpaper{search2024} and \ixpaper{network2024} (2024).
 \ixpaper{whitepaper}, \ixpaper{client} and \ixpaper{network} describe the current
 system; \ixpaper{properties} separates the measured applications from hypotheses.
@@ -27,23 +27,34 @@ The accompanying \href{https://github.com/indexus/papers/tree/main/ai-transparen
 provides selected dated exchanges and their evidential limits.
 
 \section{Chronology of Development}\hypertarget{ix:chronology}{}
-The project evolved through four phases. The early outline called its two 2026 phases ``H1'' and ``H2''; those labels are retained as provenance, not as dates of experimental execution. The cluster campaigns cited here ran in November 2026.
+\paragraph{2014--2016: finding an activity near the user.}
+The Android repository preserved under the name Ocurz begins on 24 August 2014. Its first commit contains a basic Android activity under the earlier name \texttt{EgoApp} (\texttt{6b3f10d2}). The surviving backend starts on 14 December 2014 with a PHP/Phalcon application (\texttt{a1eceb2}). By 28 December the feed already answered a proximity query: the database filtered a geographic window, computed distances, and returned up to ten activities ordered by distance (\texttt{05716cd}). On 11 January 2015 the backend added caching and geohash lookups (\texttt{fe76729}). On 12 January the activity feed looked across several geohash cells (\texttt{8351eea}). These commits date the application and its early search code. In his \href{https://remi.news/articles/2024-08-02-the-startup-journey/}{account of the startup}, Henriot dates the entrepreneurial work with a friend to November 2015 and the release to July 2016.
+
+His \href{https://remi.news/articles/2024-08-07-the-beginnings-of-the-protocol/}{technical retrospective} explains the ordering rule. Suppose the nearest unread cell starts 300 metres from the reader. A result 200 metres away can already be displayed. A result 400 metres away must wait, because the unread cell might contain something closer. The January commits establish a multi-cell feed. By 1 December 2015 the Android client already used the boundary of a geohash neighbourhood to withhold events beyond its current distance bound (\texttt{8da780dc}, also visible in \texttt{618af15f} on 13 December). On 11 February 2016 a later revision explicitly retained candidates awaiting a wider search (\texttt{19c57a92}). These dates bound when the rule was present in the code.
+
+\paragraph{2016--2021: from the application to a client algorithm.}
+Henriot recalls continuing the client search independently after Ocurz, exploring how to load the next results without restarting a search and how to combine collections in one view. The next dated implementation identified in this review is the JavaScript prototype \texttt{next-js}. On 10 and 11 October 2019 the code changed the index root and introduced distance, direction and spatial filtering (\texttt{e584243}, \texttt{cda9445}, \texttt{5c4d60d}). At revision \texttt{0ad8469} on 11 October, the prototype computes a cell-boundary distance and uses the first remaining candidate to set a traversal radius. This dates an executable form of the idea described above. The separate \texttt{next-backend} added bulk insertion of positions on 7 October 2020 (\texttt{c1c07e3}); its retained history extends into March 2021.
+
+\paragraph{2023--2024: defining the network.}
+Henriot subsequently explored using the same encoding for peers and data, drawing on Kademlia for routing and later on CRDTs for convergence. A preserved GitLab clone records Go interfaces for dimensions, masks, locations, networks and sets on 18 June 2023 (\texttt{26c2914}). A BitExplorer manuscript survives in the whitepaper repository in June 2024 (\texttt{f348f6e}). The simulator gained exploration latency on 6 August (\texttt{b08624d}). Its 31 August rename from BitExplorer to Indexus (\texttt{7fac057}) and the node commit importing simulation code (\texttt{3221f42}) document a concrete transition between those projects. On 2 October 2024 the \href{https://registry.npmjs.org/js-indexus-sdk/1.0.0}{npm registry} records the release of \texttt{js-indexus-sdk} 1.0.0.
+
+The early outline called its two 2026 phases ``H1'' and ``H2''; those labels are retained as provenance, not as dates of experimental execution. The cluster campaigns cited here ran in November 2026.
 
 \begin{figure}[H]
     \centering
     \ixnew{figures/timeline.tikz}
-    \caption{Chronology of Indexus from the 2024 solo papers to the 2026 public series.}
+    \caption{From the Ocurz activity feed to DPIP. Dates before 2024 refer to artifacts or to the author's recollection as indicated in the text.}
 \end{figure}
 
 \begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
-  \item \textbf{2024 --- Foundations (solo work).} The author conceived the core model and published two initial papers on \texttt{indexus.io} under CC~BY~4.0: \emph{Indexus: A Peer-to-Peer Search Algorithm}~[\ixref{1}] and \emph{Indexus: A Peer-to-Peer Data Indexing System}~[\ixref{2}], accompanied by hand-drawn TikZiT diagrams and initial prototypes. All fundamental primitives were set here: one binary tree shared by nodes, collections and records; BASE4/BASE64 prefix encoding with bit masks and collection offsets; incremental nearby search by concentric layers; and delegation of zones to XOR-closest nodes.
-  \item \textbf{2025 --- Core engine and visual client.} The protocol was implemented as a Go node (\texttt{core}), a JavaScript SDK (\texttt{sdk-js}), a management dashboard (\texttt{dashboard}), and live browser applications (\texttt{experiences}: \emph{Explore} for weather, real estate and 3D LiDAR scenes, \emph{Drawing}, and \emph{Chronicle}). The end-to-end columnar path from disk pages to a browser WebGPU arena was designed and built during this phase.
+  \item \textbf{2024 --- The first Indexus papers (solo work).} The author formalized the core model in two papers on \texttt{indexus.io} under CC~BY~4.0: \emph{Indexus: A Peer-to-Peer Search Algorithm}~[\ixref{1}] and \emph{Indexus: A Peer-to-Peer Data Indexing System}~[\ixref{2}], accompanied by hand-drawn TikZiT diagrams and initial prototypes. All fundamental primitives were set here: one binary tree shared by nodes, collections and records; BASE4/BASE64 prefix encoding with bit masks and collection offsets; incremental nearby search by concentric layers; and delegation of zones to XOR-closest nodes.
+  \item \textbf{2025--2026 --- Engine and visual client.} Core work on transferring ownership and data is recorded on 1 March 2025 (\texttt{9a3336a}). The surviving management dashboard repository begins on 6 August 2026 (\texttt{d429e17}); the current experiences repository begins on 3 November (\texttt{55ed703}). The 2026 implementation connects disk pages to the WebGPU client for the Explore weather, real estate and 3D LiDAR layers. The same repository also houses Drawing and Chronicle.
   \item \textbf{2026 --- Protocol phase (original outline: H1).} The codebase was reorganized into seven strict unidirectional layers: tree, authority, store, wire, walk, gpu and bords. The store evolved into the \texttt{zonelog} engine. An early implementation represented write authority as a certificate-chain CRDT with commit-time fencing; hand-overs were redesigned into granular lots (\texttt{FLIP-UNIT}); and open-loop benchmarks were run on dedicated AWS NVMe clusters up to 64 vnodes (190\,700 writes/s). A separate 4-to-16-vnode ramp measured 99.5\% linearity; other campaigns exercised live elastic scaling.
   \item \textbf{2026 --- Algebra phase (original outline: H2).} Zone summaries were generalized from sums to arbitrary associative monoids (\texttt{sum}, \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, \texttt{affine}) under self-certifying \texttt{IXC1} descriptors. Two measured applications were established on the same primitive: continual learning with exact unlearning (archived on Zenodo with independent reproduction) and dynamic SPFresh/LIRE vector search beating static IVF at 1\,M vectors.
 \end{enumerate}
 
 \section{What Stayed and What Became Explicit}
-The 2024 papers remain the historical starting point, not an account retroactively rewritten to contain the 2026 implementation. They called zones \emph{sets} and records \emph{items}. The newer vocabulary names the same nesting structure, while the durable authority protocol and the broader algebra make its contracts more explicit.
+The 2024 papers provide the published baseline for comparing the protocol with its 2026 implementation. They called zones \emph{sets} and records \emph{items}. The newer vocabulary names the same nesting structure, while the durable authority protocol and the broader algebra make its contracts more explicit.
 
 \begin{table}[H]
 \centering
@@ -136,7 +147,7 @@ The selection keeps course corrections, including a checker that accepted missin
 A further proposal is to index the project's commits, experiments, revisions and selected exchanges in Indexus itself. A reader could start with a year, select a subsystem, then open the session or benchmark behind one decision.
 
 \section{Licenses, Open Standard, and Public Release}
-All papers in the Indexus series are prepared for publication on \texttt{indexus.io} under the \textbf{Creative Commons Attribution 4.0 International (CC BY 4.0)} license, continuing the open licensing of the 2024 papers. The accompanying repositories (\texttt{core}, \texttt{sdk-js}, \texttt{experiences}, \texttt{papers} and the public transcript archive) are being prepared for public release under clear open licenses, with reproducible benchmark scripts and archived dataset references.
+The seven papers in the Indexus series are published on \texttt{indexus.io} under the \textbf{Creative Commons Attribution 4.0 International (CC BY 4.0)} license, continuing the open licensing of the 2024 papers. The accompanying repositories (\texttt{core}, \texttt{sdk-js}, \texttt{experiences}, \texttt{papers} and the public transcript archive) are being prepared for public release under clear open licenses, with reproducible benchmark scripts and archived dataset references.
 
 Indexus is the brand and project that originated the \textbf{Distributed Prefix Index Protocol (DPIP)}. The proposed open standard would specify the address space, canonical collection descriptors (\texttt{IXC1}), wire blocks (\texttt{IXB2}, \texttt{IXRB}), authority certificates and conformance test vectors so that independent implementations can be built in different languages and interoperate cleanly without relying on a single reference codebase. Questions, reviews and collaboration proposals are welcome at \texttt{research@indexus.io}.
 

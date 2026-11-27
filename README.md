@@ -55,6 +55,9 @@ repository's neighboring PDF folders together.
 | --- | --- | --- |
 | Why a shared index? | [Manifesto](00-manifesto/indexus-manifesto.pdf) | [Whitepaper](10-whitepaper/indexus-whitepaper.pdf) |
 | How do maps and feeds read it? | [Client](20-client/indexus-client.pdf) | [Network summaries](30-network/indexus-network.pdf#nameddest=ix:summaries) |
+| How can parent and child address the same peer? | [Whitepaper, collection](10-whitepaper/indexus-whitepaper.pdf#nameddest=ix:collection) | [Network](30-network/indexus-network.pdf) |
+| How do collections meet across coordinate systems? | [Client, combining collections](20-client/indexus-client.pdf#nameddest=ix:composition) | [Anglet, sales and weather](50-properties-and-applications/indexus-properties-and-applications.pdf#nameddest=ix:anglet) |
+| Where did the search algorithm come from? | [History, Ocurz and the prototypes](60-history-and-authorship/indexus-history-and-authorship.pdf#nameddest=ix:chronology) | [Rémi's retrospective](https://remi.news/articles/2024-08-07-the-beginnings-of-the-protocol/) |
 | When may a new vnode accept writes? | [Network hand-over](30-network/indexus-network.pdf#nameddest=ix:handoff) | [Properties and measurements](50-properties-and-applications/indexus-properties-and-applications.pdf#nameddest=ix:benchmarks) |
 | Did adding a vnode relieve its machine? | [AWS placement experiment](50-properties-and-applications/indexus-properties-and-applications.pdf#nameddest=ix:elasticity) | [Run record, traces and replay](https://github.com/indexus/core/blob/e4b9072/docs/benchmarks/aws-placement-100-20261127/granular50/aws-pair.md) |
 | What is implemented versus proposed? | [Properties and limits](50-properties-and-applications/indexus-properties-and-applications.pdf#nameddest=ix:limits) | [Economics](40-economics/indexus-4-economics.pdf) |

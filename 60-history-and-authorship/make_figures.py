@@ -14,17 +14,21 @@ def lines(*parts):
 os.makedirs(os.path.join(HERE, "figures"), exist_ok=True)
 out = {}
 
-# Chronological snake: four spacious cards instead of a crowded single axis.
+# Two columns keep the dated stages legible at the series' fixed figure scale.
 f = Fig()
 for x, y, text in [
-    (0, 2, lines("2024", "Solo papers", "Tree, encoding, nearby search, delegation")),
-    (12.8, 2, lines("2025", "Go core and JavaScript SDK", "WebGPU client and Explore")),
-    (12.8, -2, lines("2026: protocol phase (outline H1)", "Early certificate graph and granular hand-off", "AWS cluster campaigns")),
-    (0, -2, lines("2026: algebra phase (outline H2)", "IXC1 and monoids", "Continual learning; SPFresh 1M"))]:
-    box(f, x, y, text, w=9.8, h=2.6)
-arrow(f, (4.9, 2), (7.9, 2))
-arrow(f, (12.8, 0.7), (12.8, -0.7))
-arrow(f, (7.9, -2), (4.9, -2))
+    (0, 4, lines("2014--2016: Ocurz", "Activity feed across geohash cells")),
+    (12.8, 4, lines("2019--2021: Next prototypes", "Spatial filters and position ingestion")),
+    (12.8, 0, lines("2023--2024: BitExplorer", "Go interfaces, simulation and manuscript")),
+    (0, 0, lines("2024: Indexus", "Two papers and a JavaScript SDK")),
+    (0, -4, lines("2025--2026: implementation", "Ownership transfer and visual clients")),
+    (12.8, -4, lines("2026: DPIP series", "Authority, algebra and experiments"))]:
+    box(f, x, y, text, w=9.8, h=2.4)
+arrow(f, (4.9, 4), (7.9, 4))
+arrow(f, (12.8, 2.8), (12.8, 1.2))
+arrow(f, (7.9, 0), (4.9, 0))
+arrow(f, (0, -1.2), (0, -2.8))
+arrow(f, (4.9, -4), (7.9, -4))
 out["timeline"] = f
 
 # A four-step loop: message labels occupy the gaps, not the vertical arrows.

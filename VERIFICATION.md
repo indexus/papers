@@ -1,3 +1,20 @@
+# Address identity, composition and provenance review — 27 November 2026
+
+The seven papers now cover 67 pages. The two 2024 publications retain their original sources and PDFs. The comparison used the reference node at `5188b61`, the JS SDK at `6e1bba2` and Explore at `c0e9738`.
+
+| Question | What the review checked |
+|---|---|
+| Can one address name the peer for several zones? | The whitepaper follows a parent and two branches. The network paper follows three coincident paths through a hand-off. The identity used by storage is the pair (collection, location). [Zone keys](https://github.com/indexus/core/blob/5188b61/internal/tree/id.go) · [Transfer regression](https://github.com/indexus/core/blob/5188b61/internal/mesh/zone_identity_test.go) |
+| Do the normative and implemented address encodings agree? | The two tested codecs agree with one another on the illustrated mid-byte prefix and differ from the specified suffix. The network paper records the vector and an aligned control. Independent implementations need a decision about this boundary. |
+| When can collections be composed? | The client compares coordinates, dimensions, cell bounds, offsets, units and missing inputs. The Anglet case separates a spatial association, an hourly weather column and a browser label. In the scene sample there are 19 sales. A geometry check made 18 associations. A particular viewport displayed 16 labels. [Explore's sale reader](https://github.com/indexus/experiences/blob/c0e9738/src/experiences/explore/localSales.js) |
+| How does a search avoid omitting a point? | The SDK's annular search admits an intersecting cell, then filters individual records. The historical section traces the distance bound to Ocurz client code dated 1 December 2015. [Annular tests](https://github.com/indexus/sdk/blob/6e1bba2/src/local/annular-filter.test.mjs) · [Author's retrospective](https://remi.news/articles/2024-08-07-the-beginnings-of-the-protocol/) |
+| What does a cached or paid answer establish? | The read-mode examples distinguish observation age, successful fresh coverage and failure. The economics proposal now distinguishes a quote, a right to read and the terms of reuse. A network-scoped read token carries no per-prefix access rule. [Read policy](https://github.com/indexus/core/blob/5188b61/docs/protocol/read-modes.md) · [Credentials](https://github.com/indexus/core/blob/5188b61/internal/auth/cert.go) |
+| What is original, implemented or proposed? | The project history gives dated commits for Ocurz, Next, BitExplorer and Indexus. The archive distinguishes an editorial date from a later repository import. The manifesto and economics paper identify the MIT licence in the current source trees. The papers retain CC BY 4.0. |
+
+The seven current papers and two historical sources compiled with Tectonic. The current set was rendered at 150 dpi for visual review. All nine compilation logs reported zero overfull boxes. PDF and Markdown checks resolved 34 internal actions, 89 companion actions and 181 Markdown targets before the addition of this verification entry. All 35 excerpts and 18 episodes passed their integrity check.
+
+---
+
 # DPIP title and authorship edition — 27 November 2026
 
 The lead paper carries the full protocol name and subtitle. All seven current

@@ -25,11 +25,11 @@ save("zoom", f)
 
 # Compose: two collections cut the same cells with different letters.
 f = Fig()
-plane(f, x0=0, y0=4.2, div=2, shaded=[(0, 0)], labels={(0, 1): "B", (1, 1): "C", (0, 0): "D", (1, 0): "A"})
-plane(f, x0=0, y0=0, div=2, shaded=[(0, 0)], labels={(0, 1): "D", (1, 1): "A", (0, 0): "B", (1, 0): "C"})
+plane(f, x0=0, y0=4.2, div=2, shaded=[(0, 0)], labels={(0, 1): "D", (1, 1): "A", (0, 0): "B", (1, 0): "C"})
+plane(f, x0=0, y0=0, div=2, shaded=[(0, 0)], labels={(0, 1): "B", (1, 1): "C", (0, 0): "D", (1, 0): "A"})
 plane(f, x0=13, y0=2.1, div=2, shaded=[(0, 0)], labels={(0, 0): "cell (0,0)"})
-f.node(5, 8.0, "houses, offset B: D", "tiny")
-f.node(5, -0.6, "weather, offset D: B", "tiny")
+f.node(5, 8.0, "first collection, offset B", "tiny")
+f.node(5, -0.6, "second collection, offset D", "tiny")
 f.node(18, 6.0, "same cell after removing offsets", "tiny")
 save("compose", f)
 # Three reads following one acknowledged insertion into a collection of sixty.

@@ -39,7 +39,7 @@ Start with a city divided into cells. Each cell stores a short answer, such as a
 of the author and AI tools, with links to selected source discussions.
 
 \section{One Address Space and Three Planes}
-Vnodes and zone routing addresses use 96 bits, written as 16 characters of 6 bits. A zone is identified by its collection and location. Let $c$ be the collection's 96-bit address and $\ell$ the location's first $k$ routing bits, with $k=0$ at the root. Replacing the first $k$ bits of $c$ gives $\mathrm{ID}(z)=\ell\parallel c[k:96]$, where $c[k:96]$ is the remaining suffix. For a two-character example, location C in collection AB routes to CB. At the root the address is AB. Given the local set of active vnodes $V_{\mathrm{active}}$, the predicted placement of a zone follows from its address:
+Vnodes and zone routing addresses use 96 bits, written as 16 characters of 6 bits. A zone is identified by its collection and location. Let $c$ be the collection's 96-bit address and $\ell$ the location's first $k$ routing bits, with $k=0$ at the root. The specified routing key replaces the first $k$ bits of $c$ to give $\mathrm{ID}(z)=\ell\parallel c[k:96]$, where $c[k:96]$ is the remaining suffix. For a two-character example, location C in collection AB routes to CB. At the root the address is AB. The formula describes placement. The \ixpaper{network} discusses a conformance issue for prefixes ending inside a byte. Applications retain the collection and location as the logical zone key. Given the local set of active vnodes $V_{\mathrm{active}}$, the predicted placement of a zone follows from its address:
 \[
 \mathrm{Placement}(z, V_{\mathrm{active}}) = \arg\min_{v \in V_{\mathrm{active}}} \bigl(\mathrm{ID}(z) \oplus \mathrm{ID}(v)\bigr).
 \]
@@ -114,7 +114,7 @@ For every zone $P$, its summary is
 \[
 \mathrm{Summary}(P) = \mathrm{Direct}(P) \;\circ\; \bigodot_{c \in \mathrm{Children}(P)} \mathrm{Summary}(c),
 \]
-folded in canonical cell order. Any complete cut of the tree read in address order yields the same value as the root (verified across 1\,000 random sparse layouts). A range $[u, v]$ is covered by at most $2(2^c - 1)$ zones per level ($2^c - 1$ for a prefix). Measured fold cost on 8 columns (2 vCPU) is 41\,ns for sums, 55\,ns for mixed sum/min/max, and 229\,ns for four affine pairs. For linear recurrences $h \leftarrow a h + b$, any of 4\,096 prefixes is read in at most 12 zones and matches the sequential scan.
+folded in canonical cell order. A complete cut read in address order yields the same value as the root when it covers every contribution once, including records placed directly at expanded ancestors (verified across 1\,000 random sparse layouts). A range $[u, v]$ is covered by at most $2(2^c - 1)$ zones per level ($2^c - 1$ for a prefix). Measured fold cost on 8 columns (2 vCPU) is 41\,ns for sums, 55\,ns for mixed sum/min/max, and 229\,ns for four affine pairs. For linear recurrences $h \leftarrow a h + b$, any of 4\,096 prefixes is read in at most 12 zones and matches the sequential scan.
 
 \begin{figure}[H]
     \centering
@@ -128,11 +128,11 @@ Cut independence is the algebraic property. Floating-point addition and affine c
 
 \paragraph{Exact dyadic quantization and \texttt{IXC1}.}
 Two programs must agree on which side of every cell boundary a coordinate falls. A tiny rounding disagreement would send the same record to different zones. ``Dyadic'' means repeated halving; the condition below limits the depth so that binary64 calculations reproduce the intended exact halvings. The descriptor then makes the chosen geometry and summary rules checkable from the collection name.
-A collection is defined by a canonical binary descriptor \texttt{IXC1} (32 to 185 bytes): address geometry $(c, W)$ (bits per character and address width), a 16-byte nonce, permitted record depths $[lo, hi]$, bounded axes $[\min_a, \max_a]$ with bit schedule $\sigma$ (or $k=0$ opaque addresses), and column kinds. IEEE~754 \texttt{binary64} bisection matches exact dyadic quantization bit for bit up to depth $D_a$ satisfying
+A self-certifying collection uses a canonical binary descriptor \texttt{IXC1} (32 to 185 bytes): address geometry $(c, W)$ (bits per character and address width), a 16-byte nonce, permitted record depths $[lo, hi]$, bounded axes $[\min_a, \max_a]$ with bit schedule $\sigma$ (or $k=0$ opaque addresses), and column kinds. IEEE~754 \texttt{binary64} bisection matches exact dyadic quantization bit for bit up to depth $D_a$ satisfying
 \[
 \max(|\min_a|, |\max_a|) \le 2^{53 + \min\bigl(v_2(\min_a),\; v_2(\Delta_a) - n\bigr)},
 \]
-where $\Delta_a = \max_a - \min_a$, $n$ is the number of halvings along axis $a$, and $v_2$ is the 2-adic valuation, the exponent of two in an exact binary value. \texttt{IXC1} rejects any axis exceeding $D_a$, so Go nodes, JavaScript clients and WebGPU shaders compute identical cell addresses. The collection's 16-character name is the first 96 bits of $\mathrm{SHA\text{-}256}(\texttt{"indexus.collection.v1\textbackslash 0"} \parallel \mathrm{IXC1})$. Every node and reader verifies the algebra against the name without trusting a central directory.
+where $\Delta_a = \max_a - \min_a$, $n$ is the number of halvings along axis $a$, and $v_2$ is the 2-adic valuation, the exponent of two in an exact binary value. \texttt{IXC1} rejects any axis exceeding $D_a$, so the accepted schedules have exactly representable binary64 boundaries. An implementation still has to apply the same schedule, offsets and midpoint rule. The collection's 16-character name is the first 96 bits of $\mathrm{SHA\text{-}256}(\texttt{"indexus.collection.v1\textbackslash 0"} \parallel \mathrm{IXC1})$. A reader with the descriptor can verify this commitment locally. The \href{https://github.com/indexus/core/blob/5188b61/docs/protocol/collection-description.md}{format specification} also describes collections named by hand, including the existing demonstration datasets. Their names alone do not certify a schema.
 
 \begin{figure}[H]
     \centering
@@ -223,6 +223,15 @@ A scheduling model reserves the donor and receiver together during a copy. For 6
 \paragraph{What the audits covered.}
 In each cluster a stratified check reread 512 workload ACKs. A separate native audit sampled 512 ledger entries, matched totals for all 257 collections including the probes, and observed zero zones with two owners across 170 vnodes in A and 173 in B. Time reserved for export and cleanup expired before the exhaustive per-key reread finished. The \href{https://github.com/indexus/core/blob/e4b9072/docs/benchmarks/aws-placement-100-20261127/granular50/aws-pair.md}{dated campaign report} links the anonymized request episodes, analysis scripts and source charts.
 
+\subsection*{Reading several collections in Anglet}\hypertarget{ix:anglet}{}
+The \href{https://demo.indexus.io/?scene=anglet-mini}{Anglet demonstration} gives a concrete test of what a reader can infer from several producers. At the public verification on 27 November 2026, the prepared scene held 308,551 records in 14 collections. A visitor could move from aerial imagery and LiDAR geometry to historical property sales and archived weather without loading all those records. The \ixsection{client}{composition}{client paper} gives the separate rule for arithmetic on compatible cell summaries.
+
+\paragraph{What one roof tells us.}
+The DVF extract contains 19 house sales from 2020. The reader retrieves the local sale records and uses their coordinates to associate prices with nearby building geometry. A geometry check found 18 approximate roof associations. In one browser check at $1{,}366\times860$ pixels, the interface held 19 sale labels and displayed 16 after projection and label placement. Resizing or moving the view can change this last count. The \href{https://github.com/indexus/experiences/blob/c0e9738/src/experiences/explore/localSales.js}{local reader} and the \href{https://github.com/indexus/experiences/blob/c0e9738/test/explore/roof-prices.test.js}{roof-price tests} distinguish a transaction, a geometric association and a label visible on screen.
+
+\paragraph{What the hour tells us.}
+The AROME archive covers 28--30 January 2025. The timeline selects hourly metric columns from the spatial weather collections and blends adjacent hours for display. The \href{https://github.com/indexus/experiences/blob/c0e9738/test/weather/field-hours.test.js}{hour-selection tests} check this transition. Vegetation has three spatial coordinates. Showing it under the weather layer aligns two views of the same place. It adds neither an indexed time axis to the vegetation nor weather at the date of a 2020 sale. Answering that historical question would require observations for the sale date as well as a rule for spatial and temporal matching.
+
 \section{Case Study 1: Continual Learning and Exact Unlearning}\hypertarget{ix:unlearning}{}
 \noindent\emph{Measured application.}
 An encoder turns text into a vector of numbers. A frozen encoder keeps that transformation fixed while records are added or removed. A sufficient statistic is a small collection of totals from which the chosen model can be solved, without reading the original training records again. With a frozen encoder, linear models (ridge regression, shared-covariance LDA, nearest class mean, naive Bayes) depend only on additive sufficient statistics: $n$, $\Sigma y$, $\Sigma x y^\top$, and $\Sigma x x^\top$. In Indexus, learning is a write, forgetting is a deletion, and the model for any region or time window is solved on demand from zone sums.
@@ -293,7 +302,7 @@ Write amplification stays at 1.08--1.20 vectors moved per insert. Bringing this 
 We list only directions grounded directly in the monoid primitive, with their current status.
 
 \paragraph{Parallel descents (Geo $\times$ Semantic) [\emph{Hypothesis}].}
-An object is written to two collections sharing its ID: a geographic tree $G$ (carrying a reduced semantic centroid per map zone) and a vector tree $V$ (carrying 64 map-region count sums per vector zone). At query time, an exact count read from $G$ selects the plan: scan $G$ directly when few objects fall in the region, prune $V$ via its map sums when many do, or intersect both leaves in between. Beyond filtered top-$k$, this serves \emph{semantic heatmaps} over a whole region without scanning individual documents.
+This proposal requires the producer to assign the same stable object ID to both entries and to keep updates and removals consistent across the two collections. In this design, an object is written to a geographic tree $G$ (carrying a reduced semantic centroid per map zone) and a vector tree $V$ (carrying 64 map-region count sums per vector zone). At query time, an exact count read from $G$ selects the plan: scan $G$ directly when few objects fall in the region, prune $V$ via its map sums when many do, or intersect both leaves in between. Beyond filtered top-$k$, this serves \emph{semantic heatmaps} over a whole region without scanning individual documents.
 
 \begin{figure}[H]
     \centering
@@ -336,7 +345,7 @@ Walkad~[\ixref{8}] uses XOR placement for spatial cells. P-Grid~[\ixref{9}] and 
 \section{Conclusion}
 A prefix tree with versioned child summaries connects three results: a fold over a complete cut, unlearning with a fixed encoder, and dynamic search that beat static IVF on the 1\,M-vector test. On dedicated NVMe machines, the late-November campaigns sustained the named write plateaus while revealing how often splitting a vnode left its host busy. Parallel geo-semantic descents, hierarchical SIGReg diagnostics and verifiable analytical registries remain research directions.
 
-The proposed DPIP standard would specify canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}) and exact dyadic addressing, with conformance vectors for independent implementations. Correspondence and reviews are welcome at \texttt{research@indexus.io}.
+The proposed standard covers canonical encodings (\texttt{IXC1}, \texttt{IXB2}, \texttt{IXRB}), dyadic addressing and conformance vectors. Reviewers can contact \texttt{research@indexus.io}.
 
 \Needspace{5\baselineskip}
 \paragraph{Contributions.} Rémi Henriot directed the experiments and selected the comparisons. AI-assisted work included auditing a benchmark table, checking reproduction scripts and plotting placement requests against first writes. The \ixsection{history}{ai}{project history} dates the contributions of the tools used.
@@ -344,7 +353,7 @@ The proposed DPIP standard would specify canonical encodings (\texttt{IXC1}, \te
 \Needspace{6\baselineskip}
 \section*{References}
 \small
-\begin{enumerate}[label={[\arabic*]},leftmargin=2em,itemsep=0pt]
+\begin{enumerate}[label={[\arabic*]},leftmargin=2em,nosep]
   \item \hypertarget{reference:1}{}R. Henriot. \ixbib{search2024}. 2024.
   \item \hypertarget{reference:2}{}R. Henriot. \ixbib{network2024} (2024) / \ixbib{whitepaper} (2026).
   \item \hypertarget{reference:3}{}R. Henriot. \ixbib{client}. 2026.

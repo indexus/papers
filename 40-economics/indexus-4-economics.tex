@@ -19,7 +19,7 @@
 
 Consider a map being zoomed. It shows a city, and on top of the city three kinds of information: the parcels of the public land registry, the weather of the last hour, and the notes the user has written about places.
 
-In Indexus these are three \emph{collections}. A collection is a set of \emph{records} published by one source: a parcel, a weather measurement, a note. The map does not copy them. It asks for the part of each collection that is on the screen, and draws the three answers on top of each other.
+In Indexus these are three \emph{collections}. In this example each producer publishes a separate collection of \emph{records}: a parcel, a weather measurement, a note. The map does not copy them. It asks for the part of each collection that is on the screen, and draws the three answers on top of each other.
 
 \fig{layers}{The map reads three collections over the same squares of the city.}{layers}
 
@@ -43,11 +43,11 @@ arithmetic and availability guarantees from the verifiable totals proposed here.
 
 Four roles appear around the map.
 
-The \textbf{producer} creates the records and signs them. The land registry is a producer, the weather service is a producer, and the user who writes notes is a producer too.
+In the proposed settlement scheme, the \textbf{producer} creates the records and signs them. The land registry is a producer, the weather service is a producer, and the user who writes notes is a producer too.
 
 The \textbf{host} runs nodes. It stores zones and answers the readers who ask for them.
 
-The \textbf{application} reads zones from several collections and composes them. Here it is the map. It owns no data.
+The \textbf{application} reads zones from several collections and composes them. Here it is the map. Displaying a layer gives the map no ownership of the underlying records.
 
 The \textbf{user} looks at the application.
 
@@ -85,6 +85,8 @@ A host can answer a cached summary read from the version it holds. A producer an
 \begin{example}
 \textbf{The map.} The land registry is public: its totals are free. The weather is public too, and yesterday's weather is free, but the last hour is paid. The user's notes are private: they stay on the user's own node, are never published, and have no price.
 \end{example}
+
+A price answers a different question from permission to read. A person can keep a note on a device and draw it over public parcels without sending it to the parcel host. If the note is uploaded to a shared host, the reference node's admission token identifies a network, a client, an expiry and scopes such as \texttt{read}. The read scope covers summaries and individual records; the token has no field limiting it to one collection or prefix. Private notes hosted alongside public data therefore need an additional access-control boundary. A payment receipt alone would provide no such boundary.
 
 The free number of reads is counted by each host, since there is no central account. A reader could pretend to be many readers and obtain more free reads. We accept this: the free reads are the cheap ones, and a host may at any time ask payment from a reader it does not want to serve for free.
 
@@ -147,6 +149,8 @@ The price of reading the totals of a zone depends on the collection and on what 
 
 With the real alphabet of 64 characters a zone has 64 children instead of four, and the pricing rule is the same. The reference client read omits empty children and may add one row for records placed directly at the requested zone: at most 65 rows. The diagram uses four populated children so that the reader can check the addition by eye.
 
+In the proposed scheme the quote must identify the collection as well as the zone and the service requested. On the same screen a public parcel count and a premium weather reading may cover the same ground. Paying for the weather read grants the service quoted for that collection. The producer's terms still govern redistribution of its records; the paper's CC~BY~4.0 licence applies to the paper itself. A personal note drawn alongside those layers can stay on the device.
+
 So a price list is a few lines that a producer and a host can publish, and the map can compute the cost of a screen before reading it: the number of zones times the price of one. This is how we found 48 sat above.
 
 Reading the records themselves is different. Their number grows with the data, so they are sold by the page: so many sat for the next fifty records.
@@ -207,7 +211,7 @@ Indexus proposes the Distributed Prefix Index Protocol (DPIP) as an open standar
 
 \fig{standard}{Every implementation is checked against the tests, not against our program.}{standard}
 
-We write a reference node and release it as free software under a licence that keeps it open. Client libraries are under a permissive licence, so that any application can include them. We propose that a neutral foundation steward the DPIP specification and its name, with changes submitted through public proposals.
+The current reference node and JavaScript SDK carry the MIT licence. The original outline also considered copyleft for the reference node. Independent implementations should be able to interoperate through the published specification. We propose that a neutral foundation steward the DPIP specification and its name, with changes submitted through public proposals.
 
 \section{Status}\hypertarget{ix:status}{}
 

@@ -51,7 +51,7 @@ We write positions with characters. In our examples a character is 2 bits, writt
 A prefix names a whole branch: C includes CA, CB, CC and CD in our four-letter drawings. A deeper prefix names a smaller part of the same tree. The drawings use four letters so that all branches fit on a page; the implementation uses 64.
 
 \section{Space}\hypertarget{ix:space}{}
-A record has coordinates: a latitude and a longitude, a time, or any measurable value. A \textbf{space} turns coordinates into a position in the tree by halving its dimensions one after the other. Each halving gives one bit: 1 for the upper half, 0 for the lower one. The \textbf{mask} says which dimension each bit cuts. The \textbf{offset} shifts each character by a value taken from the name of the collection, so that two collections of the same space are spread over different nodes.
+A record has coordinates: a latitude and a longitude, a time, or any measurable value. A \textbf{space} turns coordinates into a position in the tree by halving its dimensions one after the other. Each halving gives one bit: 1 above the midpoint, 0 at or below it. The \textbf{mask} says which dimension each bit cuts. At each level the \textbf{offset} adds the corresponding collection-name digit, modulo the alphabet size. Two collections can therefore give the same coordinates different location paths.
 
 \begin{figure}[H]
     \centering
@@ -59,12 +59,12 @@ A record has coordinates: a latitude and a longitude, a time, or any measurable 
     \caption{Two subdivisions of the same space}
 \end{figure}
 
-Our house lies at latitude $-20$ and longitude $45$. Starting with the full globe, the first latitude cut puts it in the lower half, and the first longitude cut in the upper half. These bits give $01$. In collection BB the first offset is B, or one. The sum in binary is $01+1=10$, written C. A producer reporting the house at this precision gives its location as C. Finer precision would specify the next cell as well.
+Our house lies at latitude $-20$ and longitude $45$. Starting with the full globe, the first latitude cut puts it in the lower half, and the first longitude cut in the upper half. These bits give $01$. In collection BB the first offset is B, or one. The sum in binary is $01+1=10$, written C. We store the listing at this precision, C. For a finer reading, the next two cuts compare the same coordinates with $-45$ and $90$. They give $10$; adding the next B gives $11$, or D. At that precision the location would be CD, a child of C.
 
 \section{Collection}\hypertarget{ix:collection}{}
 A \textbf{record} is one entry: an identifier, a location and a few numbers, such as a count or a price. A \textbf{collection} is a named set of records that use the same space. A \textbf{zone} is a part of a collection: all the records whose location starts with the same characters. The zone C holds every record whose location starts with C, and the zone CB every record starting with CB. A map zoomed out reads large zones; zoomed in, it reads small ones.
 
-Each zone keeps its \textbf{summary}: how many records lie below it and one aggregate per number. By default each number is summed; a collection may also declare \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or linear-recurrence pairs \texttt{affine} $(a, b)$ combined in cell order. With associative operations and a consistent set of child versions, folding a complete cut in cell order gives the root in exact arithmetic. Floating-point sums may round differently when regrouped. A collection's geometry, coordinate bounds, bit mask, and column operations form a short canonical description whose SHA-256 hash is the collection's 16-character name, so every node and reader checks the rules against the name without a central authority.
+Each zone keeps its \textbf{summary}: how many records lie below it and one aggregate per number. By default each number is summed; a collection may also declare \texttt{min}, \texttt{max}, \texttt{first}, \texttt{last}, or linear-recurrence pairs \texttt{affine} $(a, b)$ combined in cell order. With associative operations and a consistent set of child versions, folding a complete cut in cell order gives the root in exact arithmetic. Floating-point sums may round differently when regrouped. A collection's geometry, coordinate bounds, bit mask, and column operations form a short canonical description whose domain-separated SHA-256 digest starts with the 96 bits that encode the collection's 16-character name, so every node and reader checks the rules against the name without a central authority.
 
 \begin{figure}[H]
     \centering
@@ -83,7 +83,22 @@ A host can run several virtual nodes, or \textbf{vnodes}. Each vnode has its own
     \caption{Network of nodes}
 \end{figure}
 
-To address a zone, start with the collection name and replace its leading characters with the location. In our two-character drawing, zone C of BB has address CB. Of the nodes drawn, CA has the smallest bitwise exclusive-or (XOR) distance to CB. A client that knows these nodes can try CA first.
+A zone is identified by its collection and its location path. For routing, the proposed rule replaces the leading digits of the collection name with that path and keeps the unused suffix. The root, written @, uses no location digits. Here is what happens as one follows the BB collection down two branches.
+
+\begin{center}
+\begin{tabular}{@{}llcl@{}}
+\toprule
+Path & Location digits & Collection suffix & Routing address \\
+\midrule
+@  & none & BB & BB \\
+C  & C    & B  & CB \\
+CB & CB   & none & CB \\
+CD & CD   & none & CD \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+C and its child CB lead to the same routing address. The B that the parent borrowed from the collection is exactly the digit its child supplies. Yet a count for C includes CA, CB, CC and CD, while a count for CB covers only that branch. Our listing stored at C contributes to C and @. Of the nodes in the drawing, CA has the smallest bitwise exclusive-or (XOR) distance to CB. A reader may try CA for either path and must still specify which zone it wants.
 
 \begin{figure}[H]
     \centering
@@ -91,7 +106,7 @@ To address a zone, start with the collection name and replace its leading charac
     \caption{Zone C of BB has address CB. CA is the nearest node shown and holds its write permission in this example.}
 \end{figure}
 
-This address calculation predicts where a request should go. It does not by itself grant permission to write: during a transfer, a node must also hold the installed right described below. Keeping those two rules separate is what makes stale routing safe.
+The address predicts a destination. A write succeeds there when the disk holds the installed right for the requested zone. The \ixsection{network}{authority}{network paper} follows the case where a child has moved and its parent is still served by the donor. It also records a byte-packing difference between the proposed address rule and the current codec.
 
 \section{Routing}
 Nodes exchange membership updates in the background. An entry also learns from a successful write which node applied it. This helps when the holder of our listing changes before all the readers have heard about the new vnode. The next request can use the learned route. The destination checks its own permission, so a write can complete while membership updates are still in flight.
